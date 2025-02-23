@@ -2,6 +2,16 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
+}
+
+ktlint {
+    android.set(true)
+    outputToConsole.set(true)
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
 }
 
 android {
