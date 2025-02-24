@@ -27,8 +27,7 @@ class LogCollector(private val onLogLine: (String) -> Unit) {
 
     /**
      * Starts collecting system logs.
-     * 
-     * This method launches a coroutine that continuously reads from the logcat process
+     * * This method launches a coroutine that continuously reads from the logcat process
      * and forwards each log line to the callback provided in the constructor.
      */
     fun startCollecting() {
@@ -61,8 +60,7 @@ class LogCollector(private val onLogLine: (String) -> Unit) {
 
     /**
      * Stops collecting system logs.
-     * 
-     * This method cancels the log collection coroutine and cleans up associated resources,
+     * * This method cancels the log collection coroutine and cleans up associated resources,
      * including the logcat process.
      */
     fun stopCollecting() {
