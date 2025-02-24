@@ -14,7 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.aoscoremonitor.diagnostics.LogCollector
+import com.aoscoremonitor.ui.navigation.Screen
 import com.aoscoremonitor.ui.screens.LogDisplay
+import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.WelcomeScreen
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 
@@ -34,19 +36,29 @@ class MainActivity : ComponentActivity() {
         setContent {
             AOSCoreMonitorTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    var showLogDisplay by remember { mutableStateOf(false) }
+                    var currentScreen by remember { mutableStateOf<Screen>(Screen.Welcome) }
 
-                    if (!showLogDisplay) {
-                        WelcomeScreen(
-                            onNavigateToLogs = { showLogDisplay = true },
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    } else {
-                        LogDisplay(
-                            logs = logLines,
-                            onNavigateBack = { showLogDisplay = false },
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    when (currentScreen) {
+                        Screen.Welcome -> {
+                            WelcomeScreen(
+                                onNavigateToLogs = { currentScreen = Screen.Logs },
+                                onNavigateToSystemInfo = { currentScreen = Screen.SystemInfo },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.Logs -> {
+                            LogDisplay(
+                                logs = logLines,
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.SystemInfo -> {
+                            SystemInfoScreen(
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
                     }
                 }
             }
