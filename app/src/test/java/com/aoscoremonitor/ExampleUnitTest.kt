@@ -1,4 +1,4 @@
-package com.example.aoscoremonitor
+package com.aoscoremonitor
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
