@@ -2,7 +2,7 @@
 
 ## Code Style
 
-This project uses [ktlint](https://github.com/pinterest/ktlint) to maintain code style.
+This project uses [ktlint](https://github.com/JLLeitschuh/ktlint-gradle) to maintain code style.
 
 ### Running ktlint
 
