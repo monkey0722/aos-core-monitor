@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 fun WelcomeScreen(
     onNavigateToLogs: () -> Unit,
     onNavigateToSystemInfo: () -> Unit,
+    onNavigateToSystemDiagnostics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -35,6 +36,13 @@ fun WelcomeScreen(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(text = "View Logs")
+        }
+
+        Button(
+            onClick = onNavigateToSystemDiagnostics,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "System Diagnostics")
         }
 
         Spacer(modifier = Modifier.weight(1f))
