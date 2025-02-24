@@ -15,11 +15,11 @@ ktlint {
 }
 
 android {
-    namespace = "com.example.aoscoremonitor"
+    namespace = "com.aoscoremonitor"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.aoscoremonitor"
+        applicationId = "com.aoscoremonitor"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.aoscoremonitor.ui.theme
+package com.aoscoremonitor.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
