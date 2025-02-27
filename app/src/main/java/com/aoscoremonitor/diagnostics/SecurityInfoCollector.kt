@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.pm.PermissionInfo as AndroidPermissionInfo
 import android.os.Build
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -30,14 +31,14 @@ class SecurityInfoCollector(
     data class SecurityInfo(
         val selinuxStatus: String,
         val selinuxMode: String,
-        val permissionMap: Map<String, List<PermissionInfo>>,
+        val permissionMap: Map<String, List<AppPermissionInfo>>,
         val hardwareSecurityInfo: HardwareSecurityInfo
     )
 
     /**
      * Data class for app permission details
      */
-    data class PermissionInfo(
+    data class AppPermissionInfo(
         val permissionName: String,
         val isGranted: Boolean,
         val isProtectionDangerous: Boolean
@@ -126,8 +127,8 @@ class SecurityInfoCollector(
      * Analyzes permissions for all installed applications.
      * @return Map of app package names to their permissions
      */
-    private fun analyzeAppPermissions(): Map<String, List<PermissionInfo>> {
-        val permissionMap = mutableMapOf<String, List<PermissionInfo>>()
+    private fun analyzeAppPermissions(): Map<String, List<AppPermissionInfo>> {
+        val permissionMap = mutableMapOf<String, List<AppPermissionInfo>>()
         val packageManager = context.packageManager
 
         try {
@@ -143,7 +144,7 @@ class SecurityInfoCollector(
 
             for (packageInfo in packages) {
                 // Skip system apps to focus on user-installed apps
-                if (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0) continue
+                if ((packageInfo.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) ?: 0) != 0) continue
 
                 val permissionInfoList = analyzePackagePermissions(packageInfo)
                 if (permissionInfoList.isNotEmpty()) {
@@ -160,10 +161,10 @@ class SecurityInfoCollector(
     /**
      * Analyzes permissions for a specific package.
      * @param packageInfo The PackageInfo object for the app
-     * @return List of PermissionInfo objects
+     * @return List of AppPermissionInfo objects
      */
-    private fun analyzePackagePermissions(packageInfo: PackageInfo): List<PermissionInfo> {
-        val permissionInfoList = mutableListOf<PermissionInfo>()
+    private fun analyzePackagePermissions(packageInfo: PackageInfo): List<AppPermissionInfo> {
+        val permissionInfoList = mutableListOf<AppPermissionInfo>()
         val packageManager = context.packageManager
         val requestedPermissions = packageInfo.requestedPermissions ?: return emptyList()
         val requestedPermissionsFlags = packageInfo.requestedPermissionsFlags
@@ -175,17 +176,23 @@ class SecurityInfoCollector(
             try {
                 if (permissionName.startsWith("android.permission.")) {
                     val permInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        packageManager.getPermissionInfo(permissionName, PackageManager.PackageInfoFlags.of(0))
+                        packageManager.getPermissionInfo(permissionName, 0)
                     } else {
                         @Suppress("DEPRECATION")
                         packageManager.getPermissionInfo(permissionName, 0)
                     }
 
-                    val isGranted = requestedPermissionsFlags[i] and PackageInfo.REQUESTED_PERMISSION_GRANTED != 0
-                    val isProtectionDangerous = permInfo.protection == PackageManager.PERMISSION_GRANTED
+                    val isGranted = 
+                        requestedPermissionsFlags?.get(i)?.and(PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
+                    val isProtectionDangerous = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        (permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS) == AndroidPermissionInfo.PROTECTION_DANGEROUS
+                    } else {
+                        @Suppress("DEPRECATION")
+                        permInfo.protectionLevel == AndroidPermissionInfo.PROTECTION_DANGEROUS
+                    }
 
                     permissionInfoList.add(
-                        PermissionInfo(
+                        AppPermissionInfo(
                             permissionName = permissionName,
                             isGranted = isGranted,
                             isProtectionDangerous = isProtectionDangerous

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import com.aoscoremonitor.diagnostics.LogCollector
 import com.aoscoremonitor.ui.navigation.Screen
 import com.aoscoremonitor.ui.screens.LogDisplay
+import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.WelcomeScreen
@@ -45,6 +46,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToLogs = { currentScreen = Screen.Logs },
                                 onNavigateToSystemInfo = { currentScreen = Screen.SystemInfo },
                                 onNavigateToSystemDiagnostics = { currentScreen = Screen.SystemDiagnostics },
+                                onNavigateToSecurityInfo = { currentScreen = Screen.SecurityInfo },
                                 modifier = Modifier.padding(innerPadding)
                             )
                         }
@@ -63,6 +65,12 @@ class MainActivity : ComponentActivity() {
                         }
                         Screen.SystemDiagnostics -> {
                             SystemDiagnosticsScreen(
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.SecurityInfo -> {
+                            SecurityInfoScreen(
                                 onNavigateBack = { currentScreen = Screen.Welcome },
                                 modifier = Modifier.padding(innerPadding)
                             )
