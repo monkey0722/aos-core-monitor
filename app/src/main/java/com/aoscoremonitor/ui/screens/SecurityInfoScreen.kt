@@ -218,7 +218,7 @@ fun SecurityFeatureItem(title: String, isSupported: Boolean) {
 @Composable
 fun AppPermissionCard(
     packageName: String,
-    permissions: List<SecurityInfoCollector.PermissionInfo>
+    permissions: List<SecurityInfoCollector.AppPermissionInfo>
 ) {
     Card(
         modifier = Modifier.padding(vertical = 4.dp)

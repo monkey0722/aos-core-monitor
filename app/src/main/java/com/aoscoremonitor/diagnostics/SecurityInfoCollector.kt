@@ -6,8 +6,14 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PermissionInfo as AndroidPermissionInfo
 import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyInfo
+import android.security.keystore.KeyProperties
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.security.KeyFactory
+import java.security.KeyPairGenerator
+import java.security.KeyStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -182,14 +188,17 @@ class SecurityInfoCollector(
                         packageManager.getPermissionInfo(permissionName, 0)
                     }
 
-                    val isGranted = 
+                    val isGranted =
                         requestedPermissionsFlags?.get(i)?.and(PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
-                    val isProtectionDangerous = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        (permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS) == AndroidPermissionInfo.PROTECTION_DANGEROUS
-                    } else {
-                        @Suppress("DEPRECATION")
-                        permInfo.protectionLevel == AndroidPermissionInfo.PROTECTION_DANGEROUS
-                    }
+                    val isProtectionDangerous =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            (
+                                permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS
+                                ) == AndroidPermissionInfo.PROTECTION_DANGEROUS
+                        } else {
+                            @Suppress("DEPRECATION")
+                            permInfo.protectionLevel == AndroidPermissionInfo.PROTECTION_DANGEROUS
+                        }
 
                     permissionInfoList.add(
                         AppPermissionInfo(
@@ -222,24 +231,21 @@ class SecurityInfoCollector(
 
         try {
             // Check for hardware-backed keystore
-            val algorithm = "RSA"
-            isHardwareBackedKeyStoreSupported = android.security.keystore.KeyProperties.isKeystoreBackedImplementation(
-                algorithm
-            )
+            isHardwareBackedKeyStoreSupported = isHardwareBackedKeyStoreAvailable()
 
             // Check for StrongBox support (Android 9+)
             isStrongBoxBackedKeyStoreSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+                context.packageManager.hasSystemFeature("android.hardware.strongbox_keystore")
             } else {
                 false
             }
 
             // Check for fingerprint support
-            isFingerprintSupported = context.packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+            isFingerprintSupported = context.packageManager.hasSystemFeature("android.hardware.fingerprint")
 
             // Check for biometric support (Android 9+)
             isBiometricSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                context.packageManager.hasSystemFeature(PackageManager.FEATURE_BIOMETRIC)
+                context.packageManager.hasSystemFeature("android.hardware.biometrics")
             } else {
                 isFingerprintSupported
             }
@@ -267,5 +273,54 @@ class SecurityInfoCollector(
             isTeeSupported = isTeeSupported,
             keystoreVersion = keystoreVersion
         )
+    }
+
+    /**
+     * Checks if the device supports hardware-backed keystore by attempting to create
+     * a key and checking if it's stored in secure hardware.
+     * @return true if hardware-backed keystore is supported, false otherwise
+     */
+    private fun isHardwareBackedKeyStoreAvailable(): Boolean {
+        return try {
+            // Try to generate a temporary key in the Android Keystore
+            val keyAlias = "HardwareBackedKeyStoreTest"
+            val keyStore = KeyStore.getInstance("AndroidKeyStore")
+            keyStore.load(null)
+
+            // Delete any existing key with this alias first
+            if (keyStore.containsAlias(keyAlias)) {
+                keyStore.deleteEntry(keyAlias)
+            }
+
+            // Generate a new key
+            val keyGenerator = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_RSA,
+                "AndroidKeyStore"
+            )
+            val keyGenSpec = KeyGenParameterSpec.Builder(
+                keyAlias,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setDigests(KeyProperties.DIGEST_SHA256)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                .build()
+
+            keyGenerator.initialize(keyGenSpec)
+            val keyPair = keyGenerator.generateKeyPair()
+
+            // Get KeyInfo to check if the key is in secure hardware
+            val privateKey = keyStore.getKey(keyAlias, null)
+            val keyFactory = KeyFactory.getInstance(privateKey.algorithm, "AndroidKeyStore")
+            val keyInfo = keyFactory.getKeySpec(privateKey, KeyInfo::class.java)
+
+            // Clean up by deleting the test key
+            keyStore.deleteEntry(keyAlias)
+
+            // Return whether the key is inside secure hardware
+            keyInfo.isInsideSecureHardware
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 }
