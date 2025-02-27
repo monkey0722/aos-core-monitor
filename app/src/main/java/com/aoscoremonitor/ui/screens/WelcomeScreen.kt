@@ -16,6 +16,7 @@ fun WelcomeScreen(
     onNavigateToLogs: () -> Unit,
     onNavigateToSystemInfo: () -> Unit,
     onNavigateToSystemDiagnostics: () -> Unit,
+    onNavigateToSecurityInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -43,6 +44,13 @@ fun WelcomeScreen(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(text = "System Diagnostics")
+        }
+
+        Button(
+            onClick = onNavigateToSecurityInfo,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "Security Analysis")
         }
 
         Spacer(modifier = Modifier.weight(1f))
