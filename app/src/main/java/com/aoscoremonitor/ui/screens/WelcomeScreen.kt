@@ -17,6 +17,8 @@ fun WelcomeScreen(
     onNavigateToSystemInfo: () -> Unit,
     onNavigateToSystemDiagnostics: () -> Unit,
     onNavigateToSecurityInfo: () -> Unit,
+    onNavigateToFrameworkAnalysis: () -> Unit,
+    onNavigateToHalInfo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -51,6 +53,20 @@ fun WelcomeScreen(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(text = "Security Analysis")
+        }
+
+        Button(
+            onClick = onNavigateToFrameworkAnalysis,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "Framework Analysis")
+        }
+
+        Button(
+            onClick = onNavigateToHalInfo,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "HAL Interface Info")
         }
 
         Spacer(modifier = Modifier.weight(1f))
