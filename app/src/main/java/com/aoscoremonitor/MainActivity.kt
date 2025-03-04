@@ -15,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.aoscoremonitor.diagnostics.LogCollector
 import com.aoscoremonitor.ui.navigation.Screen
+import com.aoscoremonitor.ui.screens.FrameworkAnalysisScreen
+import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.LogDisplay
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
@@ -47,6 +49,8 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToSystemInfo = { currentScreen = Screen.SystemInfo },
                                 onNavigateToSystemDiagnostics = { currentScreen = Screen.SystemDiagnostics },
                                 onNavigateToSecurityInfo = { currentScreen = Screen.SecurityInfo },
+                                onNavigateToFrameworkAnalysis = { currentScreen = Screen.FrameworkAnalysis }, // 追加
+                                onNavigateToHalInfo = { currentScreen = Screen.HalInfo },
                                 modifier = Modifier.padding(innerPadding)
                             )
                         }
@@ -71,6 +75,18 @@ class MainActivity : ComponentActivity() {
                         }
                         Screen.SecurityInfo -> {
                             SecurityInfoScreen(
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.FrameworkAnalysis -> {
+                            FrameworkAnalysisScreen(
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.HalInfo -> {
+                            HalInfoScreen(
                                 onNavigateBack = { currentScreen = Screen.Welcome },
                                 modifier = Modifier.padding(innerPadding)
                             )

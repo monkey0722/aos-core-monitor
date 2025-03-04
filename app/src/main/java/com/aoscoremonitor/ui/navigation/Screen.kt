@@ -5,5 +5,7 @@ enum class Screen {
     Logs,
     SystemInfo,
     SystemDiagnostics,
-    SecurityInfo
+    SecurityInfo,
+    FrameworkAnalysis,
+    HalInfo
 }
