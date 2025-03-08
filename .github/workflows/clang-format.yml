@@ -1,0 +1,31 @@
+name: C++ Format Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  clang-format:
+    name: Check C++ Code Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Check C++ formatting
+        run: |
+          find app/src/main/cpp -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | xargs clang-format -style=file -i
+          git diff --exit-code
+
+      - name: Show formatting issues
+        if: failure()
+        run: |
+          echo "C++ code formatting issues found. Please fix the formatting according to the style guide."
+          git diff
+          exit 1
