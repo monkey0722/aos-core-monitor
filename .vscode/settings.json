@@ -1,0 +1,16 @@
+{
+  "editor.formatOnSave": true,
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.formatting": "clangFormat",
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/**",
+    "${env:HOME}/Library/Android/sdk/ndk/**",
+    "${env:ANDROID_NDK_HOME}/**"
+  ],
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.intelliSenseMode": "clang-x64"
+}

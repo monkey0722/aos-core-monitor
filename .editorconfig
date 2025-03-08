@@ -11,3 +11,7 @@ trim_trailing_whitespace = true
 
 [*.{kt,kts}]
 ktlint_code_style = android_studio
+
+[*.{cpp,h,hpp,cc,c}]
+indent_size = 2
+max_line_length = 100
