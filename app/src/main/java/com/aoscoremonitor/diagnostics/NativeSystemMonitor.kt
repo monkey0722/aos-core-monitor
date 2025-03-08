@@ -7,7 +7,8 @@ import kotlinx.coroutines.withContext
 class NativeSystemMonitor {
     companion object {
         private const val TAG = "NativeSystemMonitor"
-        //　Roading the native library
+
+        // 　Roading the native library
         init {
             try {
                 System.loadLibrary("system_monitor")
@@ -17,6 +18,7 @@ class NativeSystemMonitor {
             }
         }
     }
+
     // Native methods
     external fun getCpuInfoNative(): String
     external fun getMemInfoNative(): String
