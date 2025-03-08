@@ -1,5 +1,6 @@
 #include <android/log.h>
 #include <jni.h>
+
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -60,8 +61,9 @@ Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getMemInfoNative(JNIEnv*
 
 // Function to get process information
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getProcessInfoNative(
-    JNIEnv* env, jobject /* this */, jint pid) {
+Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getProcessInfoNative(JNIEnv* env,
+                                                                             jobject /* this */,
+                                                                             jint pid) {
   std::stringstream path;
   path << "/proc/" << pid << "/status";
 
