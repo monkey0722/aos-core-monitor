@@ -18,6 +18,7 @@ import com.aoscoremonitor.ui.navigation.Screen
 import com.aoscoremonitor.ui.screens.FrameworkAnalysisScreen
 import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.LogDisplay
+import com.aoscoremonitor.ui.screens.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
@@ -49,8 +50,9 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToSystemInfo = { currentScreen = Screen.SystemInfo },
                                 onNavigateToSystemDiagnostics = { currentScreen = Screen.SystemDiagnostics },
                                 onNavigateToSecurityInfo = { currentScreen = Screen.SecurityInfo },
-                                onNavigateToFrameworkAnalysis = { currentScreen = Screen.FrameworkAnalysis }, // 追加
+                                onNavigateToFrameworkAnalysis = { currentScreen = Screen.FrameworkAnalysis },
                                 onNavigateToHalInfo = { currentScreen = Screen.HalInfo },
+                                onNavigateToNativeSystemMonitor = { currentScreen = Screen.NativeSystemMonitor },
                                 modifier = Modifier.padding(innerPadding)
                             )
                         }
@@ -87,6 +89,12 @@ class MainActivity : ComponentActivity() {
                         }
                         Screen.HalInfo -> {
                             HalInfoScreen(
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.NativeSystemMonitor -> {
+                            NativeSystemMonitorScreen(
                                 onNavigateBack = { currentScreen = Screen.Welcome },
                                 modifier = Modifier.padding(innerPadding)
                             )

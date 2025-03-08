@@ -7,5 +7,6 @@ enum class Screen {
     SystemDiagnostics,
     SecurityInfo,
     FrameworkAnalysis,
-    HalInfo
+    HalInfo,
+    NativeSystemMonitor
 }

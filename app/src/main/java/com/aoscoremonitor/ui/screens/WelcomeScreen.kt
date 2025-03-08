@@ -19,6 +19,7 @@ fun WelcomeScreen(
     onNavigateToSecurityInfo: () -> Unit,
     onNavigateToFrameworkAnalysis: () -> Unit,
     onNavigateToHalInfo: () -> Unit,
+    onNavigateToNativeSystemMonitor: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -67,6 +68,13 @@ fun WelcomeScreen(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(text = "HAL Interface Info")
+        }
+
+        Button(
+            onClick = onNavigateToNativeSystemMonitor,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "Native System Monitor")
         }
 
         Spacer(modifier = Modifier.weight(1f))
