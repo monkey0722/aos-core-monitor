@@ -12,8 +12,8 @@
 
 // Function to get CPU load
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getCpuInfoNative(JNIEnv* env,
-                                                                         jobject /* this */) {
+Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getCpuInfoNative(JNIEnv* env,
+                                                                             jobject /* this */) {
   std::ifstream stat_file("/proc/stat");
   std::string line;
   std::string result;
@@ -36,8 +36,8 @@ Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getCpuInfoNative(JNIEnv*
 
 // Function to get memory information
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getMemInfoNative(JNIEnv* env,
-                                                                         jobject /* this */) {
+Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getMemInfoNative(JNIEnv* env,
+                                                                             jobject /* this */) {
   std::ifstream meminfo_file("/proc/meminfo");
   std::string line;
   std::stringstream result;
@@ -61,9 +61,9 @@ Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getMemInfoNative(JNIEnv*
 
 // Function to get process information
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_aoscoremonitor_diagnostics_NativeSystemMonitor_getProcessInfoNative(JNIEnv* env,
-                                                                             jobject /* this */,
-                                                                             jint pid) {
+Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getProcessInfoNative(JNIEnv* env,
+                                                                                 jobject /* this */,
+                                                                                 jint pid) {
   std::stringstream path;
   path << "/proc/" << pid << "/status";
 

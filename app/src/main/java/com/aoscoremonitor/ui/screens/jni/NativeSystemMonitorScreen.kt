@@ -1,4 +1,4 @@
-package com.aoscoremonitor.ui.screens
+package com.aoscoremonitor.ui.screens.jni
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,11 +19,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.aoscoremonitor.diagnostics.NativeSystemMonitor
+import com.aoscoremonitor.diagnostics.jni.NativeSystemMonitor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -39,15 +38,14 @@ fun NativeSystemMonitorScreen(
     var currentProcessInfo by remember { mutableStateOf(mapOf<String, String>()) }
 
     val systemMonitor = remember { NativeSystemMonitor() }
-    val coroutineScope = rememberCoroutineScope()
 
-    // 定期的に情報を更新
+    // Update information periodically
     LaunchedEffect(Unit) {
         while (isActive) {
             cpuInfo = systemMonitor.getCpuInfo()
             memInfo = systemMonitor.getMemInfo()
             currentProcessInfo = systemMonitor.getProcessInfo(android.os.Process.myPid())
-            delay(1000) // 1秒ごとに更新
+            delay(1000) // Update every second
         }
     }
 
@@ -73,7 +71,7 @@ fun NativeSystemMonitorScreen(
                 .padding(16.dp)
                 .verticalScroll(scrollState)
         ) {
-            // CPU情報セクション
+            // CPU Information Section
             InfoSection(title = "CPU Information") {
                 cpuInfo.forEach { (key, value) ->
                     Text(
@@ -83,7 +81,7 @@ fun NativeSystemMonitorScreen(
                     )
                 }
             }
-            // メモリ情報セクション
+            // Memory Information Section
             InfoSection(title = "Memory Information") {
                 memInfo.forEach { (key, value) ->
                     Text(
@@ -93,7 +91,7 @@ fun NativeSystemMonitorScreen(
                     )
                 }
             }
-            // 現在のプロセス情報セクション
+            // Current Process Information Section
             InfoSection(title = "Current Process Information") {
                 currentProcessInfo.forEach { (key, value) ->
                     Text(

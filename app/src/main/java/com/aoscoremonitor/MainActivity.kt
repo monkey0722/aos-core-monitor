@@ -18,11 +18,11 @@ import com.aoscoremonitor.ui.navigation.Screen
 import com.aoscoremonitor.ui.screens.FrameworkAnalysisScreen
 import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.LogDisplay
-import com.aoscoremonitor.ui.screens.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.WelcomeScreen
+import com.aoscoremonitor.ui.screens.jni.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 
 class MainActivity : ComponentActivity() {
