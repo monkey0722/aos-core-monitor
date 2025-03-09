@@ -2,6 +2,7 @@ package com.aoscoremonitor.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,8 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -54,15 +56,18 @@ fun FrameworkAnalysisScreen(
         )
     }
 
+    // Tab selection state
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Binder Transactions", "API Calls", "Services")
 
+    // Initialize framework analyzer
     val frameworkAnalyzer = remember {
         FrameworkAnalyzer(context) { data ->
             frameworkData = data
         }
     }
 
+    // Start/stop analyzer based on component lifecycle
     DisposableEffect(frameworkAnalyzer) {
         frameworkAnalyzer.startAnalyzing()
         onDispose {
@@ -81,7 +86,11 @@ fun FrameworkAnalysisScreen(
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
         }
     ) { innerPadding ->
@@ -90,6 +99,7 @@ fun FrameworkAnalysisScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Simple tab row
             TabRow(selectedTabIndex = selectedTabIndex) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -100,6 +110,7 @@ fun FrameworkAnalysisScreen(
                 }
             }
 
+            // Content based on selected tab
             when (selectedTabIndex) {
                 0 -> BinderTransactionsTab(binderTransactions = frameworkData.binderTransactions)
                 1 -> ApiCallsTab(apiCalls = frameworkData.apiCalls)
@@ -118,34 +129,70 @@ fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTrans
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Section title
+        item {
+            Text(
+                text = "Binder Transactions",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        }
+
+        // Empty state or transactions list
         if (binderTransactions.isEmpty()) {
             item {
-                Text(
-                    text = "No Binder transactions detected." +
-                        "The device may need root access or special permissions to access this data.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "No Binder transactions detected. " +
+                            "The device may need root access or special permissions to access this data.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         } else {
             items(binderTransactions) { transaction ->
                 Card(
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "Process: ${transaction.process} (PID: ${transaction.pid})",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        Text(text = "Transaction Code: 0x${transaction.transactionCode.toString(16)}")
-                        Text(text = "Destination: ${transaction.destination}")
-                        Text(text = "Data Size: ${transaction.dataSize} bytes")
+                        Text(
+                            text = "Transaction Code: 0x${transaction.transactionCode.toString(16)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Text(
+                            text = "Destination: ${transaction.destination}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "Data Size: ${transaction.dataSize} bytes",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                         Text(
                             text = "Time: ${dateFormat.format(Date(transaction.timestamp))}",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
                         )
                     }
                 }
@@ -163,32 +210,65 @@ fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Section title
+        item {
+            Text(
+                text = "API Calls",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        }
+
+        // Empty state or API calls list
         if (apiCalls.isEmpty()) {
             item {
-                Text(
-                    text = "No API calls detected. API tracing requires special instrumentation.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "No API calls detected. API tracing requires special instrumentation.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         } else {
             items(apiCalls) { call ->
                 Card(
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "API: ${call.apiName}",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        Text(text = "Caller: ${call.callerPackage}")
-                        Text(text = "Duration: ${call.duration}ms")
+                        Text(
+                            text = "Caller: ${call.callerPackage}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Text(
+                            text = "Duration: ${call.duration}ms",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                         Text(
                             text = "Time: ${dateFormat.format(Date(call.timestamp))}",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
                         )
                     }
                 }
@@ -204,6 +284,7 @@ fun ServicesTab(serviceData: FrameworkAnalyzer.ServiceManagerData) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Running Services section
         item {
             Text(
                 text = "Running Services",
@@ -211,67 +292,106 @@ fun ServicesTab(serviceData: FrameworkAnalyzer.ServiceManagerData) {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
+            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
         }
 
+        // Empty state or services list
         if (serviceData.runningServices.isEmpty()) {
             item {
-                Text(
-                    text = "No service data available. Some information may require elevated permissions.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "No service data available. Some information may require elevated permissions.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         } else {
             items(serviceData.runningServices.entries.toList()) { (service, state) ->
                 Card(
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = service,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        Text(text = "State: $state")
+                        Text(
+                            text = "State: $state",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             }
         }
 
+        // Service Connections section
         item {
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             Text(
                 text = "Service Connections",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
+            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
         }
 
+        // Empty state or connections list
         if (serviceData.serviceConnections.isEmpty()) {
             item {
-                Text(
-                    text = "No connection data available.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "No connection data available.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         } else {
             items(serviceData.serviceConnections) { (client, service) ->
                 Card(
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "Client: $client",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        Text(text = "Connected to: $service")
+                        Text(
+                            text = "Connected to: $service",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             }
