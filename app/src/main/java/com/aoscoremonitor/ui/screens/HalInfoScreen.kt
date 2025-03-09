@@ -54,10 +54,7 @@ fun HalInfoScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Get local context for the analyzer
     val context = LocalContext.current
-
-    // State for HAL data
     var halData by remember {
         mutableStateOf(
             HalInterfaceAnalyzer.HalData(
