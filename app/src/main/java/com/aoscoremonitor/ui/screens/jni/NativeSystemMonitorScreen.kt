@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aoscoremonitor.diagnostics.jni.NativeSystemMonitor
 import kotlinx.coroutines.delay
@@ -60,7 +62,11 @@ fun NativeSystemMonitorScreen(
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
         }
     ) { innerPadding ->
@@ -72,49 +78,41 @@ fun NativeSystemMonitorScreen(
                 .verticalScroll(scrollState)
         ) {
             // CPU Information Section
-            InfoSection(title = "CPU Information") {
-                cpuInfo.forEach { (key, value) ->
-                    Text(
-                        text = "$key: $value",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                    )
-                }
+            SectionHeader("CPU Information")
+            cpuInfo.forEach { (key, value) ->
+                InfoItem(key, value.toString())
             }
+
             // Memory Information Section
-            InfoSection(title = "Memory Information") {
-                memInfo.forEach { (key, value) ->
-                    Text(
-                        text = "$key: $value kB",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                    )
-                }
+            SectionHeader("Memory Information")
+            memInfo.forEach { (key, value) ->
+                InfoItem(key, "$value kB")
             }
+
             // Current Process Information Section
-            InfoSection(title = "Current Process Information") {
-                currentProcessInfo.forEach { (key, value) ->
-                    Text(
-                        text = "$key: $value",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                    )
-                }
+            SectionHeader("Current Process Information")
+            currentProcessInfo.forEach { (key, value) ->
+                InfoItem(key, value)
             }
         }
     }
 }
 
 @Composable
-private fun InfoSection(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium
-        )
-        content()
-    }
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun InfoItem(key: String, value: String) {
+    Text(
+        text = "$key: $value",
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)
+    )
 }
