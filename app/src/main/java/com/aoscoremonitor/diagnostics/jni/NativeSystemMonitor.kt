@@ -1,4 +1,4 @@
-package com.aoscoremonitor.diagnostics
+package com.aoscoremonitor.diagnostics.jni
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
