@@ -2,6 +2,7 @@
 #include <jni.h>
 
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -85,4 +86,74 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getProcessInfoNative
   LOGI("Read process info for PID: %d", pid);
 
   return env->NewStringUTF(result.str().c_str());
+}
+
+// Function to get network interface statistics
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getNetworkStatsNative(
+    JNIEnv* env, jobject /* this */) {
+  std::ifstream net_dev_file("/proc/net/dev");
+  std::string line;
+  std::stringstream result;
+  std::string json = "{";
+  bool first_interface = true;
+
+  if (!net_dev_file.is_open()) {
+    LOGE("Failed to open /proc/net/dev");
+    return env->NewStringUTF("Error: Failed to read network statistics");
+  }
+
+  // Skip header lines (first two lines)
+  std::getline(net_dev_file, line);  // Skip header line 1
+  std::getline(net_dev_file, line);  // Skip header line 2
+
+  // Process each network interface
+  while (std::getline(net_dev_file, line)) {
+    std::stringstream line_stream(line);
+    std::string interface_name;
+
+    // Extract interface name (format: "  interface_name: stats...")
+    std::getline(line_stream, interface_name, ':');
+    interface_name = interface_name.substr(interface_name.find_first_not_of(" \t"));
+
+    // Skip loopback interface
+    if (interface_name == "lo") {
+      continue;
+    }
+
+    // Read stats (in order):
+    // rx_bytes rx_packets rx_errs rx_drop rx_fifo rx_frame rx_compressed rx_multicast
+    // tx_bytes tx_packets tx_errs tx_drop tx_fifo tx_colls tx_carrier tx_compressed
+    unsigned long long rx_bytes, rx_packets, rx_errs, rx_drop;
+    unsigned long long tx_bytes, tx_packets, tx_errs, tx_drop;
+
+    line_stream >> rx_bytes >> rx_packets >> rx_errs >> rx_drop;
+    // Skip 4 fields
+    unsigned long long skip;
+    line_stream >> skip >> skip >> skip >> skip;
+    line_stream >> tx_bytes >> tx_packets >> tx_errs >> tx_drop;
+
+    // Format as JSON
+    if (!first_interface) {
+      json += ",";
+    }
+    first_interface = false;
+
+    json += "\"" + interface_name + "\":{";
+    json += "\"rx_bytes\":" + std::to_string(rx_bytes) + ",";
+    json += "\"rx_packets\":" + std::to_string(rx_packets) + ",";
+    json += "\"rx_errors\":" + std::to_string(rx_errs) + ",";
+    json += "\"rx_dropped\":" + std::to_string(rx_drop) + ",";
+    json += "\"tx_bytes\":" + std::to_string(tx_bytes) + ",";
+    json += "\"tx_packets\":" + std::to_string(tx_packets) + ",";
+    json += "\"tx_errors\":" + std::to_string(tx_errs) + ",";
+    json += "\"tx_dropped\":" + std::to_string(tx_drop);
+    json += "}";
+  }
+
+  json += "}";
+  net_dev_file.close();
+  LOGI("Read network interface statistics");
+
+  return env->NewStringUTF(json.c_str());
 }

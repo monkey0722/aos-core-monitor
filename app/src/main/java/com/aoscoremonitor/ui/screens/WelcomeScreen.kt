@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -55,6 +56,7 @@ fun WelcomeScreen(
     onNavigateToFrameworkAnalysis: () -> Unit,
     onNavigateToHalInfo: () -> Unit,
     onNavigateToNativeSystemMonitor: () -> Unit,
+    onNavigateToNetworkStats: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -138,6 +140,12 @@ fun WelcomeScreen(
                 icon = Icons.Default.Memory,
                 color = MaterialTheme.colorScheme.tertiary,
                 onClick = onNavigateToNativeSystemMonitor
+            ),
+            MenuItem(
+                title = "Network Stats",
+                icon = Icons.Default.NetworkCell,
+                color = MaterialTheme.colorScheme.primary,
+                onClick = onNavigateToNetworkStats
             )
         )
 
