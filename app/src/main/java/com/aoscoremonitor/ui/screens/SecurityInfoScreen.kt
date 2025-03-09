@@ -1,7 +1,9 @@
 package com.aoscoremonitor.ui.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,24 +12,26 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,7 +86,11 @@ fun SecurityInfoScreen(
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
         }
     ) { innerPadding ->
@@ -90,28 +98,27 @@ fun SecurityInfoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
         ) {
             // SELinux Status Section
             item {
-                SecuritySectionTitle(title = "SELinux Status")
+                SecuritySectionTitle(title = "SELinux Status", Icons.Filled.Security)
                 SELinuxStatusCard(
                     status = securityInfo.selinuxStatus,
                     mode = securityInfo.selinuxMode
                 )
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
             }
 
             // Hardware Security Module Section
             item {
-                SecuritySectionTitle(title = "Hardware Security")
+                SecuritySectionTitle(title = "Hardware Security", Icons.Filled.Security)
                 HardwareSecurityCard(hardwareInfo = securityInfo.hardwareSecurityInfo)
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
             }
 
             // App Permissions Section
             item {
-                SecuritySectionTitle(title = "App Permissions (Non-System Apps)")
+                SecuritySectionTitle(title = "App Permissions (Non-System Apps)", Icons.Filled.Info)
             }
 
             items(securityInfo.permissionMap.entries.toList()) { (packageName, permissions) ->
@@ -125,40 +132,59 @@ fun SecurityInfoScreen(
 }
 
 @Composable
-fun SecuritySectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
+fun SecuritySectionTitle(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(end = 8.dp)
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }
 
 @Composable
 fun SELinuxStatusCard(status: String, mode: String) {
+    val isEnforcing = mode.contains("Enforcing", ignoreCase = true)
+    val isPermissive = mode.contains("Permissive", ignoreCase = true)
+
     Card(
-        modifier = Modifier.padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = when {
-                mode.contains("Enforcing", ignoreCase = true) -> Color(0xFFE8F5E9) // Light green
-                mode.contains("Permissive", ignoreCase = true) -> Color(0xFFFFF8E1) // Light amber
-                else -> Color(0xFFFFEBEE) // Light red
+                isEnforcing -> MaterialTheme.colorScheme.primaryContainer
+                isPermissive -> MaterialTheme.colorScheme.tertiaryContainer
+                else -> MaterialTheme.colorScheme.errorContainer
             }
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Status: $status",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
             )
             Text(
                 text = "Mode: $mode",
                 style = MaterialTheme.typography.bodyLarge,
                 color = when {
-                    mode.contains("Enforcing", ignoreCase = true) -> Color(0xFF388E3C) // Dark green
-                    mode.contains("Permissive", ignoreCase = true) -> Color(0xFFFFA000) // Amber
-                    else -> Color(0xFFD32F2F) // Red
-                }
+                    isEnforcing -> MaterialTheme.colorScheme.primary
+                    isPermissive -> MaterialTheme.colorScheme.tertiary
+                    else -> MaterialTheme.colorScheme.error
+                },
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }
@@ -167,7 +193,10 @@ fun SELinuxStatusCard(status: String, mode: String) {
 @Composable
 fun HardwareSecurityCard(hardwareInfo: SecurityInfoCollector.HardwareSecurityInfo) {
     Card(
-        modifier = Modifier.padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             SecurityFeatureItem(
@@ -190,10 +219,13 @@ fun HardwareSecurityCard(hardwareInfo: SecurityInfoCollector.HardwareSecurityInf
                 title = "Trusted Execution Environment (TEE)",
                 isSupported = hardwareInfo.isTeeSupported
             )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             Text(
                 text = "Keystore Implementation: ${hardwareInfo.keystoreVersion}",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 4.dp)
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -201,17 +233,20 @@ fun HardwareSecurityCard(hardwareInfo: SecurityInfoCollector.HardwareSecurityInf
 
 @Composable
 fun SecurityFeatureItem(title: String, isSupported: Boolean) {
-    androidx.compose.foundation.layout.Row(
+    Row(
         modifier = Modifier.padding(vertical = 4.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = if (isSupported) Icons.Filled.CheckCircle else Icons.Filled.Error,
             contentDescription = if (isSupported) "Supported" else "Not Supported",
-            tint = if (isSupported) Color(0xFF388E3C) else Color(0xFFD32F2F),
+            tint = if (isSupported) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(end = 8.dp)
         )
-        Text(text = title, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -220,8 +255,20 @@ fun AppPermissionCard(
     packageName: String,
     permissions: List<SecurityInfoCollector.AppPermissionInfo>
 ) {
+    val hasDangerousPermissions = permissions.any { it.isProtectionDangerous && it.isGranted }
+
     Card(
-        modifier = Modifier.padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (hasDangerousPermissions) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -233,19 +280,20 @@ fun AppPermissionCard(
             Text(
                 text = "Dangerous Permissions: ${permissions.count { it.isProtectionDangerous && it.isGranted }}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (permissions.any { it.isProtectionDangerous && it.isGranted }) {
-                    Color(0xFFD32F2F) // Red for dangerous permissions
+                color = if (hasDangerousPermissions) {
+                    MaterialTheme.colorScheme.error
                 } else {
-                    Color(0xFF388E3C) // Green if no dangerous permissions
+                    MaterialTheme.colorScheme.primary
                 },
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 4.dp)
             )
 
             // Show the first 3 permissions only to avoid cluttering the UI
             permissions.take(3).forEach { permission ->
-                androidx.compose.foundation.layout.Row(
+                Row(
                     modifier = Modifier.padding(top = 4.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = when {
@@ -255,9 +303,9 @@ fun AppPermissionCard(
                         },
                         contentDescription = "Permission Status",
                         tint = when {
-                            permission.isGranted && permission.isProtectionDangerous -> Color(0xFFD32F2F)
-                            permission.isGranted -> Color(0xFF388E3C)
-                            else -> Color(0xFF9E9E9E)
+                            permission.isGranted && permission.isProtectionDangerous -> MaterialTheme.colorScheme.error
+                            permission.isGranted -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.outline
                         },
                         modifier = Modifier.padding(end = 4.dp)
                     )
