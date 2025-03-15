@@ -9,5 +9,6 @@ enum class Screen {
     FrameworkAnalysis,
     HalInfo,
     NativeSystemMonitor,
-    NetworkStats
+    NetworkStats,
+    TcpConnections
 }

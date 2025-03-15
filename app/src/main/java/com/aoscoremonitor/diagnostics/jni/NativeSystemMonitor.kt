@@ -25,6 +25,7 @@ class NativeSystemMonitor {
     external fun getMemInfoNative(): String
     external fun getProcessInfoNative(pid: Int): String
     external fun getNetworkStatsNative(): String
+    external fun getTcpConnectionsNative(): String
 
     suspend fun getCpuInfo(): Map<String, Long> = withContext(Dispatchers.IO) {
         val cpuInfo = mutableMapOf<String, Long>()
@@ -175,6 +176,108 @@ class NativeSystemMonitor {
                 txPackets = 2200,
                 txErrors = 1,
                 txDropped = 3
+            )
+        )
+    }
+
+    // Data class for TCP connection information
+    data class TcpConnection(
+        val localAddress: String,
+        val remoteAddress: String,
+        val status: String,
+        val uid: Int,
+        val inode: String
+    ) {
+        fun getFormattedLocalAddress(): String = formatAddress(localAddress)
+        fun getFormattedRemoteAddress(): String = formatAddress(remoteAddress)
+
+        private fun formatAddress(hexAddress: String): String {
+            // Example: "0100007F:0050" → "127.0.0.1:80"
+            val parts = hexAddress.split(":")
+            if (parts.size != 2) return hexAddress
+
+            val ipHex = parts[0]
+            val port = Integer.parseInt(parts[1], 16)
+
+            val ip = StringBuilder()
+            for (i in (ipHex.length - 2) downTo 0 step 2) {
+                val octet = ipHex.substring(i, i + 2)
+                ip.append(Integer.parseInt(octet, 16))
+                if (i > 0) ip.append(".")
+            }
+
+            return "$ip:$port"
+        }
+    }
+
+    // Function to retrieve TCP connection information
+    suspend fun getTcpConnections(): List<TcpConnection> = withContext(Dispatchers.IO) {
+        val connections = mutableListOf<TcpConnection>()
+        try {
+            val jsonData = getTcpConnectionsNative()
+            val jsonObject = JSONObject(jsonData)
+            val connectionsArray = jsonObject.getJSONArray("connections")
+
+            for (i in 0 until connectionsArray.length()) {
+                val conn = connectionsArray.getJSONObject(i)
+                connections.add(
+                    TcpConnection(
+                        localAddress = conn.getString("local_address"),
+                        remoteAddress = conn.getString("remote_address"),
+                        status = conn.getString("status"),
+                        uid = conn.getInt("uid"),
+                        inode = conn.getString("inode")
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing TCP connections", e)
+        }
+
+        if (connections.isEmpty()) {
+            Log.i(TAG, "Using dummy TCP connection data")
+            return@withContext getDummyTcpConnections()
+        }
+
+        connections
+    }
+
+    private fun getDummyTcpConnections(): List<TcpConnection> {
+        return listOf(
+            TcpConnection(
+                localAddress = "0100007F:1F90", // 127.0.0.1:8080
+                remoteAddress = "00000000:0000", // 0.0.0.0:0
+                status = "LISTEN",
+                uid = 10123,
+                inode = "12345"
+            ),
+            TcpConnection(
+                localAddress = "0100007F:01BB", // 127.0.0.1:443
+                remoteAddress = "630A000A:C642", // 10.0.10.99:50754
+                status = "ESTABLISHED",
+                uid = 10045,
+                inode = "23456"
+            ),
+            TcpConnection(
+                localAddress = "0100007F:0050", // 127.0.0.1:80
+                remoteAddress = "540B000A:A2B6", // 10.0.11.84:41654
+                status = "TIME_WAIT",
+                uid = 10045,
+                inode = "34567"
+            ),
+            TcpConnection(
+                localAddress = "0100007F:0050", // 127.0.0.1:80
+                remoteAddress = "2C0A000A:F1A2", // 10.0.10.44:61858
+                status = "ESTABLISHED",
+                uid = 10045,
+                inode = "45678"
+            ),
+            TcpConnection(
+                localAddress = "78563412:0CEA", // 18.52.86.120:3338
+                remoteAddress = "9A3C7856:01BB", // 86.120.60.154:443
+                status = "ESTABLISHED",
+                uid = 10073,
+                inode = "56789"
             )
         )
     }

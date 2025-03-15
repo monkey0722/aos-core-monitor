@@ -157,3 +157,103 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getNetworkStatsNativ
 
   return env->NewStringUTF(json.c_str());
 }
+
+// Function to retrieve TCP connection statistics
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getTcpConnectionsNative(
+    JNIEnv* env, jobject /* this */) {
+  std::ifstream tcp_file("/proc/net/tcp");
+  std::string line;
+  std::string json = "{\"connections\":[";
+  bool first_connection = true;
+
+  if (!tcp_file.is_open()) {
+    LOGE("Failed to open /proc/net/tcp - Permission denied or file not available");
+    // Get detailed error information
+    char error_msg[256];
+    strerror_r(errno, error_msg, sizeof(error_msg));
+    std::string error_string = "Error: Failed to read TCP connection information. Reason: ";
+    error_string += error_msg;
+    return env->NewStringUTF(error_string.c_str());
+  }
+
+  // Skip header line
+  std::getline(tcp_file, line);
+
+  // Process each TCP connection information
+  while (std::getline(tcp_file, line)) {
+    std::stringstream line_stream(line);
+    std::string sl, local_address, remote_address, status, tx_queue, rx_queue, tr, tm_when,
+        retrnsmt, uid_str, timeout, inode, rest;
+
+    line_stream >> sl >> local_address >> remote_address >> status >> tx_queue >> rx_queue >> tr >>
+        tm_when >> retrnsmt >> uid_str >> timeout >> inode;
+
+    // Convert hexadecimal status to integer
+    int status_int = 0;
+    std::stringstream ss;
+    ss << std::hex << status;
+    ss >> status_int;
+
+    // Convert status to string
+    std::string status_str;
+    switch (status_int) {
+      case 1:
+        status_str = "ESTABLISHED";
+        break;
+      case 2:
+        status_str = "SYN_SENT";
+        break;
+      case 3:
+        status_str = "SYN_RECV";
+        break;
+      case 4:
+        status_str = "FIN_WAIT1";
+        break;
+      case 5:
+        status_str = "FIN_WAIT2";
+        break;
+      case 6:
+        status_str = "TIME_WAIT";
+        break;
+      case 7:
+        status_str = "CLOSE";
+        break;
+      case 8:
+        status_str = "CLOSE_WAIT";
+        break;
+      case 9:
+        status_str = "LAST_ACK";
+        break;
+      case 10:
+        status_str = "LISTEN";
+        break;
+      case 11:
+        status_str = "CLOSING";
+        break;
+      default:
+        status_str = "UNKNOWN";
+        break;
+    }
+
+    // Add data in JSON format
+    if (!first_connection) {
+      json += ",";
+    }
+    first_connection = false;
+
+    json += "{";
+    json += "\"local_address\":\"" + local_address + "\",";
+    json += "\"remote_address\":\"" + remote_address + "\",";
+    json += "\"status\":\"" + status_str + "\",";
+    json += "\"uid\":" + uid_str + ",";
+    json += "\"inode\":\"" + inode + "\"";
+    json += "}";
+  }
+
+  json += "]}";
+  tcp_file.close();
+  LOGI("Read TCP connection statistics");
+
+  return env->NewStringUTF(json.c_str());
+}
