@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Memory
@@ -57,6 +58,7 @@ fun WelcomeScreen(
     onNavigateToHalInfo: () -> Unit,
     onNavigateToNativeSystemMonitor: () -> Unit,
     onNavigateToNetworkStats: () -> Unit,
+    onNavigateToTcpConnections: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -146,6 +148,12 @@ fun WelcomeScreen(
                 icon = Icons.Default.NetworkCell,
                 color = MaterialTheme.colorScheme.primary,
                 onClick = onNavigateToNetworkStats
+            ),
+            MenuItem(
+                title = "TCP Connections",
+                icon = Icons.Default.Cloud,
+                color = MaterialTheme.colorScheme.error,
+                onClick = onNavigateToTcpConnections
             )
         )
 

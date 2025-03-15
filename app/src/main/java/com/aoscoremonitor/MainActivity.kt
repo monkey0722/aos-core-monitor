@@ -24,6 +24,7 @@ import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.WelcomeScreen
 import com.aoscoremonitor.ui.screens.jni.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.screens.jni.NetworkStatsScreen
+import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 
 class MainActivity : ComponentActivity() {
@@ -55,6 +56,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToHalInfo = { currentScreen = Screen.HalInfo },
                                 onNavigateToNativeSystemMonitor = { currentScreen = Screen.NativeSystemMonitor },
                                 onNavigateToNetworkStats = { currentScreen = Screen.NetworkStats },
+                                onNavigateToTcpConnections = { currentScreen = Screen.TcpConnections },
                                 modifier = Modifier.padding(innerPadding)
                             )
                         }
@@ -103,6 +105,12 @@ class MainActivity : ComponentActivity() {
                         }
                         Screen.NetworkStats -> {
                             NetworkStatsScreen(
+                                onNavigateBack = { currentScreen = Screen.Welcome },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                        Screen.TcpConnections -> {
+                            TcpConnectionsScreen(
                                 onNavigateBack = { currentScreen = Screen.Welcome },
                                 modifier = Modifier.padding(innerPadding)
                             )
