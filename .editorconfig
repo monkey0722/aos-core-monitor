@@ -11,6 +11,7 @@ trim_trailing_whitespace = true
 
 [*.{kt,kts}]
 ktlint_code_style = android_studio
+ktlint_disabled_rules=no-wildcard-imports
 
 [*.{cpp,h,hpp,cc,c}]
 indent_size = 2
