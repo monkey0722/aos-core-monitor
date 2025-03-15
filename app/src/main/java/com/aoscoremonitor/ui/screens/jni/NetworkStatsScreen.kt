@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.SignalCellular4Bar
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -119,11 +120,19 @@ private fun EmptyNetworkStats(refreshing: Boolean) {
 
 @Composable
 private fun NetworkStatsList(networkStats: Map<String, NativeSystemMonitor.InterfaceStats>) {
+    val isDummyData = networkStats.keys.any { it.startsWith("dummy:") }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        if (isDummyData) {
+            item {
+                DummyDataBanner()
+            }
+        }
+
         items(networkStats.entries.toList()) { (interfaceName, stats) ->
             NetworkInterfaceCard(interfaceName, stats)
         }
@@ -131,12 +140,53 @@ private fun NetworkStatsList(networkStats: Map<String, NativeSystemMonitor.Inter
 }
 
 @Composable
+private fun DummyDataBanner() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Warning",
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Displaying dummy network data",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
 private fun NetworkInterfaceCard(interfaceName: String, stats: NativeSystemMonitor.InterfaceStats) {
+    val isDummy = interfaceName.startsWith("dummy:")
+    val displayName = if (isDummy) interfaceName.substringAfter("dummy:") else interfaceName
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = if (isDummy) {
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        } else {
+            CardDefaults.cardColors()
+        }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Interface Name Header
@@ -150,12 +200,20 @@ private fun NetworkInterfaceCard(interfaceName: String, stats: NativeSystemMonit
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
-                Text(
-                    text = interfaceName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    Text(
+                        text = displayName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (isDummy) {
+                        Text(
+                            text = "(Dummy Data)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

@@ -23,6 +23,7 @@ fun TcpConnectionsScreen(
 ) {
     var tcpConnections by remember { mutableStateOf<List<NativeSystemMonitor.TcpConnection>>(emptyList()) }
     var refreshing by remember { mutableStateOf(false) }
+    var isDummyData by remember { mutableStateOf(false) }
 
     val systemMonitor = remember { NativeSystemMonitor() }
 
@@ -31,6 +32,16 @@ fun TcpConnectionsScreen(
         while (isActive) {
             refreshing = true
             tcpConnections = systemMonitor.getTcpConnections()
+
+            // Check if this is dummy data by comparing with known dummy data patterns
+            // This is a simple heuristic - we check if the data contains the exact local addresses from dummy data
+            isDummyData = tcpConnections.any { conn ->
+                conn.localAddress == "0100007F:1F90" || // 127.0.0.1:8080
+                    conn.localAddress == "0100007F:01BB" || // 127.0.0.1:443
+                    conn.localAddress == "0100007F:0050" || // 127.0.0.1:80
+                    conn.localAddress == "78563412:0CEA" // 18.52.86.120:3338
+            }
+
             refreshing = false
             delay(3000) // Update every 3 seconds
         }
@@ -63,8 +74,11 @@ fun TcpConnectionsScreen(
             if (tcpConnections.isEmpty()) {
                 EmptyConnectionsView(refreshing)
             } else {
+                if (isDummyData) {
+                    DummyDataBanner()
+                }
                 ConnectionStatusSummary(tcpConnections)
-                TcpConnectionsList(tcpConnections)
+                TcpConnectionsList(tcpConnections, isDummyData)
             }
         }
     }
@@ -114,25 +128,63 @@ private fun ConnectionStatusSummary(connections: List<NativeSystemMonitor.TcpCon
 }
 
 @Composable
-private fun TcpConnectionsList(connections: List<NativeSystemMonitor.TcpConnection>) {
+private fun DummyDataBanner() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Warning",
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Displaying dummy TCP connection data",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TcpConnectionsList(connections: List<NativeSystemMonitor.TcpConnection>, isDummyData: Boolean) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
         items(connections) { connection ->
-            TcpConnectionItem(connection)
+            TcpConnectionItem(connection, isDummyData)
         }
     }
 }
 
 @Composable
-private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection) {
+private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection, isDummyData: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = if (isDummyData) {
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        } else {
+            CardDefaults.cardColors()
+        }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Status row
@@ -140,6 +192,15 @@ private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                if (isDummyData) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Dummy Data",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
                 val (icon, color) = when (connection.status) {
                     "ESTABLISHED" -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.primary
                     "LISTEN" -> Icons.Default.Hearing to MaterialTheme.colorScheme.tertiary
