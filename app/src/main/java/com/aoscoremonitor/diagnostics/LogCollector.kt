@@ -30,7 +30,7 @@ class LogCollector(private val onLogLine: (String) -> Unit) {
      * * This method launches a coroutine that continuously reads from the logcat process
      * and forwards each log line to the callback provided in the constructor.
      */
-    fun startCollecting() {
+    fun start() {
         // Skip if already collecting logs
         if (logJob?.isActive == true) return
 
@@ -63,7 +63,7 @@ class LogCollector(private val onLogLine: (String) -> Unit) {
      * * This method cancels the log collection coroutine and cleans up associated resources,
      * including the logcat process.
      */
-    fun stopCollecting() {
+    fun stop() {
         logJob?.cancel()
         logJob = null
         process?.destroy()

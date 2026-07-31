@@ -1,3 +1,173 @@
 <resources>
     <string name="app_name">AOS Core Monitor</string>
+
+    <!-- Shared -->
+    <string name="action_back">Back</string>
+    <string name="action_scroll_to_bottom">Scroll to bottom</string>
+    <string name="action_expand">Show all</string>
+    <string name="action_collapse">Show less</string>
+    <string name="sample_data_label">Sample data</string>
+    <string name="status_supported">Supported</string>
+    <string name="status_not_supported">Not supported</string>
+
+    <!-- Home -->
+    <string name="home_subtitle">Inspect the Android system layers on this device</string>
+    <string name="destination_system_info">System Info</string>
+    <string name="destination_logs">System Logs</string>
+    <string name="destination_diagnostics">Diagnostics</string>
+    <string name="destination_security">Security</string>
+    <string name="destination_framework">Framework</string>
+    <string name="destination_hal">HAL Interface</string>
+    <string name="destination_native_monitor">Native Monitor</string>
+    <string name="destination_network_stats">Network Stats</string>
+    <string name="destination_tcp_connections">TCP Connections</string>
+
+    <!-- System logs -->
+    <string name="logs_title">System Logs</string>
+    <string name="logs_empty">No logs collected yet</string>
+    <string name="logs_empty_hint">Reading logcat starts when this screen opens. Nothing has arrived so far.</string>
+    <plurals name="logs_dropped_notice">
+        <item quantity="one">Showing the most recent %1$d lines. %2$d older line was dropped.</item>
+        <item quantity="other">Showing the most recent %1$d lines. %2$d older lines were dropped.</item>
+    </plurals>
+
+    <!-- System information -->
+    <string name="system_info_title">System Information</string>
+    <string name="system_info_cpu">CPU Usage</string>
+    <string name="system_info_memory">Memory</string>
+    <string name="system_info_battery">Battery</string>
+    <string name="system_info_network">Network</string>
+
+    <!-- System diagnostics -->
+    <string name="diagnostics_title">System Diagnostics</string>
+    <string name="diagnostics_memory">Memory</string>
+    <string name="diagnostics_screen_state">Screen State</string>
+    <string name="diagnostics_screen_on">On</string>
+    <string name="diagnostics_screen_off">Off</string>
+    <string name="diagnostics_running_processes">Running Processes</string>
+    <string name="diagnostics_no_processes">No process information available</string>
+    <string name="diagnostics_dumpsys">Dumpsys Memory Info</string>
+    <string name="diagnostics_loading">Loading…</string>
+
+    <!-- Security information -->
+    <string name="security_title">Security Information</string>
+    <string name="security_selinux_section">SELinux</string>
+    <string name="security_selinux_subtitle">Kernel-level mandatory access control</string>
+    <string name="security_selinux_status">Status</string>
+    <string name="security_selinux_mode">Mode</string>
+    <string name="security_hardware_section">Hardware Security</string>
+    <string name="security_hardware_subtitle">Key storage and biometric hardware on this device</string>
+    <string name="security_permissions_section">App Permissions</string>
+    <string name="security_permissions_subtitle">Non-system apps and the dangerous permissions they hold</string>
+    <string name="security_feature_hardware_keystore">Hardware-backed Keystore</string>
+    <string name="security_feature_strongbox">StrongBox Keystore</string>
+    <string name="security_feature_fingerprint">Fingerprint Hardware</string>
+    <string name="security_feature_biometric">Biometric Authentication</string>
+    <string name="security_feature_tee">Trusted Execution Environment (TEE)</string>
+    <string name="security_keystore_implementation">Keystore implementation</string>
+    <plurals name="security_dangerous_permissions">
+        <item quantity="one">%1$d dangerous permission granted</item>
+        <item quantity="other">%1$d dangerous permissions granted</item>
+    </plurals>
+    <plurals name="security_more_permissions">
+        <item quantity="one">and %1$d more permission</item>
+        <item quantity="other">and %1$d more permissions</item>
+    </plurals>
+    <string name="security_permission_granted_dangerous">Granted, dangerous</string>
+    <string name="security_permission_granted">Granted</string>
+    <string name="security_permission_not_granted">Not granted</string>
+    <string name="security_no_apps">No non-system apps reported permissions.</string>
+
+    <!-- Framework analysis -->
+    <string name="framework_title">Framework Analysis</string>
+    <string name="framework_tab_binder">Binder</string>
+    <string name="framework_tab_api">API Calls</string>
+    <string name="framework_tab_services">Services</string>
+    <string name="framework_binder_section">Binder Transactions</string>
+    <string name="framework_binder_subtitle">Cross-process calls observed on this device</string>
+    <string name="framework_binder_empty">No Binder transactions detected. Reading them needs root access or a userdebug build.</string>
+    <string name="framework_binder_code">Transaction code</string>
+    <string name="framework_binder_destination">Destination</string>
+    <string name="framework_binder_size">Data size</string>
+    <string name="framework_api_section">API Calls</string>
+    <string name="framework_api_subtitle">Framework entry points and how long each call took</string>
+    <string name="framework_api_empty">No API calls detected. Tracing them needs instrumentation.</string>
+    <string name="framework_api_caller">Caller</string>
+    <string name="framework_api_duration">Duration</string>
+    <string name="framework_services_section">Running Services</string>
+    <string name="framework_services_subtitle">Services registered with the activity manager</string>
+    <string name="framework_services_empty">No service data available. Some of it needs elevated permissions.</string>
+    <string name="framework_connections_section">Service Connections</string>
+    <string name="framework_connections_subtitle">Which client is bound to which service</string>
+    <string name="framework_connections_empty">No connection data available.</string>
+    <string name="framework_service_state">State</string>
+    <string name="framework_connection_target">Connected to</string>
+    <string name="framework_sample_api">Capturing real API calls needs instrumentation</string>
+    <string name="framework_sample_services">`dumpsys activity services` returned nothing on this device</string>
+    <plurals name="framework_bytes">
+        <item quantity="one">%1$d byte</item>
+        <item quantity="other">%1$d bytes</item>
+    </plurals>
+    <string name="framework_millis">%1$d ms</string>
+
+    <!-- HAL interfaces -->
+    <string name="hal_title">HAL Interfaces</string>
+    <string name="hal_tab_interfaces">HAL</string>
+    <string name="hal_tab_services">Services</string>
+    <string name="hal_tab_vndk">VNDK</string>
+    <string name="hal_interfaces_section">Hardware Abstraction Layer</string>
+    <string name="hal_interfaces_subtitle">HALs provide standardized interfaces to hardware components</string>
+    <string name="hal_interfaces_empty">No HAL interface data available. Some of it needs elevated permissions.</string>
+    <string name="hal_services_section">Hardware Services</string>
+    <string name="hal_services_subtitle">System services that expose hardware functionality</string>
+    <string name="hal_services_empty">No hardware service data available.</string>
+    <string name="hal_vndk_section">VNDK</string>
+    <string name="hal_vndk_subtitle">Vendor Native Development Kit libraries</string>
+    <string name="hal_vndk_version">VNDK version %1$s</string>
+    <string name="hal_vndk_explainer">The VNDK is the set of libraries vendors build their HALs against. It keeps vendor implementations working across Android OS updates.</string>
+    <string name="hal_vndk_libraries">Libraries</string>
+    <string name="hal_vndk_empty">No VNDK library information available.</string>
+    <string name="hal_version">Version</string>
+    <string name="hal_type">Type</string>
+    <string name="hal_implementation">Implementation</string>
+    <string name="hal_service_server">Server</string>
+    <string name="hal_service_clients">Clients</string>
+    <string name="hal_service_no_clients">No clients bound</string>
+    <string name="hal_sample_interfaces">lshal returned nothing on this device</string>
+    <string name="hal_sample_services">`service list` returned nothing on this device</string>
+
+    <!-- Native system monitor -->
+    <string name="native_title">Native System Monitor</string>
+    <string name="native_cpu_section">CPU</string>
+    <string name="native_cpu_subtitle">System-wide counters from /proc/stat</string>
+    <string name="native_memory_section">Memory</string>
+    <string name="native_memory_subtitle">System-wide counters from /proc/meminfo</string>
+    <string name="native_process_section">This Process</string>
+    <string name="native_process_subtitle">Counters for the monitor app itself</string>
+    <string name="native_cpu_unavailable">System-wide CPU statistics come from /proc/stat, which SELinux does not let the app sandbox read on modern Android. Reading it needs a rooted or userdebug build. The per-process counters below stay available.</string>
+    <string name="native_memory_unavailable">No memory counters available.</string>
+    <string name="native_process_unavailable">No counters available for this process.</string>
+    <string name="native_kilobytes">%1$d kB</string>
+
+    <!-- Network statistics -->
+    <string name="network_title">Network Interfaces</string>
+    <string name="network_loading">Reading interface statistics…</string>
+    <string name="network_empty">No network interfaces found</string>
+    <string name="network_received">Received</string>
+    <string name="network_transmitted">Transmitted</string>
+    <string name="network_packet_detail">Packets %1$d · Errors %2$d · Dropped %3$d</string>
+    <string name="network_sample">/proc/net is not readable by apps</string>
+
+    <!-- TCP connections -->
+    <string name="tcp_title">TCP Connections</string>
+    <string name="tcp_loading">Reading connection table…</string>
+    <string name="tcp_empty">No active TCP connections found</string>
+    <string name="tcp_established">Established</string>
+    <string name="tcp_listening">Listening</string>
+    <string name="tcp_waiting">Waiting</string>
+    <string name="tcp_total">Total</string>
+    <string name="tcp_local">Local</string>
+    <string name="tcp_remote">Remote</string>
+    <string name="tcp_uid">UID</string>
+    <string name="tcp_sample">/proc/net/tcp is not readable by apps</string>
 </resources>

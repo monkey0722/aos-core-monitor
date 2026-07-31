@@ -12,8 +12,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class HalInterfaceAnalyzer(private val context: Context, private val onDataCollected: (HalData) -> Unit) {
-    data class HalData(val halInterfaces: Collected<List<HalInterface>>, val hwservices: Collected<List<HwService>>, val vndkInfo: VndkInfo)
+/**
+ * Periodically reads the device's HAL interfaces, hardware services and VNDK libraries, and hands
+ * each pass to [onUpdate].
+ */
+class HalInterfaceCollector(private val context: Context, private val onUpdate: (HalData) -> Unit) {
+    data class HalData(val halInterfaces: Collected<List<HalInterface>>, val hwServices: Collected<List<HwService>>, val vndkInfo: VndkInfo)
 
     data class HalInterface(
         val name: String,
@@ -99,7 +103,7 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
 
-    fun startAnalyzing() {
+    fun start() {
         if (job?.isActive == true) return
 
         job = scope.launch {
@@ -109,19 +113,19 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
                     val halInterfaces = collectHalInterfaces()
 
                     // Collect hardware service data
-                    val hwservices = collectHwServices()
+                    val hwServices = collectHwServices()
 
                     // Collect VNDK information
                     val vndkInfo = collectVndkInfo()
 
                     val halData = HalData(
                         halInterfaces = Collected.realOrSample(halInterfaces, SAMPLE_HAL_INTERFACES),
-                        hwservices = Collected.realOrSample(hwservices, SAMPLE_HW_SERVICES),
+                        hwServices = Collected.realOrSample(hwServices, SAMPLE_HW_SERVICES),
                         vndkInfo = vndkInfo
                     )
 
                     withContext(Dispatchers.Main) {
-                        onDataCollected(halData)
+                        onUpdate(halData)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -132,7 +136,7 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
         }
     }
 
-    fun stopAnalyzing() {
+    fun stop() {
         job?.cancel()
         job = null
     }

@@ -1,6 +1,7 @@
 package com.aoscoremonitor.ui.screens
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,318 +9,262 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SecurityInfoCollector
+import com.aoscoremonitor.ui.components.EmptyState
+import com.aoscoremonitor.ui.components.LabeledValue
+import com.aoscoremonitor.ui.components.MonitorCard
+import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.ReadingStatus
+import com.aoscoremonitor.ui.components.SectionHeader
+import com.aoscoremonitor.ui.components.StatusRow
+import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.Spacing
+import com.aoscoremonitor.ui.viewmodel.SecurityInfoViewModel
+import com.aoscoremonitor.ui.viewmodel.monitorViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecurityInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var securityInfo by remember {
-        mutableStateOf(
-            SecurityInfoCollector.SecurityInfo(
-                selinuxStatus = "Unknown",
-                selinuxMode = "Unknown",
-                permissionMap = emptyMap(),
-                hardwareSecurityInfo = SecurityInfoCollector.HardwareSecurityInfo(
-                    isHardwareBackedKeyStoreSupported = false,
-                    isStrongBoxBackedKeyStoreSupported = false,
-                    isFingerprintSupported = false,
-                    isBiometricSupported = false,
-                    isTeeSupported = false,
-                    keystoreVersion = "Unknown"
-                )
-            )
-        )
-    }
+fun SecurityInfoScreen(
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SecurityInfoViewModel = monitorViewModel { SecurityInfoViewModel(it) }
+) {
+    val securityInfo by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val securityInfoCollector = remember {
-        SecurityInfoCollector(context) { info ->
-            securityInfo = info
-        }
-    }
+    SecurityInfoContent(
+        securityInfo = securityInfo,
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
+    )
+}
 
-    DisposableEffect(securityInfoCollector) {
-        securityInfoCollector.startCollecting()
-        onDispose {
-            securityInfoCollector.stopCollecting()
-        }
-    }
+@Composable
+private fun SecurityInfoContent(
+    securityInfo: SecurityInfoCollector.SecurityInfo,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Materialising the map's entries is O(n); doing it inline in the `items` call redid it on
+    // every recomposition, including the ones caused by scrolling.
+    val apps = remember(securityInfo.permissionMap) { securityInfo.permissionMap.entries.toList() }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Security Information") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        }
+    MonitorScaffold(
+        title = stringResource(R.string.security_title),
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(Spacing.Large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
         ) {
-            // SELinux Status Section
-            item {
-                SecuritySectionTitle(title = "SELinux Status", Icons.Filled.Security)
-                SELinuxStatusCard(
-                    status = securityInfo.selinuxStatus,
-                    mode = securityInfo.selinuxMode
+            item(key = "selinux-header") {
+                SectionHeader(
+                    title = stringResource(R.string.security_selinux_section),
+                    subtitle = stringResource(R.string.security_selinux_subtitle),
+                    icon = Icons.Default.Security
                 )
             }
+            item(key = "selinux") {
+                SeLinuxCard(status = securityInfo.selinuxStatus, mode = securityInfo.selinuxMode)
+            }
 
-            // Hardware Security Module Section
-            item {
-                SecuritySectionTitle(title = "Hardware Security", Icons.Filled.Security)
+            item(key = "hardware-header") {
+                SectionHeader(
+                    title = stringResource(R.string.security_hardware_section),
+                    subtitle = stringResource(R.string.security_hardware_subtitle),
+                    icon = Icons.Default.Lock
+                )
+            }
+            item(key = "hardware") {
                 HardwareSecurityCard(hardwareInfo = securityInfo.hardwareSecurityInfo)
             }
 
-            // App Permissions Section
-            item {
-                SecuritySectionTitle(title = "App Permissions (Non-System Apps)", Icons.Filled.Info)
-            }
-
-            items(securityInfo.permissionMap.entries.toList()) { (packageName, permissions) ->
-                AppPermissionCard(
-                    packageName = packageName,
-                    permissions = permissions
+            item(key = "permissions-header") {
+                SectionHeader(
+                    title = stringResource(R.string.security_permissions_section),
+                    subtitle = stringResource(R.string.security_permissions_subtitle),
+                    icon = Icons.Default.Info
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun SecuritySectionTitle(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(end = 8.dp)
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-fun SELinuxStatusCard(status: String, mode: String) {
-    val isEnforcing = mode.contains("Enforcing", ignoreCase = true)
-    val isPermissive = mode.contains("Permissive", ignoreCase = true)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = when {
-                isEnforcing -> MaterialTheme.colorScheme.primaryContainer
-                isPermissive -> MaterialTheme.colorScheme.tertiaryContainer
-                else -> MaterialTheme.colorScheme.errorContainer
-            }
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Status: $status",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "Mode: $mode",
-                style = MaterialTheme.typography.bodyLarge,
-                color = when {
-                    isEnforcing -> MaterialTheme.colorScheme.primary
-                    isPermissive -> MaterialTheme.colorScheme.tertiary
-                    else -> MaterialTheme.colorScheme.error
-                },
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun HardwareSecurityCard(hardwareInfo: SecurityInfoCollector.HardwareSecurityInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            SecurityFeatureItem(
-                title = "Hardware-backed Keystore",
-                isSupported = hardwareInfo.isHardwareBackedKeyStoreSupported
-            )
-            SecurityFeatureItem(
-                title = "StrongBox Keystore",
-                isSupported = hardwareInfo.isStrongBoxBackedKeyStoreSupported
-            )
-            SecurityFeatureItem(
-                title = "Fingerprint Hardware",
-                isSupported = hardwareInfo.isFingerprintSupported
-            )
-            SecurityFeatureItem(
-                title = "Biometric Authentication",
-                isSupported = hardwareInfo.isBiometricSupported
-            )
-            SecurityFeatureItem(
-                title = "Trusted Execution Environment (TEE)",
-                isSupported = hardwareInfo.isTeeSupported
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            Text(
-                text = "Keystore Implementation: ${hardwareInfo.keystoreVersion}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-fun SecurityFeatureItem(title: String, isSupported: Boolean) {
-    Row(
-        modifier = Modifier.padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = if (isSupported) Icons.Filled.CheckCircle else Icons.Filled.Error,
-            contentDescription = if (isSupported) "Supported" else "Not Supported",
-            tint = if (isSupported) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(end = 8.dp)
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-@Composable
-fun AppPermissionCard(packageName: String, permissions: List<SecurityInfoCollector.AppPermissionInfo>) {
-    val hasDangerousPermissions = permissions.any { it.isProtectionDangerous && it.isGranted }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (hasDangerousPermissions) {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            if (apps.isEmpty()) {
+                item(key = "permissions-empty") {
+                    EmptyState(message = stringResource(R.string.security_no_apps))
+                }
             } else {
-                MaterialTheme.colorScheme.surface
-            }
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = packageName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "Dangerous Permissions: ${permissions.count { it.isProtectionDangerous && it.isGranted }}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (hasDangerousPermissions) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            // Show the first 3 permissions only to avoid cluttering the UI
-            permissions.take(3).forEach { permission ->
-                Row(
-                    modifier = Modifier.padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = when {
-                            permission.isGranted && permission.isProtectionDangerous -> Icons.Filled.Error
-                            permission.isGranted -> Icons.Filled.CheckCircle
-                            else -> Icons.Filled.Info
-                        },
-                        contentDescription = "Permission Status",
-                        tint = when {
-                            permission.isGranted && permission.isProtectionDangerous -> MaterialTheme.colorScheme.error
-                            permission.isGranted -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.outline
-                        },
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
-                    // Extract just the permission name without the android.permission prefix
-                    val shortPermName = permission.permissionName.split(".").lastOrNull() ?: permission.permissionName
-                    Text(
-                        text = shortPermName,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                items(apps, key = { it.key }) { (packageName, permissions) ->
+                    AppPermissionCard(packageName = packageName, permissions = permissions)
                 }
             }
-
-            // Show count of remaining permissions
-            if (permissions.size > 3) {
-                Text(
-                    text = "... and ${permissions.size - 3} more permissions",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
         }
+    }
+}
+
+/**
+ * SELinux's mode, and whether that mode is the one you want.
+ *
+ * Enforcing is the healthy state, permissive is a working but weakened one, and anything else
+ * means the mode could not be read at all. The card used to signal that through
+ * primaryContainer / tertiaryContainer / errorContainer, which meant "good" was rendered in the
+ * app's brand color and read as decoration.
+ */
+@Composable
+private fun SeLinuxCard(status: String, mode: String, modifier: Modifier = Modifier) {
+    val readingStatus = when {
+        mode.contains("Enforcing", ignoreCase = true) -> ReadingStatus.Ok
+        mode.contains("Permissive", ignoreCase = true) -> ReadingStatus.Warning
+        else -> ReadingStatus.Problem
+    }
+
+    MonitorCard(modifier = modifier, status = readingStatus) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraLarge)
+        ) {
+            LabeledValue(
+                label = stringResource(R.string.security_selinux_status),
+                value = status,
+                valueStyle = MaterialTheme.typography.titleMedium
+            )
+            LabeledValue(
+                label = stringResource(R.string.security_selinux_mode),
+                value = mode,
+                valueStyle = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun HardwareSecurityCard(hardwareInfo: SecurityInfoCollector.HardwareSecurityInfo, modifier: Modifier = Modifier) {
+    val supported = stringResource(R.string.status_supported)
+    val notSupported = stringResource(R.string.status_not_supported)
+
+    @Composable
+    fun feature(labelRes: Int, isSupported: Boolean) {
+        StatusRow(
+            label = stringResource(labelRes),
+            status = if (isSupported) ReadingStatus.Ok else ReadingStatus.Neutral,
+            statusDescription = if (isSupported) supported else notSupported
+        )
+    }
+
+    MonitorCard(modifier = modifier) {
+        feature(R.string.security_feature_hardware_keystore, hardwareInfo.isHardwareBackedKeyStoreSupported)
+        feature(R.string.security_feature_strongbox, hardwareInfo.isStrongBoxBackedKeyStoreSupported)
+        feature(R.string.security_feature_fingerprint, hardwareInfo.isFingerprintSupported)
+        feature(R.string.security_feature_biometric, hardwareInfo.isBiometricSupported)
+        feature(R.string.security_feature_tee, hardwareInfo.isTeeSupported)
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+
+        LabeledValue(
+            label = stringResource(R.string.security_keystore_implementation),
+            value = hardwareInfo.keystoreVersion
+        )
+    }
+}
+
+@Composable
+private fun AppPermissionCard(
+    packageName: String,
+    permissions: List<SecurityInfoCollector.AppPermissionInfo>,
+    modifier: Modifier = Modifier
+) {
+    val dangerousCount = remember(permissions) {
+        permissions.count { it.isProtectionDangerous && it.isGranted }
+    }
+    val shown = remember(permissions) { permissions.take(PERMISSIONS_SHOWN) }
+
+    MonitorCard(
+        modifier = modifier,
+        status = if (dangerousCount > 0) ReadingStatus.Problem else ReadingStatus.Neutral
+    ) {
+        Text(
+            text = packageName,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            text = pluralStringResource(R.plurals.security_dangerous_permissions, dangerousCount, dangerousCount),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        shown.forEach { permission ->
+            val status = when {
+                permission.isGranted && permission.isProtectionDangerous -> ReadingStatus.Problem
+                permission.isGranted -> ReadingStatus.Ok
+                else -> ReadingStatus.Neutral
+            }
+            StatusRow(
+                // The android.permission prefix is the same on every row and only makes the
+                // distinguishing part harder to find.
+                label = permission.permissionName.substringAfterLast('.'),
+                status = status,
+                statusDescription = stringResource(
+                    when (status) {
+                        ReadingStatus.Problem -> R.string.security_permission_granted_dangerous
+                        ReadingStatus.Ok -> R.string.security_permission_granted
+                        else -> R.string.security_permission_not_granted
+                    }
+                )
+            )
+        }
+
+        if (permissions.size > PERMISSIONS_SHOWN) {
+            val remaining = permissions.size - PERMISSIONS_SHOWN
+            Text(
+                text = pluralStringResource(R.plurals.security_more_permissions, remaining, remaining),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/** Enough to characterise an app without turning the list into a permission dump. */
+private const val PERMISSIONS_SHOWN = 3
+
+@Preview(name = "Security", showBackground = true)
+@Preview(name = "Security (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun SecurityInfoPreview() {
+    AOSCoreMonitorTheme(dynamicColor = false) {
+        SecurityInfoContent(
+            securityInfo = SecurityInfoCollector.SecurityInfo(
+                selinuxStatus = "Enabled",
+                selinuxMode = "Enforcing",
+                permissionMap = mapOf(
+                    "com.example.camera" to listOf(
+                        SecurityInfoCollector.AppPermissionInfo("android.permission.CAMERA", true, true),
+                        SecurityInfoCollector.AppPermissionInfo("android.permission.INTERNET", true, false)
+                    )
+                ),
+                hardwareSecurityInfo = SecurityInfoCollector.HardwareSecurityInfo(
+                    isHardwareBackedKeyStoreSupported = true,
+                    isStrongBoxBackedKeyStoreSupported = false,
+                    isFingerprintSupported = true,
+                    isBiometricSupported = true,
+                    isTeeSupported = true,
+                    keystoreVersion = "Keymaster 4.1"
+                )
+            ),
+            onNavigateBack = {}
+        )
     }
 }

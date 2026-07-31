@@ -1,205 +1,116 @@
 package com.aoscoremonitor.ui.screens
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SystemDiagnosticsCollector
+import com.aoscoremonitor.ui.components.ExpandableTextCard
+import com.aoscoremonitor.ui.components.InfoCard
+import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.Spacing
+import com.aoscoremonitor.ui.viewmodel.SystemDiagnosticsViewModel
+import com.aoscoremonitor.ui.viewmodel.monitorViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SystemDiagnosticsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val scrollState = rememberScrollState()
-    var diagnosticsInfo by remember {
-        mutableStateOf(
-            SystemDiagnosticsCollector.DiagnosticsInfo(
-                runningProcesses = emptyList(),
-                availableMemory = "Memory: N/A",
-                screenOn = false,
-                dumpsysResult = "Loading..."
-            )
-        )
-    }
+fun SystemDiagnosticsScreen(
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SystemDiagnosticsViewModel = monitorViewModel { SystemDiagnosticsViewModel(it) }
+) {
+    val diagnostics by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val diagnosticsCollector = remember {
-        SystemDiagnosticsCollector(context) { info ->
-            diagnosticsInfo = info
-        }
-    }
+    SystemDiagnosticsContent(
+        diagnostics = diagnostics,
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
+    )
+}
 
-    DisposableEffect(diagnosticsCollector) {
-        diagnosticsCollector.startCollecting()
-        onDispose {
-            diagnosticsCollector.stopCollecting()
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("System Diagnostics") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        }
+@Composable
+private fun SystemDiagnosticsContent(
+    diagnostics: SystemDiagnosticsCollector.DiagnosticsInfo,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    MonitorScaffold(
+        title = stringResource(R.string.diagnostics_title),
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
     ) { innerPadding ->
-        Column(
-            modifier = modifier
+        LazyColumn(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(scrollState),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(Spacing.Large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
         ) {
-            // Memory Card
-            DiagnosticCard(
-                title = "Memory",
-                value = diagnosticsInfo.availableMemory,
-                icon = Icons.Default.Memory,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            // Screen State Card
-            DiagnosticCard(
-                title = "Screen State",
-                value = if (diagnosticsInfo.screenOn) "On" else "Off",
-                icon = if (diagnosticsInfo.screenOn) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                color = if (diagnosticsInfo.screenOn) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
-            )
-
-            // Running Processes Card
-            DiagnosticCard(
-                title = "Running Processes",
-                value = if (diagnosticsInfo.runningProcesses.isEmpty()) {
-                    "No process information available"
-                } else {
-                    diagnosticsInfo.runningProcesses.joinToString("\n")
-                },
-                icon = Icons.AutoMirrored.Filled.List,
-                color = MaterialTheme.colorScheme.error,
-                expandable = true,
-                maxHeight = 200.dp
-            )
-
-            // Dumpsys Result Card
-            DiagnosticCard(
-                title = "Dumpsys Memory Info",
-                value = diagnosticsInfo.dumpsysResult,
-                icon = Icons.Default.Terminal,
-                color = MaterialTheme.colorScheme.secondary,
-                expandable = true,
-                maxHeight = 300.dp
-            )
+            item(key = "memory") {
+                InfoCard(
+                    title = stringResource(R.string.diagnostics_memory),
+                    value = diagnostics.availableMemory,
+                    icon = Icons.Default.Memory
+                )
+            }
+            item(key = "screen") {
+                InfoCard(
+                    title = stringResource(R.string.diagnostics_screen_state),
+                    value = stringResource(
+                        if (diagnostics.screenOn) R.string.diagnostics_screen_on else R.string.diagnostics_screen_off
+                    ),
+                    // Deliberately no status: the screen being on is not a health signal, and
+                    // painting the whole card green said it was.
+                    icon = if (diagnostics.screenOn) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                )
+            }
+            item(key = "processes") {
+                ExpandableTextCard(
+                    title = stringResource(R.string.diagnostics_running_processes),
+                    text = diagnostics.runningProcesses.joinToString("\n")
+                        .ifEmpty { stringResource(R.string.diagnostics_no_processes) },
+                    icon = Icons.AutoMirrored.Filled.List
+                )
+            }
+            item(key = "dumpsys") {
+                ExpandableTextCard(
+                    title = stringResource(R.string.diagnostics_dumpsys),
+                    text = diagnostics.dumpsysResult.ifEmpty { stringResource(R.string.diagnostics_loading) },
+                    icon = Icons.Default.Terminal,
+                    collapsedLines = 12
+                )
+            }
         }
     }
 }
 
+@Preview(name = "Diagnostics", showBackground = true)
+@Preview(name = "Diagnostics (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun DiagnosticCard(
-    title: String,
-    value: String,
-    icon: ImageVector,
-    color: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier,
-    expandable: Boolean = false,
-    maxHeight: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp.Unspecified
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
+private fun SystemDiagnosticsPreview() {
+    AOSCoreMonitorTheme(dynamicColor = false) {
+        SystemDiagnosticsContent(
+            diagnostics = SystemDiagnosticsCollector.DiagnosticsInfo(
+                runningProcesses = listOf("com.android.systemui", "com.google.android.gms", "com.aoscoremonitor"),
+                availableMemory = "1686 MB available",
+                screenOn = true,
+                dumpsysResult = "Applications Memory Usage (in Kilobytes):\nUptime: 843211 Realtime: 843211"
+            ),
+            onNavigateBack = {}
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = color,
-                    modifier = Modifier.size(28.dp)
-                )
-
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = 12.dp)
-                )
-            }
-
-            if (expandable) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(maxHeight)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            } else {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
     }
 }

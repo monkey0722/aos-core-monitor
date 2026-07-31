@@ -10,14 +10,23 @@ class NativeSystemMonitor {
     companion object {
         private const val TAG = "NativeSystemMonitor"
 
-        // Loading the native library
-        init {
-            try {
-                System.loadLibrary("system_monitor")
-                Log.i(TAG, "Native library loaded successfully")
-            } catch (e: UnsatisfiedLinkError) {
-                Log.e(TAG, "Failed to load native library", e)
-            }
+        /**
+         * Whether libsystem_monitor loaded. Every `external fun` below throws without it.
+         *
+         * The load failure was already being caught and logged, but nothing recorded the result,
+         * so the `external fun` calls went ahead anyway and threw [UnsatisfiedLinkError]. That is
+         * an [Error], not an [Exception], so the `catch (e: Exception)` around each call did not
+         * stop it and the app crashed — on a device where the library will not load, three of the
+         * nine screens were unreachable. The fallbacks those catch blocks guard were written for
+         * exactly this case; they just never ran.
+         */
+        private val isLibraryAvailable: Boolean = try {
+            System.loadLibrary("system_monitor")
+            Log.i(TAG, "Native library loaded successfully")
+            true
+        } catch (e: UnsatisfiedLinkError) {
+            Log.e(TAG, "Failed to load native library; native readings are unavailable", e)
+            false
         }
     }
 
@@ -30,6 +39,7 @@ class NativeSystemMonitor {
 
     suspend fun getCpuInfo(): Map<String, Long> = withContext(Dispatchers.IO) {
         val cpuInfo = mutableMapOf<String, Long>()
+        if (!isLibraryAvailable) return@withContext cpuInfo
         try {
             val rawData = getCpuInfoNative()
             val parts = rawData.split("\\s+".toRegex())
@@ -50,6 +60,7 @@ class NativeSystemMonitor {
 
     suspend fun getMemInfo(): Map<String, Long> = withContext(Dispatchers.IO) {
         val memInfo = mutableMapOf<String, Long>()
+        if (!isLibraryAvailable) return@withContext memInfo
         try {
             val rawData = getMemInfoNative()
             for (line in rawData.split("\n")) {
@@ -72,6 +83,7 @@ class NativeSystemMonitor {
 
     suspend fun getProcessInfo(pid: Int): Map<String, String> = withContext(Dispatchers.IO) {
         val processInfo = mutableMapOf<String, String>()
+        if (!isLibraryAvailable) return@withContext processInfo
         try {
             val rawData = getProcessInfoNative(pid)
             for (line in rawData.split("\n")) {
@@ -112,6 +124,7 @@ class NativeSystemMonitor {
 
     suspend fun getNetworkStats(): Collected<Map<String, InterfaceStats>> = withContext(Dispatchers.IO) {
         val networkStats = mutableMapOf<String, InterfaceStats>()
+        if (!isLibraryAvailable) return@withContext Collected.sample(getSampleNetworkStats())
         try {
             val jsonData = getNetworkStatsNative()
             val jsonObject = JSONObject(jsonData)
@@ -210,6 +223,7 @@ class NativeSystemMonitor {
     // Function to retrieve TCP connection information
     suspend fun getTcpConnections(): Collected<List<TcpConnection>> = withContext(Dispatchers.IO) {
         val connections = mutableListOf<TcpConnection>()
+        if (!isLibraryAvailable) return@withContext Collected.sample(getSampleTcpConnections())
         try {
             val jsonData = getTcpConnectionsNative()
             val jsonObject = JSONObject(jsonData)
