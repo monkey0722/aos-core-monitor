@@ -83,6 +83,21 @@ class NativeInspectorTest {
     }
 
     @Test
+    fun threadInspectorListsThisProcessesThreads() = runBlocking {
+        val snapshot = NativeThreadInspector().read()
+
+        assertNotNull("Thread list could not be read", snapshot)
+        assertTrue("No threads reported", snapshot!!.threads.isNotEmpty())
+        // The thread running the test is in its own list, and every Android process is scheduled
+        // with a USER_HZ the kernel reports.
+        assertTrue("No clock rate reported", snapshot.clockTicks > 0)
+        assertTrue(
+            "No thread reports a scheduling policy",
+            snapshot.threads.any { it.policy != SchedulerPolicy.Unknown }
+        )
+    }
+
+    @Test
     fun storageInspectorReadsTheMountTable() = runBlocking {
         val mounts = NativeStorageInspector().read()
 

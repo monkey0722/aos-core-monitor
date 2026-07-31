@@ -20,6 +20,7 @@ add_library(
     memory_map.cpp
     elf_modules.cpp
     storage_info.cpp
+    thread_info.cpp
 )
 
 # The conversion warnings earn their place here: this code carries kernel counters — size_t,

@@ -83,6 +83,8 @@ class JsonWriter {
 
   JsonWriter& Value(std::string_view value);
   JsonWriter& Value(uint64_t value);
+  /** For counters the kernel reports signed — a thread's nice value runs from -20. */
+  JsonWriter& Value(int64_t value);
   JsonWriter& Value(bool value);
   /**
    * Keeps a C string a string.
@@ -94,6 +96,8 @@ class JsonWriter {
   JsonWriter& Value(const char* value);
   JsonWriter& Field(std::string_view key, std::string_view value);
   JsonWriter& Field(std::string_view key, uint64_t value);
+  /** See [Value(int64_t)]. */
+  JsonWriter& Field(std::string_view key, int64_t value);
   JsonWriter& Field(std::string_view key, bool value);
   /** See [Value(const char*)] — the same overload trap applies here. */
   JsonWriter& Field(std::string_view key, const char* value);

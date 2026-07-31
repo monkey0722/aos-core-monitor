@@ -19,7 +19,9 @@
     <string name="destination_security">Security</string>
     <string name="destination_framework">Framework</string>
     <string name="destination_hal">HAL Interface</string>
+    <string name="destination_sensors">Sensors</string>
     <string name="destination_kernel_counters">Kernel Counters</string>
+    <string name="destination_threads">Threads</string>
     <string name="destination_network_stats">Network Stats</string>
     <string name="destination_tcp_connections">TCP Connections</string>
     <string name="destination_cpu_cores">CPU Cores</string>
@@ -266,6 +268,87 @@
         <item quantity="one">%1$d loadable segment</item>
         <item quantity="other">%1$d loadable segments</item>
     </plurals>
+
+    <!-- Threads and scheduling -->
+    <string name="threads_title">Threads &amp; Scheduling</string>
+    <string name="threads_loading">Reading /proc/self/task…</string>
+    <string name="threads_unavailable">The native library did not load, so this process\'s threads cannot be listed.</string>
+    <string name="threads_summary_section">This process</string>
+    <plurals name="threads_summary">
+        <item quantity="one">%1$d thread</item>
+        <item quantity="other">%1$d threads</item>
+    </plurals>
+    <string name="threads_allowed_cpus">Allowed CPUs</string>
+    <string name="threads_affinity_unavailable">Not readable</string>
+    <string name="threads_real_time">Real-time scheduled</string>
+    <plurals name="threads_real_time_count">
+        <item quantity="one">%1$d thread</item>
+        <item quantity="other">%1$d threads</item>
+    </plurals>
+    <string name="threads_section">Threads</string>
+    <string name="threads_subtitle">Busiest first, by CPU time used since each thread started</string>
+    <string name="threads_unnamed">Thread %1$d</string>
+    <string name="threads_cpu_time">%1$,d ms</string>
+    <string name="threads_identity">tid %1$d</string>
+    <string name="threads_nice">Nice</string>
+    <string name="threads_nice_with_rt">%1$d · real-time priority %2$d</string>
+    <string name="threads_affinity">Allowed CPUs</string>
+    <string name="threads_last_cpu">Last ran on CPU</string>
+    <string name="thread_state_running">Running</string>
+    <string name="thread_state_sleeping">Sleeping</string>
+    <string name="thread_state_disk_sleep">Uninterruptible</string>
+    <string name="thread_state_stopped">Stopped</string>
+    <string name="thread_state_tracing">Traced</string>
+    <string name="thread_state_zombie">Zombie</string>
+    <string name="thread_state_idle">Idle</string>
+    <string name="thread_state_unknown">State unknown</string>
+    <string name="thread_policy_other">SCHED_OTHER</string>
+    <string name="thread_policy_fifo">SCHED_FIFO</string>
+    <string name="thread_policy_rr">SCHED_RR</string>
+    <string name="thread_policy_batch">SCHED_BATCH</string>
+    <string name="thread_policy_idle">SCHED_IDLE</string>
+    <string name="thread_policy_deadline">SCHED_DEADLINE</string>
+    <string name="thread_policy_unknown">Policy unknown</string>
+
+    <!-- Sensors -->
+    <string name="sensors_title">Sensors</string>
+    <string name="sensors_subtitle">What the sensor HAL reports about the parts in this device. Tap one to read it.</string>
+    <string name="sensors_loading">Reading the sensor list…</string>
+    <string name="sensors_empty">No sensors reported</string>
+    <string name="sensors_empty_hint">The platform returned an empty sensor list, which an emulator built without sensor support does.</string>
+    <string name="sensors_category_motion">Motion</string>
+    <string name="sensors_category_position">Position</string>
+    <string name="sensors_category_environment">Environment</string>
+    <string name="sensors_category_other">Other</string>
+    <string name="sensors_wakeup">Wake-up</string>
+    <string name="sensors_resolution">Resolution</string>
+    <string name="sensors_range">Maximum range</string>
+    <string name="sensors_power">Power</string>
+    <string name="sensors_milliamps">%1$.2f mA</string>
+    <string name="sensors_max_rate">Fastest rate</string>
+    <string name="sensors_hertz">%1$.0f Hz</string>
+    <string name="sensors_tap_to_read">Tap to read live values</string>
+    <string name="sensors_waiting">Waiting for the first event. A sensor that reports only on change may not send one for a while.</string>
+    <string name="sensors_value">Value</string>
+    <string name="sensors_value_indexed">Value %1$d</string>
+    <string name="sensors_value_with_unit">%1$s %2$s</string>
+    <string name="sensors_accuracy">Accuracy · %1$s</string>
+    <string name="sensors_accuracy_high">High</string>
+    <string name="sensors_accuracy_medium">Medium</string>
+    <string name="sensors_accuracy_low">Low</string>
+    <string name="sensors_accuracy_unreliable">Unreliable</string>
+    <string name="sensors_accuracy_no_contact">No contact</string>
+    <string name="sensors_unit_acceleration">m/s²</string>
+    <string name="sensors_unit_angular_rate">rad/s</string>
+    <string name="sensors_unit_magnetic">µT</string>
+    <string name="sensors_unit_lux">lx</string>
+    <string name="sensors_unit_pressure">hPa</string>
+    <string name="sensors_unit_centimetres">cm</string>
+    <!-- Not %%: this is read with getString and no arguments, which does no formatting at all. -->
+    <string name="sensors_unit_percent">%</string>
+    <string name="sensors_unit_celsius">°C</string>
+    <string name="sensors_unit_degrees">°</string>
+    <string name="sensors_unit_steps">steps</string>
 
     <!-- Storage and mounts -->
     <string name="storage_title">Storage</string>
