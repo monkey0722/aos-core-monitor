@@ -19,12 +19,14 @@
     <string name="destination_security">Security</string>
     <string name="destination_framework">Framework</string>
     <string name="destination_hal">HAL Interface</string>
-    <string name="destination_native_monitor">Native Monitor</string>
+    <string name="destination_sensors">Sensors</string>
+    <string name="destination_kernel_counters">Kernel Counters</string>
+    <string name="destination_threads">Threads</string>
     <string name="destination_network_stats">Network Stats</string>
     <string name="destination_tcp_connections">TCP Connections</string>
     <string name="destination_cpu_cores">CPU Cores</string>
     <string name="destination_memory_map">Memory Map</string>
-    <string name="destination_loaded_libraries">Libraries</string>
+    <string name="destination_loaded_libraries">Native Libraries</string>
     <string name="destination_storage">Storage</string>
 
     <!-- System logs -->
@@ -45,11 +47,11 @@
 
     <!-- System diagnostics -->
     <string name="diagnostics_title">System Diagnostics</string>
-    <string name="diagnostics_memory">Memory</string>
     <string name="diagnostics_screen_state">Screen State</string>
     <string name="diagnostics_screen_on">On</string>
     <string name="diagnostics_screen_off">Off</string>
-    <string name="diagnostics_running_processes">Running Processes</string>
+    <string name="diagnostics_running_processes">Processes Visible to This App</string>
+    <string name="diagnostics_processes_notice">Since Android 8, ActivityManager reports only the calling app\'s own process. Listing the rest needs root or a userdebug build.</string>
     <string name="diagnostics_no_processes">No process information available</string>
     <string name="diagnostics_dumpsys">Dumpsys Memory Info</string>
     <string name="diagnostics_loading">Loading…</string>
@@ -87,7 +89,7 @@
     <string name="framework_title">Framework Analysis</string>
     <string name="framework_tab_binder">Binder</string>
     <string name="framework_tab_api">API Calls</string>
-    <string name="framework_tab_services">Services</string>
+    <string name="framework_tab_services">App services</string>
     <string name="framework_binder_section">Binder Transactions</string>
     <string name="framework_binder_subtitle">Cross-process calls observed on this device</string>
     <string name="framework_binder_empty">No Binder transactions detected. Reading them needs root access or a userdebug build.</string>
@@ -118,41 +120,38 @@
     <!-- HAL interfaces -->
     <string name="hal_title">HAL Interfaces</string>
     <string name="hal_tab_interfaces">HAL</string>
-    <string name="hal_tab_services">Services</string>
+    <string name="hal_tab_services">Binder services</string>
     <string name="hal_tab_vndk">VNDK</string>
     <string name="hal_interfaces_section">Hardware Abstraction Layer</string>
     <string name="hal_interfaces_subtitle">HALs provide standardized interfaces to hardware components</string>
     <string name="hal_interfaces_empty">No HAL interface data available. Some of it needs elevated permissions.</string>
-    <string name="hal_services_section">Hardware Services</string>
-    <string name="hal_services_subtitle">System services that expose hardware functionality</string>
+    <string name="hal_services_section">Registered Binder Services</string>
+    <string name="hal_services_subtitle">Everything registered with servicemanager, as `service list` reports it</string>
     <string name="hal_services_empty">No hardware service data available.</string>
     <string name="hal_vndk_section">VNDK</string>
     <string name="hal_vndk_subtitle">Vendor Native Development Kit libraries</string>
     <string name="hal_vndk_version">VNDK version %1$s</string>
     <string name="hal_vndk_explainer">The VNDK is the set of libraries vendors build their HALs against. It keeps vendor implementations working across Android OS updates.</string>
-    <string name="hal_vndk_libraries">Libraries</string>
-    <string name="hal_vndk_empty">No VNDK library information available.</string>
+    <string name="hal_vndk_unset">ro.vndk.version is not set on this build. Android 15 removed the VNDK, so recent devices report no version at all.</string>
+    <string name="hal_vndk_libraries_hint">The shared libraries actually mapped into this process are listed on the Native Libraries screen.</string>
     <string name="hal_version">Version</string>
     <string name="hal_type">Type</string>
     <string name="hal_implementation">Implementation</string>
-    <string name="hal_service_server">Server</string>
-    <string name="hal_service_clients">Clients</string>
-    <string name="hal_service_no_clients">No clients bound</string>
+    <string name="hal_service_interface">Interface</string>
+    <string name="hal_service_no_interface">No interface descriptor reported</string>
     <string name="hal_sample_interfaces">lshal returned nothing on this device</string>
     <string name="hal_sample_services">`service list` returned nothing on this device</string>
 
-    <!-- Native system monitor -->
-    <string name="native_title">Native System Monitor</string>
-    <string name="native_cpu_section">CPU</string>
-    <string name="native_cpu_subtitle">System-wide counters from /proc/stat</string>
-    <string name="native_memory_section">Memory</string>
-    <string name="native_memory_subtitle">System-wide counters from /proc/meminfo</string>
-    <string name="native_process_section">This Process</string>
-    <string name="native_process_subtitle">Counters for the monitor app itself</string>
-    <string name="native_cpu_unavailable">System-wide CPU statistics come from /proc/stat, which SELinux does not let the app sandbox read on modern Android. Reading it needs a rooted or userdebug build. The per-process counters below stay available.</string>
-    <string name="native_memory_unavailable">No memory counters available.</string>
-    <string name="native_process_unavailable">No counters available for this process.</string>
-    <string name="native_kilobytes">%1$d kB</string>
+    <!-- Kernel counters -->
+    <string name="kernel_title">Kernel Counters</string>
+    <string name="kernel_subtitle">Raw system-wide counters, exactly as the kernel reports them. System Info summarises the same sources; this app\'s own counters are on the Memory Map screen.</string>
+    <string name="kernel_cpu_section">CPU</string>
+    <string name="kernel_cpu_subtitle">System-wide counters from /proc/stat</string>
+    <string name="kernel_memory_section">Memory</string>
+    <string name="kernel_memory_subtitle">System-wide counters from /proc/meminfo</string>
+    <string name="kernel_cpu_unavailable">System-wide CPU statistics come from /proc/stat, which SELinux does not let the app sandbox read on modern Android. Reading it needs a rooted or userdebug build.</string>
+    <string name="kernel_memory_unavailable">No memory counters available.</string>
+    <string name="kernel_kilobytes">%1$d kB</string>
 
     <!-- Network statistics -->
     <string name="network_title">Network Interfaces</string>
@@ -253,12 +252,12 @@
     <string name="memory_limit_open_files">Open files</string>
     <string name="memory_count">%1$d</string>
 
-    <!-- Loaded libraries -->
-    <string name="libraries_title">Loaded Libraries</string>
+    <!-- Native libraries -->
+    <string name="libraries_title">Native Libraries</string>
     <string name="libraries_loading">Walking the linker\'s module list…</string>
     <string name="libraries_unavailable">The native library did not load, so the linker\'s module list cannot be read.</string>
-    <string name="libraries_summary_section">Linked objects</string>
-    <string name="libraries_summary">%1$d objects · %2$s mapped</string>
+    <string name="libraries_summary_section">Loaded by the linker</string>
+    <string name="libraries_summary">%1$d objects · %2$s mapped into this process</string>
     <string name="libraries_load_events">%1$d loads · %2$d unloads since the process started</string>
     <string name="libraries_main_executable">(main executable)</string>
     <string name="libraries_build_id">Build ID %1$s</string>
@@ -269,6 +268,87 @@
         <item quantity="one">%1$d loadable segment</item>
         <item quantity="other">%1$d loadable segments</item>
     </plurals>
+
+    <!-- Threads and scheduling -->
+    <string name="threads_title">Threads &amp; Scheduling</string>
+    <string name="threads_loading">Reading /proc/self/task…</string>
+    <string name="threads_unavailable">The native library did not load, so this process\'s threads cannot be listed.</string>
+    <string name="threads_summary_section">This process</string>
+    <plurals name="threads_summary">
+        <item quantity="one">%1$d thread</item>
+        <item quantity="other">%1$d threads</item>
+    </plurals>
+    <string name="threads_allowed_cpus">Allowed CPUs</string>
+    <string name="threads_affinity_unavailable">Not readable</string>
+    <string name="threads_real_time">Real-time scheduled</string>
+    <plurals name="threads_real_time_count">
+        <item quantity="one">%1$d thread</item>
+        <item quantity="other">%1$d threads</item>
+    </plurals>
+    <string name="threads_section">Threads</string>
+    <string name="threads_subtitle">Busiest first, by CPU time used since each thread started</string>
+    <string name="threads_unnamed">Thread %1$d</string>
+    <string name="threads_cpu_time">%1$,d ms</string>
+    <string name="threads_identity">tid %1$d</string>
+    <string name="threads_nice">Nice</string>
+    <string name="threads_nice_with_rt">%1$d · real-time priority %2$d</string>
+    <string name="threads_affinity">Allowed CPUs</string>
+    <string name="threads_last_cpu">Last ran on CPU</string>
+    <string name="thread_state_running">Running</string>
+    <string name="thread_state_sleeping">Sleeping</string>
+    <string name="thread_state_disk_sleep">Uninterruptible</string>
+    <string name="thread_state_stopped">Stopped</string>
+    <string name="thread_state_tracing">Traced</string>
+    <string name="thread_state_zombie">Zombie</string>
+    <string name="thread_state_idle">Idle</string>
+    <string name="thread_state_unknown">State unknown</string>
+    <string name="thread_policy_other">SCHED_OTHER</string>
+    <string name="thread_policy_fifo">SCHED_FIFO</string>
+    <string name="thread_policy_rr">SCHED_RR</string>
+    <string name="thread_policy_batch">SCHED_BATCH</string>
+    <string name="thread_policy_idle">SCHED_IDLE</string>
+    <string name="thread_policy_deadline">SCHED_DEADLINE</string>
+    <string name="thread_policy_unknown">Policy unknown</string>
+
+    <!-- Sensors -->
+    <string name="sensors_title">Sensors</string>
+    <string name="sensors_subtitle">What the sensor HAL reports about the parts in this device. Tap one to read it.</string>
+    <string name="sensors_loading">Reading the sensor list…</string>
+    <string name="sensors_empty">No sensors reported</string>
+    <string name="sensors_empty_hint">The platform returned an empty sensor list, which an emulator built without sensor support does.</string>
+    <string name="sensors_category_motion">Motion</string>
+    <string name="sensors_category_position">Position</string>
+    <string name="sensors_category_environment">Environment</string>
+    <string name="sensors_category_other">Other</string>
+    <string name="sensors_wakeup">Wake-up</string>
+    <string name="sensors_resolution">Resolution</string>
+    <string name="sensors_range">Maximum range</string>
+    <string name="sensors_power">Power</string>
+    <string name="sensors_milliamps">%1$.2f mA</string>
+    <string name="sensors_max_rate">Fastest rate</string>
+    <string name="sensors_hertz">%1$.0f Hz</string>
+    <string name="sensors_tap_to_read">Tap to read live values</string>
+    <string name="sensors_waiting">Waiting for the first event. A sensor that reports only on change may not send one for a while.</string>
+    <string name="sensors_value">Value</string>
+    <string name="sensors_value_indexed">Value %1$d</string>
+    <string name="sensors_value_with_unit">%1$s %2$s</string>
+    <string name="sensors_accuracy">Accuracy · %1$s</string>
+    <string name="sensors_accuracy_high">High</string>
+    <string name="sensors_accuracy_medium">Medium</string>
+    <string name="sensors_accuracy_low">Low</string>
+    <string name="sensors_accuracy_unreliable">Unreliable</string>
+    <string name="sensors_accuracy_no_contact">No contact</string>
+    <string name="sensors_unit_acceleration">m/s²</string>
+    <string name="sensors_unit_angular_rate">rad/s</string>
+    <string name="sensors_unit_magnetic">µT</string>
+    <string name="sensors_unit_lux">lx</string>
+    <string name="sensors_unit_pressure">hPa</string>
+    <string name="sensors_unit_centimetres">cm</string>
+    <!-- Not %%: this is read with getString and no arguments, which does no formatting at all. -->
+    <string name="sensors_unit_percent">%</string>
+    <string name="sensors_unit_celsius">°C</string>
+    <string name="sensors_unit_degrees">°</string>
+    <string name="sensors_unit_steps">steps</string>
 
     <!-- Storage and mounts -->
     <string name="storage_title">Storage</string>

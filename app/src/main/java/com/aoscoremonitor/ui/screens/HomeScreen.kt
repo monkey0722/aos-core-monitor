@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -39,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -159,19 +161,32 @@ private fun DestinationTile(destination: Destination, index: Int, onClick: () ->
                         )
                     }
                 }
-                Text(
-                    text = stringResource(destination.shortTitleRes),
-                    style = MaterialTheme.typography.titleSmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = Spacing.Small),
-                    // Shrink to fit so long single words like "Diagnostics" are not broken
-                    // mid-word by the tile's width.
-                    maxLines = 2,
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = 10.sp,
-                        maxFontSize = MaterialTheme.typography.titleSmall.fontSize
+                // Two lines of room whether the label needs them or not. The column centres what it
+                // holds, so a label that wrapped made the content taller and pushed the icon up —
+                // "Kernel Counters" and "Native Libraries" sat a line above the tiles beside them.
+                //
+                // The label is centred in that room rather than laid at the top of it, which is
+                // what `minLines = 2` would do: that fixed the icons but left a line-high hole
+                // under every short label. Room measured from the style's line height, so it grows
+                // with the user's font scale instead of being pinned to a dp constant.
+                val labelStyle = MaterialTheme.typography.titleSmall
+                val labelHeight = with(LocalDensity.current) { labelStyle.lineHeight.toDp() * 2 }
+                Box(
+                    modifier = Modifier
+                        .padding(top = Spacing.Small)
+                        .height(labelHeight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(destination.shortTitleRes),
+                        style = labelStyle,
+                        textAlign = TextAlign.Center,
+                        // Shrink to fit so long single words like "Diagnostics" are not broken
+                        // mid-word by the tile's width.
+                        maxLines = 2,
+                        autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = labelStyle.fontSize)
                     )
-                )
+                }
             }
         }
     }
@@ -184,7 +199,7 @@ private val IconSize = 24.dp
 private const val STAGGER_STEP_MS = 35L
 
 /** One less than the number of tiles, so the last one still arrives after the one before it. */
-private const val MAX_STAGGER_STEPS = 12
+private const val MAX_STAGGER_STEPS = 14
 
 @Preview(name = "Home", showBackground = true)
 @Preview(name = "Home (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)

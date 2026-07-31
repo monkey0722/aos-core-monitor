@@ -3,6 +3,7 @@ package com.aoscoremonitor.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Cloud
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -101,8 +103,24 @@ sealed interface Destination : NavKey {
     }
 
     @Serializable
-    data object NativeSystemMonitor : Destination {
-        override val titleRes get() = R.string.native_title
+    data object Sensors : Destination {
+        override val titleRes get() = R.string.sensors_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.Sensors
+    }
+
+    @Serializable
+    data object Threads : Destination {
+        override val titleRes get() = R.string.threads_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.AccountTree
+    }
+
+    @Serializable
+    data object KernelCounters : Destination {
+        override val titleRes get() = R.string.kernel_title
 
         @Transient
         override val icon: ImageVector = Icons.Default.Memory
@@ -172,8 +190,10 @@ val HomeDestinations: List<Destination> = listOf(
     Destination.SecurityInfo,
     Destination.FrameworkAnalysis,
     Destination.HalInfo,
-    Destination.NativeSystemMonitor,
+    Destination.Sensors,
+    Destination.KernelCounters,
     Destination.CpuCores,
+    Destination.Threads,
     Destination.MemoryMap,
     Destination.LoadedLibraries,
     Destination.StorageMounts,
@@ -192,7 +212,9 @@ val Destination.shortTitleRes: Int
         Destination.SecurityInfo -> R.string.destination_security
         Destination.FrameworkAnalysis -> R.string.destination_framework
         Destination.HalInfo -> R.string.destination_hal
-        Destination.NativeSystemMonitor -> R.string.destination_native_monitor
+        Destination.Sensors -> R.string.destination_sensors
+        Destination.Threads -> R.string.destination_threads
+        Destination.KernelCounters -> R.string.destination_kernel_counters
         Destination.NetworkStats -> R.string.destination_network_stats
         Destination.TcpConnections -> R.string.destination_tcp_connections
         Destination.CpuCores -> R.string.destination_cpu_cores

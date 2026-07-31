@@ -13,15 +13,17 @@ import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.HomeScreen
 import com.aoscoremonitor.ui.screens.LogScreen
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
+import com.aoscoremonitor.ui.screens.SensorsScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.jni.CpuCoresScreen
+import com.aoscoremonitor.ui.screens.jni.KernelCountersScreen
 import com.aoscoremonitor.ui.screens.jni.LoadedLibrariesScreen
 import com.aoscoremonitor.ui.screens.jni.MemoryMapScreen
-import com.aoscoremonitor.ui.screens.jni.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.screens.jni.NetworkStatsScreen
 import com.aoscoremonitor.ui.screens.jni.StorageMountsScreen
 import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
+import com.aoscoremonitor.ui.screens.jni.ThreadsScreen
 
 /**
  * The app's single navigation host.
@@ -74,7 +76,9 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.SecurityInfo> { SecurityInfoScreen(onNavigateBack = goBack) }
                 entry<Destination.FrameworkAnalysis> { FrameworkAnalysisScreen(onNavigateBack = goBack) }
                 entry<Destination.HalInfo> { HalInfoScreen(onNavigateBack = goBack) }
-                entry<Destination.NativeSystemMonitor> { NativeSystemMonitorScreen(onNavigateBack = goBack) }
+                entry<Destination.Sensors> { SensorsScreen(onNavigateBack = goBack) }
+                entry<Destination.Threads> { ThreadsScreen(onNavigateBack = goBack) }
+                entry<Destination.KernelCounters> { KernelCountersScreen(onNavigateBack = goBack) }
                 entry<Destination.NetworkStats> { NetworkStatsScreen(onNavigateBack = goBack) }
                 entry<Destination.TcpConnections> { TcpConnectionsScreen(onNavigateBack = goBack) }
                 entry<Destination.CpuCores> { CpuCoresScreen(onNavigateBack = goBack) }

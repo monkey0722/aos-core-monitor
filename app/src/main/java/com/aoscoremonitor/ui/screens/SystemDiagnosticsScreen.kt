@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -60,13 +59,6 @@ private fun SystemDiagnosticsContent(
             contentPadding = PaddingValues(Spacing.Large),
             verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
         ) {
-            item(key = "memory") {
-                InfoCard(
-                    title = stringResource(R.string.diagnostics_memory),
-                    value = diagnostics.availableMemory,
-                    icon = Icons.Default.Memory
-                )
-            }
             item(key = "screen") {
                 InfoCard(
                     title = stringResource(R.string.diagnostics_screen_state),
@@ -83,7 +75,10 @@ private fun SystemDiagnosticsContent(
                     title = stringResource(R.string.diagnostics_running_processes),
                     text = diagnostics.runningProcesses.joinToString("\n")
                         .ifEmpty { stringResource(R.string.diagnostics_no_processes) },
-                    icon = Icons.AutoMirrored.Filled.List
+                    icon = Icons.AutoMirrored.Filled.List,
+                    // The heading used to read "Running Processes" over a list that the platform
+                    // has limited to one entry since Android 8 — this app's own process.
+                    supportingText = stringResource(R.string.diagnostics_processes_notice)
                 )
             }
             item(key = "dumpsys") {
@@ -105,8 +100,7 @@ private fun SystemDiagnosticsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
         SystemDiagnosticsContent(
             diagnostics = SystemDiagnosticsCollector.DiagnosticsInfo(
-                runningProcesses = listOf("com.android.systemui", "com.google.android.gms", "com.aoscoremonitor"),
-                availableMemory = "1686 MB available",
+                runningProcesses = listOf("com.aoscoremonitor"),
                 screenOn = true,
                 dumpsysResult = "Applications Memory Usage (in Kilobytes):\nUptime: 843211 Realtime: 843211"
             ),

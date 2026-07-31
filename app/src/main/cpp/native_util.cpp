@@ -284,6 +284,13 @@ JsonWriter& JsonWriter::Value(uint64_t value) {
   return *this;
 }
 
+JsonWriter& JsonWriter::Value(int64_t value) {
+  Separate();
+  out_.append(std::to_string(value));
+  needs_comma_ = true;
+  return *this;
+}
+
 JsonWriter& JsonWriter::Value(bool value) {
   Separate();
   out_.append(value ? "true" : "false");
@@ -312,6 +319,10 @@ JsonWriter& JsonWriter::Field(std::string_view key, std::string_view value) {
 }
 
 JsonWriter& JsonWriter::Field(std::string_view key, uint64_t value) {
+  return Key(key).Value(value);
+}
+
+JsonWriter& JsonWriter::Field(std::string_view key, int64_t value) {
   return Key(key).Value(value);
 }
 

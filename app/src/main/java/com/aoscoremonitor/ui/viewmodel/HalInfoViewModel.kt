@@ -23,7 +23,7 @@ class HalInfoViewModel(context: Context) : ViewModel() {
         val EMPTY = HalInterfaceCollector.HalData(
             halInterfaces = Collected.real(emptyList()),
             hwServices = Collected.real(emptyList()),
-            vndkInfo = HalInterfaceCollector.VndkInfo(version = "—", libraries = emptyList())
+            vndkInfo = HalInterfaceCollector.VndkInfo(version = null)
         )
     }
 }
