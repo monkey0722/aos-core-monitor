@@ -18,13 +18,12 @@ import kotlinx.coroutines.withContext
 class SystemDiagnosticsCollector(private val context: Context, private val onUpdate: (DiagnosticsInfo) -> Unit) {
     /**
      * Data class containing system diagnostic information.
+     *
+     * Available memory was here too, read from the same `ActivityManager.MemoryInfo.availMem` the
+     * system info collector reads a second earlier. Two collectors polling one API for one figure
+     * put the same number on two screens, so the figure lives on the system info screen alone now.
      */
-    data class DiagnosticsInfo(
-        val runningProcesses: List<String>,
-        val availableMemory: String,
-        val screenOn: Boolean,
-        val dumpsysResult: String
-    )
+    data class DiagnosticsInfo(val runningProcesses: List<String>, val screenOn: Boolean, val dumpsysResult: String)
 
     // Maintain CoroutineScope at class level
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -45,14 +44,10 @@ class SystemDiagnosticsCollector(private val context: Context, private val onUpd
 
                 while (isActive) {
                     // --- Get running process information from ActivityManager ---
+                    // Since Android 8 this returns the caller's own process and nothing else, which
+                    // is what the screen's heading and note now say.
                     val runningAppProcesses = activityManager.runningAppProcesses
                     val processNames = runningAppProcesses?.map { it.processName } ?: emptyList()
-
-                    // --- Get memory information from ActivityManager ---
-                    val memoryInfo = ActivityManager.MemoryInfo()
-                    activityManager.getMemoryInfo(memoryInfo)
-                    val availMemMB = memoryInfo.availMem / (1024 * 1024)
-                    val memoryStatus = "Available: $availMemMB MB"
 
                     // --- Get screen state from PowerManager ---
                     val screenOn = powerManager.isInteractive
@@ -63,7 +58,6 @@ class SystemDiagnosticsCollector(private val context: Context, private val onUpd
                     // --- Notify diagnostic information ---
                     val diagnosticsInfo = DiagnosticsInfo(
                         runningProcesses = processNames,
-                        availableMemory = memoryStatus,
                         screenOn = screenOn,
                         dumpsysResult = dumpsysResult
                     )

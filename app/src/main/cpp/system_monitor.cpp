@@ -66,35 +66,9 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getMemInfoNative(JNI
   });
 }
 
-// Function to get process information
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_aoscoremonitor_diagnostics_jni_NativeSystemMonitor_getProcessInfoNative(JNIEnv* env,
-                                                                                 jobject /* this */,
-                                                                                 jint pid) {
-  return aoscm::ReturnJson(env, [pid] {
-    std::stringstream path;
-    path << "/proc/" << pid << "/status";
-
-    std::ifstream status_file(path.str());
-    std::string line;
-    std::stringstream result;
-
-    if (!status_file.is_open()) {
-      LOGE("Failed to open %s", path.str().c_str());
-      return std::string("Error: Process not found or permission denied");
-    }
-
-    // Read contents of the status file
-    while (std::getline(status_file, line)) {
-      result << line << "\n";
-    }
-
-    status_file.close();
-    LOGI("Read process info for PID: %d", pid);
-
-    return result.str();
-  });
-}
+// A getProcessInfoNative(pid) returning /proc/<pid>/status verbatim used to sit here.
+// memory_map.cpp reads the same file for this process and picks out the lines worth showing, so the
+// two readings reached the UI as two screens of the same counters. This one went; that one stayed.
 
 // Function to get network interface statistics
 extern "C" JNIEXPORT jstring JNICALL

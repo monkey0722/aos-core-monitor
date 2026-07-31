@@ -38,7 +38,14 @@ import com.aoscoremonitor.ui.theme.Spacing
  * neither short nor long output. Expanding in place removes the inner scroller entirely.
  */
 @Composable
-fun ExpandableTextCard(title: String, text: String, icon: ImageVector, modifier: Modifier = Modifier, collapsedLines: Int = 8) {
+fun ExpandableTextCard(
+    title: String,
+    text: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+    collapsedLines: Int = 8
+) {
     var expanded by rememberSaveable(title) { mutableStateOf(false) }
     val canExpand = text.lineSequence().take(collapsedLines + 1).count() > collapsedLines
 
@@ -78,6 +85,17 @@ fun ExpandableTextCard(title: String, text: String, icon: ImageVector, modifier:
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            // Prose about the reading, in the body font rather than the machine one below: what
+            // limits a reading is not part of it. The diagnostics screen uses this to say that the
+            // platform will only ever report one process here.
+            if (supportingText != null) {
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.Small)
+                )
             }
             Spacer(modifier = Modifier.padding(top = Spacing.Small))
             Text(

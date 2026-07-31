@@ -101,8 +101,8 @@ sealed interface Destination : NavKey {
     }
 
     @Serializable
-    data object NativeSystemMonitor : Destination {
-        override val titleRes get() = R.string.native_title
+    data object KernelCounters : Destination {
+        override val titleRes get() = R.string.kernel_title
 
         @Transient
         override val icon: ImageVector = Icons.Default.Memory
@@ -172,7 +172,7 @@ val HomeDestinations: List<Destination> = listOf(
     Destination.SecurityInfo,
     Destination.FrameworkAnalysis,
     Destination.HalInfo,
-    Destination.NativeSystemMonitor,
+    Destination.KernelCounters,
     Destination.CpuCores,
     Destination.MemoryMap,
     Destination.LoadedLibraries,
@@ -192,7 +192,7 @@ val Destination.shortTitleRes: Int
         Destination.SecurityInfo -> R.string.destination_security
         Destination.FrameworkAnalysis -> R.string.destination_framework
         Destination.HalInfo -> R.string.destination_hal
-        Destination.NativeSystemMonitor -> R.string.destination_native_monitor
+        Destination.KernelCounters -> R.string.destination_kernel_counters
         Destination.NetworkStats -> R.string.destination_network_stats
         Destination.TcpConnections -> R.string.destination_tcp_connections
         Destination.CpuCores -> R.string.destination_cpu_cores

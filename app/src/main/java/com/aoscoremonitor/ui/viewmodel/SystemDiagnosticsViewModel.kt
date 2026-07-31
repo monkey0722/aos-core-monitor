@@ -26,7 +26,6 @@ class SystemDiagnosticsViewModel(context: Context) : ViewModel() {
     private companion object {
         val EMPTY = SystemDiagnosticsCollector.DiagnosticsInfo(
             runningProcesses = emptyList(),
-            availableMemory = "—",
             screenOn = false,
             dumpsysResult = ""
         )

@@ -23,7 +23,6 @@ class NativeSystemMonitor {
     // Native methods
     external fun getCpuInfoNative(): String
     external fun getMemInfoNative(): String
-    external fun getProcessInfoNative(pid: Int): String
     external fun getNetworkStatsNative(): String
     external fun getTcpConnectionsNative(): String
 
@@ -71,25 +70,9 @@ class NativeSystemMonitor {
         memInfo
     }
 
-    suspend fun getProcessInfo(pid: Int): Map<String, String> = withContext(Dispatchers.IO) {
-        val processInfo = mutableMapOf<String, String>()
-        if (!isLibraryAvailable) return@withContext processInfo
-        try {
-            val rawData = getProcessInfoNative(pid)
-            for (line in rawData.split("\n")) {
-                if (line.isBlank()) continue
-                val colonIndex = line.indexOf(':')
-                if (colonIndex > 0) {
-                    val key = line.substring(0, colonIndex).trim()
-                    val value = line.substring(colonIndex + 1).trim()
-                    processInfo[key] = value
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing process info", e)
-        }
-        processInfo
-    }
+    // A getProcessInfo(pid) reading this process's /proc/self/status used to sit here. The memory
+    // map screen reads the same file through NativeMemoryInspector and shows a curated subset of
+    // it, so the two screens carried the same counters; this one went and that one stayed.
 
     data class InterfaceStats(
         val rxBytes: Long,

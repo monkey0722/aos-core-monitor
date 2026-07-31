@@ -28,9 +28,26 @@ class HalInterfaceCollector(private val context: Context, private val onUpdate: 
         val status: String
     )
 
-    data class HwService(val name: String, val server: String, val clients: List<String>)
+    /**
+     * One entry from `service list`: a name registered with servicemanager, and the interface
+     * descriptor it publishes.
+     *
+     * This used to carry `server` and `clients` as well. Neither came from the device: every entry
+     * was given `server = "system_server"` and the same two client packages, because `service list`
+     * reports neither. The screen presented them as readings. The descriptor below is what that
+     * command actually prints.
+     */
+    data class HwService(val name: String, val interfaceDescriptor: String)
 
-    data class VndkInfo(val version: String, val libraries: List<String>)
+    /**
+     * The VNDK version this build declares, if any.
+     *
+     * The library list that used to hang off this was a hard-coded set of five names — the same
+     * five whether or not the property was readable — with a fabricated "30" standing in for the
+     * version when `getprop` returned nothing. Both are gone: the libraries actually mapped into
+     * the process are the loaded-libraries screen's subject, and are read from the linker there.
+     */
+    data class VndkInfo(val version: String?)
 
     companion object {
         /**
@@ -77,26 +94,9 @@ class HalInterfaceCollector(private val context: Context, private val onUpdate: 
 
         /** Shown when `service list` produces nothing. */
         private val SAMPLE_HW_SERVICES = listOf(
-            HwService(
-                name = "SurfaceFlinger",
-                server = "surfaceflinger",
-                clients = listOf("system_server", "com.android.systemui")
-            ),
-            HwService(
-                name = "audio",
-                server = "audioserver",
-                clients = listOf("com.android.music", "com.spotify.music")
-            ),
-            HwService(
-                name = "camera",
-                server = "cameraserver",
-                clients = listOf("com.android.camera")
-            ),
-            HwService(
-                name = "power",
-                server = "system_server",
-                clients = listOf("com.android.systemui", "com.android.settings")
-            )
+            HwService(name = "SurfaceFlinger", interfaceDescriptor = "android.ui.ISurfaceComposer"),
+            HwService(name = "audio", interfaceDescriptor = "android.media.IAudioService"),
+            HwService(name = "power", interfaceDescriptor = "android.os.IPowerManager")
         )
     }
 
@@ -205,20 +205,15 @@ class HalInterfaceCollector(private val context: Context, private val onUpdate: 
             while (true) {
                 val line = reader.readLine() ?: break
                 if (line.contains(": [")) {
-                    // Parse service information
+                    // A line reads "12  power: [android.os.IPowerManager]", so the name is what
+                    // precedes the colon once its index is dropped, and the descriptor is what sits
+                    // in the brackets. The descriptor was parsed here before and then thrown away.
                     val parts = line.split(": [")
                     if (parts.size >= 2) {
-                        val serviceName = parts[0].trim()
-                        val serviceInfo = parts[1].replace("]", "").trim()
+                        val serviceName = parts[0].substringAfter('\t').trim()
+                        val descriptor = parts[1].substringBefore(']').trim()
 
-                        services.add(
-                            HwService(
-                                name = serviceName,
-                                // Most services run in system_server
-                                server = "system_server",
-                                clients = listOf("com.android.systemui", "com.android.settings")
-                            )
-                        )
+                        services.add(HwService(name = serviceName, interfaceDescriptor = descriptor))
                     }
                 }
             }
@@ -232,12 +227,16 @@ class HalInterfaceCollector(private val context: Context, private val onUpdate: 
         return services
     }
 
+    /**
+     * Reads `ro.vndk.version`, and reports nothing when it is unset.
+     *
+     * Unset is the normal answer on a current device — Android 15 removed the VNDK — so the screen
+     * says that rather than showing the "30" this used to substitute silently.
+     */
     private suspend fun collectVndkInfo(): VndkInfo {
-        var vndkVersion = "Unknown"
-        val libraries = mutableListOf<String>()
+        var vndkVersion: String? = null
 
         try {
-            // Get VNDK version
             val versionProcess = Runtime.getRuntime().exec("getprop ro.vndk.version")
             val versionReader = BufferedReader(InputStreamReader(versionProcess.inputStream))
             val version = versionReader.readLine()
@@ -246,42 +245,10 @@ class HalInterfaceCollector(private val context: Context, private val onUpdate: 
             }
             versionReader.close()
             versionProcess.destroy()
-
-            // List some VNDK libraries (would need root to actually list the directory)
-            if (vndkVersion != "Unknown") {
-                libraries.addAll(
-                    listOf(
-                        "libc++.so",
-                        "libhardware.so",
-                        "libhidlbase.so",
-                        "libutils.so",
-                        "libcutils.so"
-                    )
-                )
-            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        // If no real data is available, provide example data
-        if (vndkVersion == "Unknown") {
-            vndkVersion = "30" // Example for Android 11
-            libraries.addAll(
-                listOf(
-                    "libc++.so",
-                    "libhardware.so",
-                    "libhidlbase.so",
-                    "libutils.so",
-                    "libcutils.so",
-                    "libui.so",
-                    "libgui.so"
-                )
-            )
-        }
-
-        return VndkInfo(
-            version = vndkVersion,
-            libraries = libraries
-        )
+        return VndkInfo(version = vndkVersion)
     }
 }

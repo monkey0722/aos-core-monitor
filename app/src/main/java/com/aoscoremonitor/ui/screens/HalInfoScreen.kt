@@ -36,7 +36,6 @@ import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.components.StatusRow
 import com.aoscoremonitor.ui.components.TabContentList
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
-import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.HalInfoViewModel
 import com.aoscoremonitor.ui.viewmodel.monitorViewModel
@@ -61,7 +60,9 @@ private fun HalInfoContent(halData: HalInterfaceCollector.HalData, onNavigateBac
     val tabs = listOf(
         MonitorTab(stringResource(R.string.hal_tab_interfaces), Icons.Default.Hardware, halData.halInterfaces.value.size),
         MonitorTab(stringResource(R.string.hal_tab_services), Icons.Default.Devices, halData.hwServices.value.size),
-        MonitorTab(stringResource(R.string.hal_tab_vndk), Icons.Default.Memory, halData.vndkInfo.libraries.size)
+        // No count: the tab holds one property, not a list. It used to be badged with the length of
+        // a hard-coded library list, so the badge said "5" on every device.
+        MonitorTab(stringResource(R.string.hal_tab_vndk), Icons.Default.Memory)
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
@@ -147,11 +148,10 @@ private fun HwServicesTab(collected: Collected<List<HalInterfaceCollector.HwServ
             items(services, key = { it.name }) { service ->
                 MonitorCard {
                     Text(text = service.name, style = MaterialTheme.typography.titleMedium)
-                    LabeledValue(stringResource(R.string.hal_service_server), service.server)
                     LabeledValue(
-                        label = stringResource(R.string.hal_service_clients),
-                        value = service.clients.joinToString("\n")
-                            .ifEmpty { stringResource(R.string.hal_service_no_clients) }
+                        label = stringResource(R.string.hal_service_interface),
+                        value = service.interfaceDescriptor
+                            .ifEmpty { stringResource(R.string.hal_service_no_interface) }
                     )
                 }
             }
@@ -171,8 +171,13 @@ private fun VndkInfoTab(vndkInfo: HalInterfaceCollector.VndkInfo, modifier: Modi
         }
         item(key = "version") {
             MonitorCard {
+                val version = vndkInfo.version
                 Text(
-                    text = stringResource(R.string.hal_vndk_version, vndkInfo.version),
+                    text = if (version != null) {
+                        stringResource(R.string.hal_vndk_version, version)
+                    } else {
+                        stringResource(R.string.hal_vndk_unset)
+                    },
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
@@ -182,23 +187,17 @@ private fun VndkInfoTab(vndkInfo: HalInterfaceCollector.VndkInfo, modifier: Modi
                 )
             }
         }
-        item(key = "libraries-header") {
-            SectionHeader(title = stringResource(R.string.hal_vndk_libraries))
-        }
-        if (vndkInfo.libraries.isEmpty()) {
-            item(key = "empty") { EmptyState(stringResource(R.string.hal_vndk_empty)) }
-        } else {
-            // A library name is one line of text; a card each turned the list into a wall of
-            // rounded rectangles, so they are plain rows now.
-            items(vndkInfo.libraries, key = { it }) { library ->
-                Text(
-                    text = library,
-                    style = MonitorTypography.machineText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = Spacing.ExtraSmall)
-                )
-            }
+        // The list of library names that stood here was hard-coded, and named files this app never
+        // read. What is genuinely mapped into the process is on the native libraries screen.
+        item(key = "libraries-hint") {
+            Text(
+                text = stringResource(R.string.hal_vndk_libraries_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = Spacing.Small)
+            )
         }
     }
 }
@@ -241,7 +240,7 @@ private fun HalInfoPreview() {
                     )
                 ),
                 hwServices = Collected.real(emptyList()),
-                vndkInfo = HalInterfaceCollector.VndkInfo(version = "36", libraries = listOf("libbase.so", "libcutils.so"))
+                vndkInfo = HalInterfaceCollector.VndkInfo(version = "36")
             ),
             onNavigateBack = {}
         )
