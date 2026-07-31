@@ -12,15 +12,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class HalInterfaceAnalyzer(
-    private val context: Context,
-    private val onDataCollected: (HalData) -> Unit
-) {
-    data class HalData(
-        val halInterfaces: List<HalInterface>,
-        val hwservices: List<HwService>,
-        val vndkInfo: VndkInfo
-    )
+class HalInterfaceAnalyzer(private val context: Context, private val onDataCollected: (HalData) -> Unit) {
+    data class HalData(val halInterfaces: List<HalInterface>, val hwservices: List<HwService>, val vndkInfo: VndkInfo)
 
     data class HalInterface(
         val name: String,
@@ -31,16 +24,9 @@ class HalInterfaceAnalyzer(
         val status: String
     )
 
-    data class HwService(
-        val name: String,
-        val server: String,
-        val clients: List<String>
-    )
+    data class HwService(val name: String, val server: String, val clients: List<String>)
 
-    data class VndkInfo(
-        val version: String,
-        val libraries: List<String>
-    )
+    data class VndkInfo(val version: String, val libraries: List<String>)
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
@@ -91,19 +77,19 @@ class HalInterfaceAnalyzer(
             val process = Runtime.getRuntime().exec("lshal")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-            var line: String?
             var skipHeader = true
 
-            while (reader.readLine().also { line = it } != null) {
+            while (true) {
+                val line = reader.readLine() ?: break
                 if (skipHeader) {
-                    if (line?.contains("Interface") == true && line?.contains("Transport") == true) {
+                    if (line.contains("Interface") && line.contains("Transport")) {
                         skipHeader = false
                     }
                     continue
                 }
 
                 // Parse HAL interface information from lshal output
-                val parts = line?.split("\\s+".toRegex())?.filter { it.isNotEmpty() } ?: continue
+                val parts = line.split("\\s+".toRegex()).filter { it.isNotEmpty() }
                 if (parts.size >= 5) {
                     val name = parts[0]
                     val impl = parts[2]
@@ -187,12 +173,11 @@ class HalInterfaceAnalyzer(
             val process = Runtime.getRuntime().exec("service list")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-            var line: String?
-
-            while (reader.readLine().also { line = it } != null) {
-                if (line?.contains(": [") == true) {
+            while (true) {
+                val line = reader.readLine() ?: break
+                if (line.contains(": [")) {
                     // Parse service information
-                    val parts = line?.split(": [") ?: continue
+                    val parts = line.split(": [")
                     if (parts.size >= 2) {
                         val serviceName = parts[0].trim()
                         val serviceInfo = parts[1].replace("]", "").trim()

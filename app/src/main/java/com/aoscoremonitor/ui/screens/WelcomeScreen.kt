@@ -232,9 +232,4 @@ private fun GridMenuItem(menuItem: MenuItem, visible: Boolean, modifier: Modifie
     }
 }
 
-private data class MenuItem(
-    val title: String,
-    val icon: ImageVector,
-    val color: Color,
-    val onClick: () -> Unit
-)
+private data class MenuItem(val title: String, val icon: ImageVector, val color: Color, val onClick: () -> Unit)

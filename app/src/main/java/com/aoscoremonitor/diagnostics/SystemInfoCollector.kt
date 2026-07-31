@@ -19,16 +19,8 @@ import kotlinx.coroutines.withContext
  * A class that periodically collects various system information (CPU/Memory, Battery, Network)
  * and notifies through callbacks.
  */
-class SystemInfoCollector(
-    private val context: Context,
-    private val onInfoUpdated: (SystemInfo) -> Unit
-) {
-    data class SystemInfo(
-        val cpuUsage: String,
-        val memoryUsage: String,
-        val batteryStatus: String,
-        val networkStatus: String
-    )
+class SystemInfoCollector(private val context: Context, private val onInfoUpdated: (SystemInfo) -> Unit) {
+    data class SystemInfo(val cpuUsage: String, val memoryUsage: String, val batteryStatus: String, val networkStatus: String)
 
     // Define dedicated CoroutineScope with SupervisorJob
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

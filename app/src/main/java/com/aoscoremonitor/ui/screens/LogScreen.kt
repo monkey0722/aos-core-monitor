@@ -42,9 +42,10 @@ fun LogDisplay(logs: List<String>, onNavigateBack: () -> Unit, modifier: Modifie
     // Show "Scroll to bottom" button only if there are enough logs at the bottom
     val showScrollToBottom by remember {
         derivedStateOf {
-            lazyListState.canScrollForward || (
-                logs.isNotEmpty() && !lazyListState.isScrolledToEnd() && lazyListState.firstVisibleItemIndex > 0
-                )
+            lazyListState.canScrollForward ||
+                (
+                    logs.isNotEmpty() && !lazyListState.isScrolledToEnd() && lazyListState.firstVisibleItemIndex > 0
+                    )
         }
     }
 
@@ -137,33 +138,31 @@ fun LogItem(log: String) {
 }
 
 @Composable
-private fun getLogColors(log: String): Pair<Color, Color> {
-    return when {
-        log.contains(" E ", ignoreCase = true) ||
-            log.contains("error", ignoreCase = true) ||
-            log.contains(
-                "exception",
-                ignoreCase = true
-            ) -> {
-            // Error logs
-            MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        }
-        log.contains(" W ", ignoreCase = true) || log.contains("warning", ignoreCase = true) -> {
-            // Warning logs
-            MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-        }
-        log.contains(" I ", ignoreCase = true) || log.contains("info", ignoreCase = true) -> {
-            // Info logs
-            MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
-        }
-        log.contains(" D ", ignoreCase = true) || log.contains("debug", ignoreCase = true) -> {
-            // Debug logs
-            MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
-        }
-        else -> {
-            // Other logs
-            MaterialTheme.colorScheme.onSurface to MaterialTheme.colorScheme.surface
-        }
+private fun getLogColors(log: String): Pair<Color, Color> = when {
+    log.contains(" E ", ignoreCase = true) ||
+        log.contains("error", ignoreCase = true) ||
+        log.contains(
+            "exception",
+            ignoreCase = true
+        ) -> {
+        // Error logs
+        MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+    }
+    log.contains(" W ", ignoreCase = true) || log.contains("warning", ignoreCase = true) -> {
+        // Warning logs
+        MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+    }
+    log.contains(" I ", ignoreCase = true) || log.contains("info", ignoreCase = true) -> {
+        // Info logs
+        MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+    }
+    log.contains(" D ", ignoreCase = true) || log.contains("debug", ignoreCase = true) -> {
+        // Debug logs
+        MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
+    }
+    else -> {
+        // Other logs
+        MaterialTheme.colorScheme.onSurface to MaterialTheme.colorScheme.surface
     }
 }
 

@@ -531,8 +531,4 @@ fun EmptyStateMessage(message: String) {
 }
 
 // Data class to represent tab information
-private data class TabInfo(
-    val title: String,
-    val icon: ImageVector,
-    val count: Int
-)
+private data class TabInfo(val title: String, val icon: ImageVector, val count: Int)

@@ -15,10 +15,7 @@ import kotlinx.coroutines.withContext
 /**
  * A class that analyzes system state using public APIs of AOSP internal services.
  */
-class SystemDiagnosticsCollector(
-    private val context: Context,
-    private val onDiagnosticsUpdated: (DiagnosticsInfo) -> Unit
-) {
+class SystemDiagnosticsCollector(private val context: Context, private val onDiagnosticsUpdated: (DiagnosticsInfo) -> Unit) {
     /**
      * Data class containing system diagnostic information.
      */
@@ -94,12 +91,10 @@ class SystemDiagnosticsCollector(
     /**
      * Gets the result of dumpsys meminfo.
      */
-    private fun readDumpsysResult(): String {
-        return try {
-            val process = Runtime.getRuntime().exec("dumpsys meminfo")
-            process.inputStream.bufferedReader().use { it.readText() }
-        } catch (e: Exception) {
-            "Error reading dumpsys: ${e.message}"
-        }
+    private fun readDumpsysResult(): String = try {
+        val process = Runtime.getRuntime().exec("dumpsys meminfo")
+        process.inputStream.bufferedReader().use { it.readText() }
+    } catch (e: Exception) {
+        "Error reading dumpsys: ${e.message}"
     }
 }

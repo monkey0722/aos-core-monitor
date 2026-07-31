@@ -1,8 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("org.jlleitschuh.gradle.ktlint") version "12.3.0"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
 }
 
 ktlint {
@@ -16,7 +15,7 @@ ktlint {
 
 android {
     namespace = "com.aoscoremonitor"
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = "27.1.12297006"
 
     externalNativeBuild {
@@ -51,9 +50,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
     }
     buildFeatures {
         compose = true

@@ -61,9 +61,12 @@ fun TcpConnectionsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifi
             // Check if this is dummy data by comparing with known dummy data patterns
             // This is a simple heuristic - we check if the data contains the exact local addresses from dummy data
             isDummyData = tcpConnections.any { conn ->
-                conn.localAddress == "0100007F:1F90" || // 127.0.0.1:8080
-                    conn.localAddress == "0100007F:01BB" || // 127.0.0.1:443
-                    conn.localAddress == "0100007F:0050" || // 127.0.0.1:80
+                conn.localAddress == "0100007F:1F90" ||
+                    // 127.0.0.1:8080
+                    conn.localAddress == "0100007F:01BB" ||
+                    // 127.0.0.1:443
+                    conn.localAddress == "0100007F:0050" ||
+                    // 127.0.0.1:80
                     conn.localAddress == "78563412:0CEA" // 18.52.86.120:3338
             }
 
