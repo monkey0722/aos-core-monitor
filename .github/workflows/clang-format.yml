@@ -6,26 +6,31 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   clang-format:
     name: Check C++ Code Formatting
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
 
     steps:
-      - name: Clone repo
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format
-
-      - name: Check C++ formatting
+      - name: Check C/C++ formatting
+        shell: bash
         run: |
-          find app/src/main/cpp -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | xargs clang-format -style=file -i
-          git diff --exit-code
-
-      - name: Show formatting issues
-        if: failure()
-        run: |
-          echo "C++ code formatting issues found. Please fix the formatting according to the style guide."
-          git diff
-          exit 1
+          find app/src/main/cpp -type f \
+            \( -name "*.c" -o -name "*.cc" -o -name "*.cxx" \
+               -o -name "*.h" -o -name "*.hh" -o -name "*.hpp" \) \
+            -print0 |
+            xargs -0 --no-run-if-empty \
+              clang-format-18 --dry-run --Werror --style=file
