@@ -21,7 +21,6 @@ data class MountPoint(
     val totalBytes: Long? = null,
     val freeBytes: Long? = null,
     val availableBytes: Long? = null,
-    val blockSize: Long? = null,
     val inodesTotal: Long? = null,
     val inodesFree: Long? = null
 ) {
@@ -102,7 +101,6 @@ internal fun parseMounts(json: String): List<MountPoint> = JSONObject(json).optJ
         totalBytes = if (measured) mount.longOrNull("total_bytes") else null,
         freeBytes = if (measured) mount.longOrNull("free_bytes") else null,
         availableBytes = if (measured) mount.longOrNull("available_bytes") else null,
-        blockSize = if (measured) mount.longOrNull("block_size") else null,
         inodesTotal = if (measured) mount.longOrNull("inodes_total") else null,
         inodesFree = if (measured) mount.longOrNull("inodes_free") else null
     )

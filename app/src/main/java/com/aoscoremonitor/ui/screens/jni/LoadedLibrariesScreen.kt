@@ -173,7 +173,7 @@ private fun ModuleCard(module: LoadedModule, modifier: Modifier = Modifier) {
         ) {
             if (module.hasRelro) ModuleTag(stringResource(R.string.libraries_relro))
             if (module.hasTls) ModuleTag(stringResource(R.string.libraries_tls))
-            ModuleTag(pluralStringResource(R.plurals.libraries_segments, module.segments.size, module.segments.size))
+            ModuleTag(pluralStringResource(R.plurals.libraries_segments, module.segmentCount, module.segmentCount))
         }
     }
 }
@@ -213,8 +213,7 @@ private fun LoadedLibrariesPreview() {
                             buildId = "9f2c14ad55e0b3771c0e4a8d2b7f6613",
                             hasRelro = true,
                             hasTls = true,
-                            headerCount = 9,
-                            segments = emptyList()
+                            segmentCount = 4
                         ),
                         LoadedModule(
                             path = "/apex/com.android.runtime/lib64/bionic/libc.so",
@@ -223,8 +222,7 @@ private fun LoadedLibrariesPreview() {
                             buildId = "1ab3ff90c7d5e2418800aa11bc93de77",
                             hasRelro = true,
                             hasTls = true,
-                            headerCount = 8,
-                            segments = emptyList()
+                            segmentCount = 4
                         )
                     ),
                     loadEvents = 231,

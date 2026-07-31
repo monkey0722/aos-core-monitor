@@ -5,9 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-/** One loadable segment of an ELF object, and how much address space it takes. */
-data class ModuleSegment(val flags: String, val memSize: Long)
-
 /**
  * A shared object the dynamic linker has mapped into this process.
  *
@@ -23,8 +20,7 @@ data class LoadedModule(
     val buildId: String? = null,
     val hasRelro: Boolean = false,
     val hasTls: Boolean = false,
-    val headerCount: Int = 0,
-    val segments: List<ModuleSegment> = emptyList()
+    val segmentCount: Int = 0
 ) {
     /** The file name on its own, which is what identifies a library at a glance. */
     val fileName: String get() = path.substringAfterLast('/')
@@ -77,10 +73,7 @@ internal fun parseLoadedModules(json: String): ModuleSnapshot {
             buildId = module.stringOrNull("build_id"),
             hasRelro = module.optBoolean("relro"),
             hasTls = module.optBoolean("tls"),
-            headerCount = module.optInt("phnum"),
-            segments = module.optJSONArray("segments")?.mapObjects { segment ->
-                ModuleSegment(flags = segment.optString("flags"), memSize = segment.optLong("memsz"))
-            }.orEmpty()
+            segmentCount = module.optInt("segment_count")
         )
     }.orEmpty()
 

@@ -5,12 +5,9 @@
 #include <array>
 #include <cstdlib>
 #include <fstream>
-#include <optional>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 #include "native_util.h"
 
@@ -24,8 +21,11 @@ using aoscm::JsonWriter;
  * The keys are stable identifiers rather than labels: the display names live in strings.xml so
  * that renaming a category — or translating it — does not mean rebuilding the native library.
  * The order here is the order the screen lists them in.
+ *
+ * The underlying type is `size_t` because every use is an array index; leaving it `int` costs a
+ * signedness conversion at each one.
  */
-enum class Category {
+enum class Category : size_t {
   kNativeLib,
   kArt,
   kDalvik,

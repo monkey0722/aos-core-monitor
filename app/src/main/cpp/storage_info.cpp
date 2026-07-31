@@ -3,8 +3,6 @@
 #include <sys/statvfs.h>
 
 #include <cstdio>
-#include <cstring>
-#include <string>
 #include <string_view>
 
 #include "native_util.h"
@@ -35,7 +33,6 @@ void WriteUsage(JsonWriter* writer, const char* target) {
   // interchangeable with it, though on most Android filesystems the two happen to agree.
   const uint64_t unit = usage.f_frsize != 0 ? usage.f_frsize : usage.f_bsize;
   writer->Field("statvfs_ok", true);
-  writer->Field("block_size", unit);
   writer->Field("total_bytes", static_cast<uint64_t>(usage.f_blocks) * unit);
   writer->Field("free_bytes", static_cast<uint64_t>(usage.f_bfree) * unit);
   writer->Field("available_bytes", static_cast<uint64_t>(usage.f_bavail) * unit);

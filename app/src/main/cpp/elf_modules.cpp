@@ -16,11 +16,6 @@ using aoscm::JsonWriter;
 
 constexpr char kHexDigits[] = "0123456789abcdef";
 
-struct Segment {
-  std::string flags;
-  uint64_t memsz = 0;
-};
-
 struct Module {
   std::string path;
   uint64_t base = 0;
@@ -28,8 +23,7 @@ struct Module {
   std::string build_id;
   bool has_relro = false;
   bool has_tls = false;
-  size_t phnum = 0;
-  std::vector<Segment> segments;
+  uint64_t segment_count = 0;
 };
 
 struct Collector {
@@ -38,20 +32,6 @@ struct Collector {
   unsigned long long subs = 0;
   bool counts_valid = false;
 };
-
-std::string DescribeFlags(uint32_t flags) {
-  std::string described(3, '-');
-  if ((flags & PF_R) != 0) {
-    described[0] = 'r';
-  }
-  if ((flags & PF_W) != 0) {
-    described[1] = 'w';
-  }
-  if ((flags & PF_X) != 0) {
-    described[2] = 'x';
-  }
-  return described;
-}
 
 /**
  * Pulls the GNU build id out of a `PT_NOTE` segment.
@@ -114,7 +94,6 @@ int CollectModule(dl_phdr_info* info, size_t size, void* data) {
   Module module;
   module.path = (info->dlpi_name != nullptr) ? info->dlpi_name : "";
   module.base = static_cast<uint64_t>(info->dlpi_addr);
-  module.phnum = info->dlpi_phnum;
 
   uint64_t lowest = UINT64_MAX;
   uint64_t highest = 0;
@@ -124,7 +103,7 @@ int CollectModule(dl_phdr_info* info, size_t size, void* data) {
       case PT_LOAD:
         lowest = std::min<uint64_t>(lowest, header.p_vaddr);
         highest = std::max<uint64_t>(highest, header.p_vaddr + header.p_memsz);
-        module.segments.push_back({DescribeFlags(header.p_flags), header.p_memsz});
+        module.segment_count += 1;
         break;
       case PT_NOTE:
         if (module.build_id.empty()) {
@@ -177,20 +156,12 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeModuleInspector_getLoadedModulesNa
     writer.Field("path", module.path);
     writer.FieldHex("base", module.base);
     writer.Field("mapped_size", module.mapped_size);
-    writer.Field("phnum", static_cast<uint64_t>(module.phnum));
+    writer.Field("segment_count", module.segment_count);
     writer.Field("relro", module.has_relro);
     writer.Field("tls", module.has_tls);
     if (!module.build_id.empty()) {
       writer.Field("build_id", module.build_id);
     }
-    writer.Key("segments").BeginArray();
-    for (const Segment& segment : module.segments) {
-      writer.BeginObject();
-      writer.Field("flags", segment.flags);
-      writer.Field("memsz", segment.memsz);
-      writer.EndObject();
-    }
-    writer.EndArray();
     writer.EndObject();
   }
   writer.EndArray();

@@ -239,7 +239,6 @@ private fun StorageMountsPreview() {
                         totalBytes = 107_374_182_400,
                         freeBytes = 42_949_672_960,
                         availableBytes = 40_000_000_000,
-                        blockSize = 4096,
                         inodesTotal = 26_214_400,
                         inodesFree = 25_000_000
                     ),
@@ -251,8 +250,7 @@ private fun StorageMountsPreview() {
                         readOnly = true,
                         totalBytes = 4_294_967_296,
                         freeBytes = 0,
-                        availableBytes = 0,
-                        blockSize = 4096
+                        availableBytes = 0
                     )
                 ),
                 pseudoFilesystems = listOf(

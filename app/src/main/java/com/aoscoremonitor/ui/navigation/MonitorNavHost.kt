@@ -43,7 +43,19 @@ import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
 @Composable
 fun MonitorNavHost(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Destination.Home)
-    val goBack: () -> Unit = { backStack.removeLastOrNull() }
+
+    // Guarded because [NavDisplay] throws IllegalArgumentException — "backstack cannot be empty" —
+    // the moment the last entry goes, and this app was seen to crash with exactly that message.
+    //
+    // The trigger was not reproduced: system back, a double back, the edge-swipe gesture, rotation
+    // and process death were all tried against the unguarded version without emptying the stack,
+    // because NavDisplay does not route back here once Home is the only entry. So this does not
+    // fix a known path; it makes the state the crash reported unreachable from this callback,
+    // which is one comparison.
+    //
+    // What it must not do is turn back at the root into a no-op, leaving the user unable to leave
+    // the app. MonitorNavigationTest.backingOutPastHomeLeavesTheApp pins that.
+    val goBack: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
 
     NavDisplay(
         backStack = backStack,

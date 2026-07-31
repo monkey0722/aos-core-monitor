@@ -282,5 +282,4 @@
     <string name="storage_readonly">Read-only</string>
     <string name="storage_source">Device · %1$s</string>
     <string name="storage_inodes">Inodes · %1$s free of %2$s</string>
-    <string name="storage_options">Mount options</string>
 </resources>

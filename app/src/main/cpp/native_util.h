@@ -9,16 +9,13 @@
 namespace aoscm {
 
 /**
- * Reads a whole file, or nothing at all.
+ * Reads the first line of a file with surrounding whitespace removed, or nothing at all.
  *
  * Sysfs and procfs reads fail routinely from the app sandbox — SELinux denies some paths outright,
  * and others exist only on some kernels. Returning an empty optional keeps "could not read" apart
  * from "read a zero", which matters because the screens present the two differently: a missing
  * reading is shown as unavailable rather than as 0.
  */
-std::optional<std::string> ReadFile(const std::string& path);
-
-/** Reads the first line of a file with surrounding whitespace removed. */
 std::optional<std::string> ReadTrimmedLine(const std::string& path);
 
 /** Reads a file holding a single decimal number, as sysfs counters do. */
@@ -55,14 +52,12 @@ class JsonWriter {
    * `uname().machine` is written as `true`.
    */
   JsonWriter& Value(const char* value);
-  /** Writes an address as a `"0x…"` string: JSON numbers cannot hold a 64-bit pointer exactly. */
-  JsonWriter& ValueHex(uint64_t value);
-
   JsonWriter& Field(std::string_view key, std::string_view value);
   JsonWriter& Field(std::string_view key, uint64_t value);
   JsonWriter& Field(std::string_view key, bool value);
   /** See [Value(const char*)] — the same overload trap applies here. */
   JsonWriter& Field(std::string_view key, const char* value);
+  /** Writes an address as a `"0x…"` string: JSON numbers cannot hold a 64-bit pointer exactly. */
   JsonWriter& FieldHex(std::string_view key, uint64_t value);
 
   /**
@@ -77,6 +72,7 @@ class JsonWriter {
   std::string Take();
 
  private:
+  JsonWriter& ValueHex(uint64_t value);
   void Separate();
   void AppendEscaped(std::string_view value);
 

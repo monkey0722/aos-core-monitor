@@ -69,8 +69,7 @@ void AppendUtf16Escape(std::string* out, uint32_t unit) {
   }
 }
 
-}  // namespace
-
+/** Reads a whole file. Used only to back ReadTrimmedLine — nothing outside needs raw contents. */
 std::optional<std::string> ReadFile(const std::string& path) {
   std::ifstream file(path, std::ios::in | std::ios::binary);
   if (!file.is_open()) {
@@ -85,6 +84,8 @@ std::optional<std::string> ReadFile(const std::string& path) {
   }
   return contents.str();
 }
+
+}  // namespace
 
 std::optional<std::string> ReadTrimmedLine(const std::string& path) {
   const std::optional<std::string> contents = ReadFile(path);

@@ -6,9 +6,11 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso
+import androidx.test.espresso.NoActivityResumedException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aoscoremonitor.MainActivity
 import com.aoscoremonitor.R
+import org.junit.Assert.assertThrows
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,6 +51,28 @@ class MonitorNavigationTest {
 
         awaitText(string(R.string.home_subtitle))
         composeRule.onNodeWithText(string(R.string.home_subtitle)).assertIsDisplayed()
+    }
+
+    /**
+     * Backing out past home leaves the app, rather than doing nothing.
+     *
+     * `MonitorNavHost` refuses to pop the last entry, because an empty back stack is what
+     * `NavDisplay` rejects with an IllegalArgumentException. The risk in that guard is the
+     * opposite failure — a root screen that swallows back and traps the user — so this pins that
+     * the press still finishes the activity. Espresso reports exactly that as
+     * [NoActivityResumedException].
+     *
+     * It is not a regression test for the crash itself: it passes with the guard removed, because
+     * NavDisplay stops routing back here once Home is the only entry.
+     */
+    @Test
+    fun backingOutPastHomeLeavesTheApp() {
+        openSystemInfo()
+
+        Espresso.pressBack()
+        awaitText(string(R.string.home_subtitle))
+
+        assertThrows(NoActivityResumedException::class.java) { Espresso.pressBack() }
     }
 
     private fun openSystemInfo() {

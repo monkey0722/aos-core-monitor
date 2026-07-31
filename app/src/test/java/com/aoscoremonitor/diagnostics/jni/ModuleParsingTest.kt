@@ -13,10 +13,9 @@ class ModuleParsingTest {
             """
             {"adds":231,"subs":3,"modules":[
               {"path":"/apex/com.android.runtime/lib64/bionic/libc.so","base":"0x7b0f440000",
-               "mapped_size":1052672,"phnum":8,"relro":true,"tls":true,"build_id":"1ab3ff90",
-               "segments":[{"flags":"r--","memsz":4096},{"flags":"r-x","memsz":1024000}]},
+               "mapped_size":1052672,"segment_count":4,"relro":true,"tls":true,"build_id":"1ab3ff90"},
               {"path":"/apex/com.android.art/lib64/libart.so","base":"0x7b1c2a0000",
-               "mapped_size":8912896,"phnum":9,"relro":true,"tls":false,"segments":[]}]}
+               "mapped_size":8912896,"segment_count":5,"relro":true,"tls":false}]}
             """.trimIndent()
         )
 
@@ -24,6 +23,7 @@ class ModuleParsingTest {
         assertEquals(231, snapshot.loadEvents)
         assertEquals(3, snapshot.unloadEvents)
         assertEquals(9_965_568L, snapshot.totalMappedSize)
+        assertEquals(5, snapshot.modules.first().segmentCount)
     }
 
     @Test

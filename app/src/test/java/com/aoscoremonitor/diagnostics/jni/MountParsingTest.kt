@@ -14,7 +14,7 @@ class MountParsingTest {
             """
             {"mounts":[{"source":"/dev/block/dm-9","target":"/data","fs_type":"f2fs",
                         "options":"rw,nosuid,nodev,noatime","readonly":false,"statvfs_ok":true,
-                        "block_size":4096,"total_bytes":100,"free_bytes":40,"available_bytes":30,
+                        "total_bytes":100,"free_bytes":40,"available_bytes":30,
                         "inodes_total":1000,"inodes_free":900}]}
             """.trimIndent()
         )

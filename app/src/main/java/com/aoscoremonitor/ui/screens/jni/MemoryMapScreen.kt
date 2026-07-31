@@ -36,7 +36,6 @@ import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
-import com.aoscoremonitor.ui.components.SampleDataBanner
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.Spacing
@@ -83,9 +82,18 @@ private fun MemoryMapContent(uiState: MemoryMapUiState, onNavigateBack: () -> Un
                     )
                 }
                 if (!rollup.fromRollupFile) {
-                    // Not a fallback to invented numbers, so not a sample banner's subject — but the
-                    // reader should know the total was assembled here rather than by the kernel.
-                    item(key = "smaps-notice") { SampleDataBanner(stringResource(R.string.memory_smaps_notice)) }
+                    // A note rather than a SampleDataBanner, which this used to be: that banner is
+                    // titled "Sample data", and these are measurements — only the summing was done
+                    // here rather than by the kernel. Labelling a real reading as a sample is the
+                    // exact confusion the banner exists to prevent.
+                    item(key = "smaps-notice") {
+                        Text(
+                            text = stringResource(R.string.memory_smaps_notice),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = Spacing.Small)
+                        )
+                    }
                 }
                 item(key = "footprint") { FootprintCard(rollup) }
             }
