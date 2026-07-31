@@ -33,7 +33,7 @@ fun SystemDiagnosticsScreen(
     modifier: Modifier = Modifier,
     viewModel: SystemDiagnosticsViewModel = monitorViewModel { SystemDiagnosticsViewModel(it) }
 ) {
-    val diagnostics by viewModel.diagnostics.collectAsStateWithLifecycle()
+    val diagnostics by viewModel.uiState.collectAsStateWithLifecycle()
 
     SystemDiagnosticsContent(
         diagnostics = diagnostics,

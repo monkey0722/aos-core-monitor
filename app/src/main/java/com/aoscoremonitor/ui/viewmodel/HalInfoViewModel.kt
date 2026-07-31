@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 /** Feeds the HAL screen from [HalInterfaceAnalyzer]. */
 class HalInfoViewModel(context: Context) : ViewModel() {
 
-    val halData: StateFlow<HalInterfaceAnalyzer.HalData> = callbackFlow {
+    val uiState: StateFlow<HalInterfaceAnalyzer.HalData> = callbackFlow {
         val analyzer = HalInterfaceAnalyzer(context) { data -> trySend(data) }
         analyzer.startAnalyzing()
         awaitClose { analyzer.stopAnalyzing() }

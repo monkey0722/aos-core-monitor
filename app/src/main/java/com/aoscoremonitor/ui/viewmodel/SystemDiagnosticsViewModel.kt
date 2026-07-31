@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 class SystemDiagnosticsViewModel(context: Context) : ViewModel() {
 
-    val diagnostics: StateFlow<SystemDiagnosticsCollector.DiagnosticsInfo> = callbackFlow {
+    val uiState: StateFlow<SystemDiagnosticsCollector.DiagnosticsInfo> = callbackFlow {
         val collector = SystemDiagnosticsCollector(context) { info -> trySend(info) }
         collector.startCollecting()
         awaitClose { collector.stopCollecting() }

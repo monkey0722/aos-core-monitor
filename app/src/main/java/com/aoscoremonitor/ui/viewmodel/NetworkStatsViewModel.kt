@@ -26,7 +26,7 @@ class NetworkStatsViewModel : ViewModel() {
 
     private val monitor = NativeSystemMonitor()
 
-    val state: StateFlow<NetworkStatsUiState> = flow {
+    val uiState: StateFlow<NetworkStatsUiState> = flow {
         while (true) {
             emit(NetworkStatsUiState(stats = monitor.getNetworkStats(), hasLoaded = true))
             delay(REFRESH_INTERVAL_MS)

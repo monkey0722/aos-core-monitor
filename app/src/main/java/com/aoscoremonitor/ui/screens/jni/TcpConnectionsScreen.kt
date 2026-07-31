@@ -39,14 +39,14 @@ import com.aoscoremonitor.ui.viewmodel.TcpConnectionsViewModel
 
 @Composable
 fun TcpConnectionsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier, viewModel: TcpConnectionsViewModel = viewModel()) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    TcpConnectionsContent(state = state, onNavigateBack = onNavigateBack, modifier = modifier)
+    TcpConnectionsContent(uiState = uiState, onNavigateBack = onNavigateBack, modifier = modifier)
 }
 
 @Composable
-private fun TcpConnectionsContent(state: TcpConnectionsUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    val connections = state.connections.value
+private fun TcpConnectionsContent(uiState: TcpConnectionsUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+    val connections = uiState.connections.value
 
     MonitorScaffold(
         title = stringResource(R.string.tcp_title),
@@ -55,7 +55,7 @@ private fun TcpConnectionsContent(state: TcpConnectionsUiState, onNavigateBack: 
     ) { innerPadding ->
         if (connections.isEmpty()) {
             FullScreenMessage(
-                message = stringResource(if (state.hasLoaded) R.string.tcp_empty else R.string.tcp_loading),
+                message = stringResource(if (uiState.hasLoaded) R.string.tcp_empty else R.string.tcp_loading),
                 icon = Icons.Default.CloudOff,
                 modifier = Modifier.padding(innerPadding)
             )
@@ -67,10 +67,10 @@ private fun TcpConnectionsContent(state: TcpConnectionsUiState, onNavigateBack: 
                 contentPadding = PaddingValues(Spacing.Large),
                 verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
             ) {
-                if (state.connections.isSample) {
+                if (uiState.connections.isSample) {
                     item(key = "sample") { SampleDataBanner(stringResource(R.string.tcp_sample)) }
                 }
-                item(key = "summary") { ConnectionSummary(state) }
+                item(key = "summary") { ConnectionSummary(uiState) }
                 // The inode is the kernel's own identifier for the socket, so it keys the row
                 // stably even as addresses churn between polls.
                 items(connections, key = { it.inode }) { connection ->
@@ -88,16 +88,16 @@ private fun TcpConnectionsContent(state: TcpConnectionsUiState, onNavigateBack: 
  * under it and ate a fixed slice of a phone screen. It scrolls with the list now.
  */
 @Composable
-private fun ConnectionSummary(state: TcpConnectionsUiState, modifier: Modifier = Modifier) {
+private fun ConnectionSummary(uiState: TcpConnectionsUiState, modifier: Modifier = Modifier) {
     MonitorCard(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            SummaryCount(state.established, stringResource(R.string.tcp_established))
-            SummaryCount(state.listening, stringResource(R.string.tcp_listening))
-            SummaryCount(state.waiting, stringResource(R.string.tcp_waiting))
-            SummaryCount(state.total, stringResource(R.string.tcp_total))
+            SummaryCount(uiState.established, stringResource(R.string.tcp_established))
+            SummaryCount(uiState.listening, stringResource(R.string.tcp_listening))
+            SummaryCount(uiState.waiting, stringResource(R.string.tcp_waiting))
+            SummaryCount(uiState.total, stringResource(R.string.tcp_total))
         }
     }
 }
@@ -156,7 +156,7 @@ private val NativeSystemMonitor.TcpConnection.readingStatus: ReadingStatus
 private fun TcpConnectionsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
         TcpConnectionsContent(
-            state = TcpConnectionsUiState(
+            uiState = TcpConnectionsUiState(
                 connections = Collected.sample(
                     listOf(
                         NativeSystemMonitor.TcpConnection(

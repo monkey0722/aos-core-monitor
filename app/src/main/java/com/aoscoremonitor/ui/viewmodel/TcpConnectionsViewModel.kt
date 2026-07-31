@@ -25,7 +25,7 @@ class TcpConnectionsViewModel : ViewModel() {
 
     private val monitor = NativeSystemMonitor()
 
-    val state: StateFlow<TcpConnectionsUiState> = flow {
+    val uiState: StateFlow<TcpConnectionsUiState> = flow {
         while (true) {
             emit(TcpConnectionsUiState(connections = monitor.getTcpConnections(), hasLoaded = true))
             delay(REFRESH_INTERVAL_MS)

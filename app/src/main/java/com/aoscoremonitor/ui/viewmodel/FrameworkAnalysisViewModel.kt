@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 /** Feeds the framework screen from [FrameworkAnalyzer]. */
 class FrameworkAnalysisViewModel(context: Context) : ViewModel() {
 
-    val frameworkData: StateFlow<FrameworkAnalyzer.FrameworkData> = callbackFlow {
+    val uiState: StateFlow<FrameworkAnalyzer.FrameworkData> = callbackFlow {
         val analyzer = FrameworkAnalyzer(context) { data -> trySend(data) }
         analyzer.startAnalyzing()
         awaitClose { analyzer.stopAnalyzing() }

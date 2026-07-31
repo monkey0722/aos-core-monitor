@@ -43,14 +43,14 @@ import com.aoscoremonitor.ui.viewmodel.NetworkStatsViewModel
 
 @Composable
 fun NetworkStatsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier, viewModel: NetworkStatsViewModel = viewModel()) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    NetworkStatsContent(state = state, onNavigateBack = onNavigateBack, modifier = modifier)
+    NetworkStatsContent(uiState = uiState, onNavigateBack = onNavigateBack, modifier = modifier)
 }
 
 @Composable
-private fun NetworkStatsContent(state: NetworkStatsUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    val interfaces = remember(state.stats) { state.stats.value.entries.toList() }
+private fun NetworkStatsContent(uiState: NetworkStatsUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+    val interfaces = remember(uiState.stats) { uiState.stats.value.entries.toList() }
 
     MonitorScaffold(
         title = stringResource(R.string.network_title),
@@ -60,7 +60,7 @@ private fun NetworkStatsContent(state: NetworkStatsUiState, onNavigateBack: () -
         if (interfaces.isEmpty()) {
             FullScreenMessage(
                 message = stringResource(
-                    if (state.hasLoaded) R.string.network_empty else R.string.network_loading
+                    if (uiState.hasLoaded) R.string.network_empty else R.string.network_loading
                 ),
                 icon = Icons.Default.NetworkCell,
                 modifier = Modifier.padding(innerPadding)
@@ -73,7 +73,7 @@ private fun NetworkStatsContent(state: NetworkStatsUiState, onNavigateBack: () -
                 contentPadding = PaddingValues(Spacing.Large),
                 verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
             ) {
-                if (state.stats.isSample) {
+                if (uiState.stats.isSample) {
                     item(key = "sample") { SampleDataBanner(stringResource(R.string.network_sample)) }
                 }
                 items(interfaces, key = { it.key }) { (name, stats) ->
@@ -153,7 +153,7 @@ private fun TransferRow(icon: ImageVector, label: String, total: String, detail:
 private fun NetworkStatsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
         NetworkStatsContent(
-            state = NetworkStatsUiState(
+            uiState = NetworkStatsUiState(
                 stats = Collected.sample(
                     mapOf(
                         "wlan0" to NativeSystemMonitor.InterfaceStats(

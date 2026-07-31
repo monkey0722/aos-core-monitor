@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 class SystemInfoViewModel(context: Context) : ViewModel() {
 
-    val systemInfo: StateFlow<SystemInfoCollector.SystemInfo> = callbackFlow {
+    val uiState: StateFlow<SystemInfoCollector.SystemInfo> = callbackFlow {
         val collector = SystemInfoCollector(context) { info -> trySend(info) }
         collector.startCollecting()
         awaitClose { collector.stopCollecting() }

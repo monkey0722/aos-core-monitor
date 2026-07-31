@@ -47,7 +47,7 @@ fun HalInfoScreen(
     modifier: Modifier = Modifier,
     viewModel: HalInfoViewModel = monitorViewModel { HalInfoViewModel(it) }
 ) {
-    val halData by viewModel.halData.collectAsStateWithLifecycle()
+    val halData by viewModel.uiState.collectAsStateWithLifecycle()
 
     HalInfoContent(
         halData = halData,

@@ -43,7 +43,7 @@ fun SecurityInfoScreen(
     modifier: Modifier = Modifier,
     viewModel: SecurityInfoViewModel = monitorViewModel { SecurityInfoViewModel(it) }
 ) {
-    val securityInfo by viewModel.securityInfo.collectAsStateWithLifecycle()
+    val securityInfo by viewModel.uiState.collectAsStateWithLifecycle()
 
     SecurityInfoContent(
         securityInfo = securityInfo,

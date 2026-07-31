@@ -38,7 +38,7 @@ import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
  */
 @Composable
 fun MonitorNavHost(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Home)
+    val backStack = rememberNavBackStack(Destination.Home)
     val goBack: () -> Unit = { backStack.removeLastOrNull() }
 
     NavDisplay(
@@ -51,16 +51,16 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
         ),
         entryProvider = remember(backStack) {
             entryProvider {
-                entry<Home> { HomeScreen(onNavigate = { backStack.add(it) }) }
-                entry<SystemInfo> { SystemInfoScreen(onNavigateBack = goBack) }
-                entry<Logs> { LogScreen(onNavigateBack = goBack) }
-                entry<Diagnostics> { SystemDiagnosticsScreen(onNavigateBack = goBack) }
-                entry<Security> { SecurityInfoScreen(onNavigateBack = goBack) }
-                entry<Framework> { FrameworkAnalysisScreen(onNavigateBack = goBack) }
-                entry<Hal> { HalInfoScreen(onNavigateBack = goBack) }
-                entry<NativeMonitor> { NativeSystemMonitorScreen(onNavigateBack = goBack) }
-                entry<NetworkStats> { NetworkStatsScreen(onNavigateBack = goBack) }
-                entry<TcpConnections> { TcpConnectionsScreen(onNavigateBack = goBack) }
+                entry<Destination.Home> { HomeScreen(onNavigate = { backStack.add(it) }) }
+                entry<Destination.SystemInfo> { SystemInfoScreen(onNavigateBack = goBack) }
+                entry<Destination.Log> { LogScreen(onNavigateBack = goBack) }
+                entry<Destination.SystemDiagnostics> { SystemDiagnosticsScreen(onNavigateBack = goBack) }
+                entry<Destination.SecurityInfo> { SecurityInfoScreen(onNavigateBack = goBack) }
+                entry<Destination.FrameworkAnalysis> { FrameworkAnalysisScreen(onNavigateBack = goBack) }
+                entry<Destination.HalInfo> { HalInfoScreen(onNavigateBack = goBack) }
+                entry<Destination.NativeSystemMonitor> { NativeSystemMonitorScreen(onNavigateBack = goBack) }
+                entry<Destination.NetworkStats> { NetworkStatsScreen(onNavigateBack = goBack) }
+                entry<Destination.TcpConnections> { TcpConnectionsScreen(onNavigateBack = goBack) }
             }
         }
     )

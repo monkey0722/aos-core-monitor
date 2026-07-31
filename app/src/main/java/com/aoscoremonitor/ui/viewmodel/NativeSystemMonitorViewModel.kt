@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 
 /** The three groups of counters the native monitor screen shows. */
-data class NativeSystemUiState(
+data class NativeSystemMonitorUiState(
     val cpu: Map<String, Long> = emptyMap(),
     val memory: Map<String, Long> = emptyMap(),
     val process: Map<String, String> = emptyMap()
@@ -27,10 +27,10 @@ class NativeSystemMonitorViewModel : ViewModel() {
 
     private val monitor = NativeSystemMonitor()
 
-    val state: StateFlow<NativeSystemUiState> = flow {
+    val uiState: StateFlow<NativeSystemMonitorUiState> = flow {
         while (true) {
             emit(
-                NativeSystemUiState(
+                NativeSystemMonitorUiState(
                     cpu = monitor.getCpuInfo(),
                     memory = monitor.getMemInfo(),
                     process = monitor.getProcessInfo(Process.myPid())
@@ -38,7 +38,7 @@ class NativeSystemMonitorViewModel : ViewModel() {
             )
             delay(REFRESH_INTERVAL_MS)
         }
-    }.stateIn(viewModelScope, WhileScreenVisible, NativeSystemUiState())
+    }.stateIn(viewModelScope, WhileScreenVisible, NativeSystemMonitorUiState())
 
     private companion object {
         const val REFRESH_INTERVAL_MS = 1_000L

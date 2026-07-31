@@ -25,6 +25,11 @@ import kotlinx.serialization.Transient
  * `enum class Screen` could not do that — it was paired with a `remember`ed field, so rotating
  * the device dropped the user back on the home screen.
  *
+ * Each key is named after the screen it opens, so `Destination.SystemDiagnostics` leads to
+ * `SystemDiagnosticsScreen` and the pairing needs no lookup. They are nested rather than
+ * top-level because several of the names they need are taken: a top-level `Security` shadowed
+ * `Icons.Filled.Security` in this very file, and `Log` would shadow `android.util.Log`.
+ *
  * [titleRes] and [icon] hang off the key so the app bar title and the home grid both read them
  * from one place instead of repeating the label at each call site. Neither is serialized.
  */
@@ -34,86 +39,86 @@ sealed interface Destination : NavKey {
     val titleRes: Int
 
     val icon: ImageVector
-}
 
-@Serializable
-data object Home : Destination {
-    override val titleRes get() = R.string.app_name
+    @Serializable
+    data object Home : Destination {
+        override val titleRes get() = R.string.app_name
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Computer
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.Computer
+    }
 
-@Serializable
-data object SystemInfo : Destination {
-    override val titleRes get() = R.string.system_info_title
+    @Serializable
+    data object SystemInfo : Destination {
+        override val titleRes get() = R.string.system_info_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Computer
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.Computer
+    }
 
-@Serializable
-data object Logs : Destination {
-    override val titleRes get() = R.string.logs_title
+    @Serializable
+    data object Log : Destination {
+        override val titleRes get() = R.string.logs_title
 
-    @Transient
-    override val icon: ImageVector = Icons.AutoMirrored.Filled.List
-}
+        @Transient
+        override val icon: ImageVector = Icons.AutoMirrored.Filled.List
+    }
 
-@Serializable
-data object Diagnostics : Destination {
-    override val titleRes get() = R.string.diagnostics_title
+    @Serializable
+    data object SystemDiagnostics : Destination {
+        override val titleRes get() = R.string.diagnostics_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.BarChart
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.BarChart
+    }
 
-@Serializable
-data object Security : Destination {
-    override val titleRes get() = R.string.security_title
+    @Serializable
+    data object SecurityInfo : Destination {
+        override val titleRes get() = R.string.security_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Security
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.Security
+    }
 
-@Serializable
-data object Framework : Destination {
-    override val titleRes get() = R.string.framework_title
+    @Serializable
+    data object FrameworkAnalysis : Destination {
+        override val titleRes get() = R.string.framework_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Analytics
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.Analytics
+    }
 
-@Serializable
-data object Hal : Destination {
-    override val titleRes get() = R.string.hal_title
+    @Serializable
+    data object HalInfo : Destination {
+        override val titleRes get() = R.string.hal_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Settings
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.Settings
+    }
 
-@Serializable
-data object NativeMonitor : Destination {
-    override val titleRes get() = R.string.native_title
+    @Serializable
+    data object NativeSystemMonitor : Destination {
+        override val titleRes get() = R.string.native_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Memory
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.Memory
+    }
 
-@Serializable
-data object NetworkStats : Destination {
-    override val titleRes get() = R.string.network_title
+    @Serializable
+    data object NetworkStats : Destination {
+        override val titleRes get() = R.string.network_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.NetworkCell
-}
+        @Transient
+        override val icon: ImageVector = Icons.Default.NetworkCell
+    }
 
-@Serializable
-data object TcpConnections : Destination {
-    override val titleRes get() = R.string.tcp_title
+    @Serializable
+    data object TcpConnections : Destination {
+        override val titleRes get() = R.string.tcp_title
 
-    @Transient
-    override val icon: ImageVector = Icons.Default.Cloud
+        @Transient
+        override val icon: ImageVector = Icons.Default.Cloud
+    }
 }
 
 /**
@@ -123,29 +128,29 @@ data object TcpConnections : Destination {
  * rather than the arbitrary order the grid grew in.
  */
 val HomeDestinations: List<Destination> = listOf(
-    SystemInfo,
-    Logs,
-    Diagnostics,
-    Security,
-    Framework,
-    Hal,
-    NativeMonitor,
-    NetworkStats,
-    TcpConnections
+    Destination.SystemInfo,
+    Destination.Log,
+    Destination.SystemDiagnostics,
+    Destination.SecurityInfo,
+    Destination.FrameworkAnalysis,
+    Destination.HalInfo,
+    Destination.NativeSystemMonitor,
+    Destination.NetworkStats,
+    Destination.TcpConnections
 )
 
 /** The short label the home grid uses, which is not always the app bar title. */
 @get:StringRes
 val Destination.menuTitleRes: Int
     get() = when (this) {
-        Home -> R.string.app_name
-        SystemInfo -> R.string.destination_system_info
-        Logs -> R.string.destination_logs
-        Diagnostics -> R.string.destination_diagnostics
-        Security -> R.string.destination_security
-        Framework -> R.string.destination_framework
-        Hal -> R.string.destination_hal
-        NativeMonitor -> R.string.destination_native_monitor
-        NetworkStats -> R.string.destination_network_stats
-        TcpConnections -> R.string.destination_tcp_connections
+        Destination.Home -> R.string.app_name
+        Destination.SystemInfo -> R.string.destination_system_info
+        Destination.Log -> R.string.destination_logs
+        Destination.SystemDiagnostics -> R.string.destination_diagnostics
+        Destination.SecurityInfo -> R.string.destination_security
+        Destination.FrameworkAnalysis -> R.string.destination_framework
+        Destination.HalInfo -> R.string.destination_hal
+        Destination.NativeSystemMonitor -> R.string.destination_native_monitor
+        Destination.NetworkStats -> R.string.destination_network_stats
+        Destination.TcpConnections -> R.string.destination_tcp_connections
     }

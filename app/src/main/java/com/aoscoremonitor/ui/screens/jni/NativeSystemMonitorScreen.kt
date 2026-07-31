@@ -26,8 +26,8 @@ import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.Spacing
+import com.aoscoremonitor.ui.viewmodel.NativeSystemMonitorUiState
 import com.aoscoremonitor.ui.viewmodel.NativeSystemMonitorViewModel
-import com.aoscoremonitor.ui.viewmodel.NativeSystemUiState
 
 @Composable
 fun NativeSystemMonitorScreen(
@@ -35,13 +35,13 @@ fun NativeSystemMonitorScreen(
     modifier: Modifier = Modifier,
     viewModel: NativeSystemMonitorViewModel = viewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    NativeSystemMonitorContent(state = state, onNavigateBack = onNavigateBack, modifier = modifier)
+    NativeSystemMonitorContent(uiState = uiState, onNavigateBack = onNavigateBack, modifier = modifier)
 }
 
 @Composable
-private fun NativeSystemMonitorContent(state: NativeSystemUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun NativeSystemMonitorContent(uiState: NativeSystemMonitorUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     // Resolved before the list is built: a LazyListScope lambda is not a composable context, so
     // stringResource cannot be called inside it.
     val sections = listOf(
@@ -50,7 +50,7 @@ private fun NativeSystemMonitorContent(state: NativeSystemUiState, onNavigateBac
             title = stringResource(R.string.native_cpu_section),
             subtitle = stringResource(R.string.native_cpu_subtitle),
             icon = Icons.Default.Speed,
-            readings = state.cpu.mapValues { (_, value) -> value.toString() },
+            readings = uiState.cpu.mapValues { (_, value) -> value.toString() },
             emptyMessage = stringResource(R.string.native_cpu_unavailable)
         ),
         CounterSection(
@@ -58,7 +58,7 @@ private fun NativeSystemMonitorContent(state: NativeSystemUiState, onNavigateBac
             title = stringResource(R.string.native_memory_section),
             subtitle = stringResource(R.string.native_memory_subtitle),
             icon = Icons.Default.Memory,
-            readings = state.memory.mapValues { (_, value) -> stringResource(R.string.native_kilobytes, value) },
+            readings = uiState.memory.mapValues { (_, value) -> stringResource(R.string.native_kilobytes, value) },
             emptyMessage = stringResource(R.string.native_memory_unavailable)
         ),
         CounterSection(
@@ -66,7 +66,7 @@ private fun NativeSystemMonitorContent(state: NativeSystemUiState, onNavigateBac
             title = stringResource(R.string.native_process_section),
             subtitle = stringResource(R.string.native_process_subtitle),
             icon = Icons.Default.Widgets,
-            readings = state.process,
+            readings = uiState.process,
             emptyMessage = stringResource(R.string.native_process_unavailable)
         )
     )
@@ -123,7 +123,7 @@ private fun LazyListScope.counterSection(section: CounterSection) {
 private fun NativeSystemMonitorPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
         NativeSystemMonitorContent(
-            state = NativeSystemUiState(
+            uiState = NativeSystemMonitorUiState(
                 cpu = emptyMap(),
                 memory = mapOf("MemTotal" to 2_027_136L, "MemAvailable" to 1_204_992L),
                 process = mapOf("Name" to "com.aoscoremonitor", "VmRSS" to "94112 kB")

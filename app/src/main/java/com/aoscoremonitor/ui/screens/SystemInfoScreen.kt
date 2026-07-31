@@ -34,7 +34,7 @@ fun SystemInfoScreen(
 ) {
     // collectAsStateWithLifecycle rather than collectAsState: the subscription ends when the
     // screen stops, which is what tells the view model to stop collecting.
-    val systemInfo by viewModel.systemInfo.collectAsStateWithLifecycle()
+    val systemInfo by viewModel.uiState.collectAsStateWithLifecycle()
 
     SystemInfoContent(
         systemInfo = systemInfo,

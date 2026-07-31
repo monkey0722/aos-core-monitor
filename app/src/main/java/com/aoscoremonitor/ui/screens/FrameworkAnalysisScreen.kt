@@ -46,7 +46,7 @@ fun FrameworkAnalysisScreen(
     modifier: Modifier = Modifier,
     viewModel: FrameworkAnalysisViewModel = monitorViewModel { FrameworkAnalysisViewModel(it) }
 ) {
-    val frameworkData by viewModel.frameworkData.collectAsStateWithLifecycle()
+    val frameworkData by viewModel.uiState.collectAsStateWithLifecycle()
 
     FrameworkAnalysisContent(
         frameworkData = frameworkData,

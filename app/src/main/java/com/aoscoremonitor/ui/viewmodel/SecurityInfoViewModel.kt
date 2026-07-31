@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 class SecurityInfoViewModel(context: Context) : ViewModel() {
 
-    val securityInfo: StateFlow<SecurityInfoCollector.SecurityInfo> = callbackFlow {
+    val uiState: StateFlow<SecurityInfoCollector.SecurityInfo> = callbackFlow {
         val collector = SecurityInfoCollector(context) { info -> trySend(info) }
         collector.startCollecting()
         awaitClose { collector.stopCollecting() }
