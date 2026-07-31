@@ -15,8 +15,8 @@ import kotlinx.coroutines.withContext
 class FrameworkAnalyzer(private val context: Context, private val onDataCollected: (FrameworkData) -> Unit) {
     data class FrameworkData(
         val binderTransactions: List<BinderTransaction>,
-        val apiCalls: List<ApiCallInfo>,
-        val serviceData: ServiceManagerData
+        val apiCalls: Collected<List<ApiCallInfo>>,
+        val serviceData: Collected<ServiceManagerData>
     )
 
     data class BinderTransaction(
@@ -31,6 +31,39 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
     data class ApiCallInfo(val apiName: String, val callerPackage: String, val timestamp: Long, val duration: Long)
 
     data class ServiceManagerData(val runningServices: Map<String, String>, val serviceConnections: List<Pair<String, String>>)
+
+    companion object {
+        /**
+         * Shown when `dumpsys activity asm` yields nothing. Capturing real API calls needs
+         * instrumentation this app does not perform, so these are illustrative only.
+         */
+        private val SAMPLE_API_CALLS = listOf(
+            ApiCallInfo(
+                apiName = "android.app.ActivityManager.getRunningAppProcesses",
+                callerPackage = "com.aoscoremonitor",
+                timestamp = 0L,
+                duration = 3L
+            ),
+            ApiCallInfo(
+                apiName = "android.content.pm.PackageManager.getInstalledPackages",
+                callerPackage = "com.aoscoremonitor",
+                timestamp = 0L,
+                duration = 120L
+            )
+        )
+
+        /** Shown when `dumpsys activity services` yields nothing. */
+        private val SAMPLE_SERVICE_DATA = ServiceManagerData(
+            runningServices = mapOf(
+                "com.android.systemui/.SystemUIService" to "Running",
+                "com.android.phone/.TelephonyDebugService" to "Running",
+                "android/com.android.server.telecom.TelecomLoaderService" to "Running"
+            ),
+            serviceConnections = listOf(
+                Pair("com.aoscoremonitor", "com.android.systemui/.SystemUIService")
+            )
+        )
+    }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
@@ -52,8 +85,12 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
 
                     val frameworkData = FrameworkData(
                         binderTransactions = binderTransactions,
-                        apiCalls = apiCalls,
-                        serviceData = serviceData
+                        apiCalls = Collected.realOrSample(apiCalls, SAMPLE_API_CALLS),
+                        serviceData = if (serviceData.runningServices.isEmpty()) {
+                            Collected.sample(SAMPLE_SERVICE_DATA)
+                        } else {
+                            Collected.real(serviceData)
+                        }
                     )
 
                     withContext(Dispatchers.Main) {
@@ -160,26 +197,6 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
             e.printStackTrace()
         }
 
-        // For demo purposes if no actual data is found
-        if (apiCalls.isEmpty()) {
-            apiCalls.add(
-                ApiCallInfo(
-                    apiName = "android.app.ActivityManager.getRunningAppProcesses",
-                    callerPackage = "com.aoscoremonitor",
-                    timestamp = System.currentTimeMillis(),
-                    duration = 3L
-                )
-            )
-            apiCalls.add(
-                ApiCallInfo(
-                    apiName = "android.content.pm.PackageManager.getInstalledPackages",
-                    callerPackage = "com.aoscoremonitor",
-                    timestamp = System.currentTimeMillis() - 1000,
-                    duration = 120L
-                )
-            )
-        }
-
         return apiCalls
     }
 
@@ -217,17 +234,6 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
             process.destroy()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-
-        // Add some demo data if needed
-        if (runningServices.isEmpty()) {
-            runningServices["com.android.systemui/.SystemUIService"] = "Running"
-            runningServices["com.android.phone/.TelephonyDebugService"] = "Running"
-            runningServices["android/com.android.server.telecom.TelecomLoaderService"] = "Running"
-        }
-
-        if (serviceConnections.isEmpty()) {
-            serviceConnections.add(Pair("com.aoscoremonitor", "com.android.systemui/.SystemUIService"))
         }
 
         return ServiceManagerData(

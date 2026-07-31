@@ -46,7 +46,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.HalInterfaceAnalyzer
+import com.aoscoremonitor.ui.components.SampleDataBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,8 +57,8 @@ fun HalInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     var halData by remember {
         mutableStateOf(
             HalInterfaceAnalyzer.HalData(
-                halInterfaces = emptyList(),
-                hwservices = emptyList(),
+                halInterfaces = Collected.real(emptyList()),
+                hwservices = Collected.real(emptyList()),
                 vndkInfo = HalInterfaceAnalyzer.VndkInfo(
                     version = "Unknown",
                     libraries = emptyList()
@@ -68,8 +70,8 @@ fun HalInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     // Tab selection state
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf(
-        TabInfo("HAL Interfaces", Icons.Default.Hardware, halData.halInterfaces.size),
-        TabInfo("HW Services", Icons.Default.Devices, halData.hwservices.size),
+        TabInfo("HAL Interfaces", Icons.Default.Hardware, halData.halInterfaces.value.size),
+        TabInfo("HW Services", Icons.Default.Devices, halData.hwservices.value.size),
         TabInfo("VNDK Info", Icons.Default.Memory, halData.vndkInfo.libraries.size)
     )
 
@@ -150,8 +152,8 @@ fun HalInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
 
             // Content based on selected tab
             when (selectedTabIndex) {
-                0 -> HalInterfacesTab(halInterfaces = halData.halInterfaces)
-                1 -> HwServicesTab(hwservices = halData.hwservices)
+                0 -> HalInterfacesTab(halData.halInterfaces)
+                1 -> HwServicesTab(halData.hwservices)
                 2 -> VndkInfoTab(vndkInfo = halData.vndkInfo)
             }
         }
@@ -159,7 +161,8 @@ fun HalInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HalInterfacesTab(halInterfaces: List<HalInterfaceAnalyzer.HalInterface>) {
+fun HalInterfacesTab(collected: Collected<List<HalInterfaceAnalyzer.HalInterface>>) {
+    val halInterfaces = collected.value
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -172,6 +175,12 @@ fun HalInterfacesTab(halInterfaces: List<HalInterfaceAnalyzer.HalInterface>) {
                 subtitle = "HALs provide standardized interfaces to hardware components",
                 icon = Icons.Default.Hardware
             )
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: lshal returned nothing on this device")
+            }
         }
 
         // Empty state message
@@ -268,7 +277,8 @@ fun HalInterfaceCard(halInterface: HalInterfaceAnalyzer.HalInterface) {
 }
 
 @Composable
-fun HwServicesTab(hwservices: List<HalInterfaceAnalyzer.HwService>) {
+fun HwServicesTab(collected: Collected<List<HalInterfaceAnalyzer.HwService>>) {
+    val hwservices = collected.value
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -281,6 +291,12 @@ fun HwServicesTab(hwservices: List<HalInterfaceAnalyzer.HwService>) {
                 subtitle = "System services that provide hardware functionality",
                 icon = Icons.Default.Devices
             )
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: `service list` returned nothing on this device")
+            }
         }
 
         // Empty state message

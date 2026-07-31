@@ -1,6 +1,7 @@
 package com.aoscoremonitor.diagnostics.jni
 
 import android.util.Log
+import com.aoscoremonitor.diagnostics.Collected
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -109,7 +110,7 @@ class NativeSystemMonitor {
         }
     }
 
-    suspend fun getNetworkStats(): Map<String, InterfaceStats> = withContext(Dispatchers.IO) {
+    suspend fun getNetworkStats(): Collected<Map<String, InterfaceStats>> = withContext(Dispatchers.IO) {
         val networkStats = mutableMapOf<String, InterfaceStats>()
         try {
             val jsonData = getNetworkStatsNative()
@@ -135,16 +136,16 @@ class NativeSystemMonitor {
             Log.e(TAG, "Error parsing network stats", e)
         }
 
-        // Use dummy data if data could not be obtained.
+        // /proc/net/dev is not readable from the app sandbox on modern Android
         if (networkStats.isEmpty()) {
-            return@withContext getDummyNetworkStats()
+            return@withContext Collected.sample(getSampleNetworkStats())
         }
 
-        networkStats
+        Collected.real(networkStats)
     }
 
-    private fun getDummyNetworkStats(): Map<String, InterfaceStats> = mapOf(
-        "dummy:wlan0" to InterfaceStats(
+    private fun getSampleNetworkStats(): Map<String, InterfaceStats> = mapOf(
+        "wlan0" to InterfaceStats(
             // 50 MB
             rxBytes = 1024 * 1024 * 50,
             rxPackets = 1500,
@@ -156,7 +157,7 @@ class NativeSystemMonitor {
             txErrors = 0,
             txDropped = 1
         ),
-        "dummy:eth0" to InterfaceStats(
+        "eth0" to InterfaceStats(
             // 25 MB
             rxBytes = 1024 * 1024 * 25,
             rxPackets = 1200,
@@ -168,7 +169,7 @@ class NativeSystemMonitor {
             txErrors = 0,
             txDropped = 0
         ),
-        "dummy:rmnet0" to InterfaceStats(
+        "rmnet0" to InterfaceStats(
             // 120 MB
             rxBytes = 1024 * 1024 * 120,
             rxPackets = 3500,
@@ -207,7 +208,7 @@ class NativeSystemMonitor {
     }
 
     // Function to retrieve TCP connection information
-    suspend fun getTcpConnections(): List<TcpConnection> = withContext(Dispatchers.IO) {
+    suspend fun getTcpConnections(): Collected<List<TcpConnection>> = withContext(Dispatchers.IO) {
         val connections = mutableListOf<TcpConnection>()
         try {
             val jsonData = getTcpConnectionsNative()
@@ -231,14 +232,15 @@ class NativeSystemMonitor {
         }
 
         if (connections.isEmpty()) {
-            Log.i(TAG, "Using dummy TCP connection data")
-            return@withContext getDummyTcpConnections()
+            // /proc/net/tcp is not readable from the app sandbox on modern Android
+            Log.i(TAG, "Using sample TCP connection data")
+            return@withContext Collected.sample(getSampleTcpConnections())
         }
 
-        connections
+        Collected.real(connections)
     }
 
-    private fun getDummyTcpConnections(): List<TcpConnection> = listOf(
+    private fun getSampleTcpConnections(): List<TcpConnection> = listOf(
         TcpConnection(
             // 127.0.0.1:8080
             localAddress = "0100007F:1F90",

@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class HalInterfaceAnalyzer(private val context: Context, private val onDataCollected: (HalData) -> Unit) {
-    data class HalData(val halInterfaces: List<HalInterface>, val hwservices: List<HwService>, val vndkInfo: VndkInfo)
+    data class HalData(val halInterfaces: Collected<List<HalInterface>>, val hwservices: Collected<List<HwService>>, val vndkInfo: VndkInfo)
 
     data class HalInterface(
         val name: String,
@@ -27,6 +27,74 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
     data class HwService(val name: String, val server: String, val clients: List<String>)
 
     data class VndkInfo(val version: String, val libraries: List<String>)
+
+    companion object {
+        /**
+         * Shown when lshal produces nothing — it needs privileges this app does not have, and on
+         * some builds it crashes outright. Presented to the UI as sample data, never as a reading.
+         */
+        private val SAMPLE_HAL_INTERFACES = listOf(
+            HalInterface(
+                name = "android.hardware.audio@7.0::IDevicesFactory",
+                version = "7.0",
+                type = "HIDL",
+                implementation = "default",
+                status = "Running"
+            ),
+            HalInterface(
+                name = "android.hardware.camera@2.5::ICameraProvider",
+                version = "2.5",
+                type = "HIDL",
+                implementation = "qcom",
+                status = "Running"
+            ),
+            HalInterface(
+                name = "android.hardware.bluetooth@1.1::IBluetoothHci",
+                version = "1.1",
+                type = "HIDL",
+                implementation = "default",
+                status = "Running"
+            ),
+            HalInterface(
+                name = "android.hardware.sensors@2.1::ISensors",
+                version = "2.1",
+                type = "HIDL",
+                implementation = "default",
+                status = "Running"
+            ),
+            HalInterface(
+                name = "android.hardware.nfc@1.2::INfc",
+                version = "1.2",
+                type = "HIDL",
+                implementation = "default",
+                status = "Running"
+            )
+        )
+
+        /** Shown when `service list` produces nothing. */
+        private val SAMPLE_HW_SERVICES = listOf(
+            HwService(
+                name = "SurfaceFlinger",
+                server = "surfaceflinger",
+                clients = listOf("system_server", "com.android.systemui")
+            ),
+            HwService(
+                name = "audio",
+                server = "audioserver",
+                clients = listOf("com.android.music", "com.spotify.music")
+            ),
+            HwService(
+                name = "camera",
+                server = "cameraserver",
+                clients = listOf("com.android.camera")
+            ),
+            HwService(
+                name = "power",
+                server = "system_server",
+                clients = listOf("com.android.systemui", "com.android.settings")
+            )
+        )
+    }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
@@ -47,8 +115,8 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
                     val vndkInfo = collectVndkInfo()
 
                     val halData = HalData(
-                        halInterfaces = halInterfaces,
-                        hwservices = hwservices,
+                        halInterfaces = Collected.realOrSample(halInterfaces, SAMPLE_HAL_INTERFACES),
+                        hwservices = Collected.realOrSample(hwservices, SAMPLE_HW_SERVICES),
                         vndkInfo = vndkInfo
                     )
 
@@ -115,49 +183,6 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
 
             reader.close()
             process.destroy()
-
-            // If no data is available from lshal (could be permission issues), provide some examples
-            if (interfaces.isEmpty()) {
-                interfaces.addAll(
-                    listOf(
-                        HalInterface(
-                            name = "android.hardware.audio@7.0::IDevicesFactory",
-                            version = "7.0",
-                            type = "HIDL",
-                            implementation = "default",
-                            status = "Running"
-                        ),
-                        HalInterface(
-                            name = "android.hardware.camera@2.5::ICameraProvider",
-                            version = "2.5",
-                            type = "HIDL",
-                            implementation = "qcom",
-                            status = "Running"
-                        ),
-                        HalInterface(
-                            name = "android.hardware.bluetooth@1.1::IBluetoothHci",
-                            version = "1.1",
-                            type = "HIDL",
-                            implementation = "default",
-                            status = "Running"
-                        ),
-                        HalInterface(
-                            name = "android.hardware.sensors@2.1::ISensors",
-                            version = "2.1",
-                            type = "HIDL",
-                            implementation = "default",
-                            status = "Running"
-                        ),
-                        HalInterface(
-                            name = "android.hardware.nfc@1.2::INfc",
-                            version = "1.2",
-                            type = "HIDL",
-                            implementation = "default",
-                            status = "Running"
-                        )
-                    )
-                )
-            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -196,34 +221,6 @@ class HalInterfaceAnalyzer(private val context: Context, private val onDataColle
 
             reader.close()
             process.destroy()
-
-            // If no data is available, provide some examples
-            if (services.isEmpty()) {
-                services.addAll(
-                    listOf(
-                        HwService(
-                            name = "SurfaceFlinger",
-                            server = "surfaceflinger",
-                            clients = listOf("system_server", "com.android.systemui")
-                        ),
-                        HwService(
-                            name = "audio",
-                            server = "audioserver",
-                            clients = listOf("com.android.music", "com.spotify.music")
-                        ),
-                        HwService(
-                            name = "camera",
-                            server = "cameraserver",
-                            clients = listOf("com.android.camera")
-                        ),
-                        HwService(
-                            name = "power",
-                            server = "system_server",
-                            clients = listOf("com.android.systemui", "com.android.settings")
-                        )
-                    )
-                )
-            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

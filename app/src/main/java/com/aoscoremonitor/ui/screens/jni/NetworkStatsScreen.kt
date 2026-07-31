@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.SignalCellular4Bar
 import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,14 +36,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.jni.NativeSystemMonitor
+import com.aoscoremonitor.ui.components.SampleDataBanner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetworkStatsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    var networkStats by remember { mutableStateOf<Map<String, NativeSystemMonitor.InterfaceStats>>(emptyMap()) }
+    var networkStats by remember {
+        mutableStateOf(Collected.real(emptyMap<String, NativeSystemMonitor.InterfaceStats>()))
+    }
     var refreshing by remember { mutableStateOf(false) }
 
     val systemMonitor = remember { NativeSystemMonitor() }
@@ -83,10 +86,10 @@ fun NetworkStatsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (networkStats.isEmpty()) {
+            if (networkStats.value.isEmpty()) {
                 EmptyNetworkStats(refreshing)
             } else {
-                NetworkStatsList(networkStats)
+                NetworkStatsList(networkStats.value, networkStats.isSample)
             }
         }
     }
@@ -116,70 +119,32 @@ private fun EmptyNetworkStats(refreshing: Boolean) {
 }
 
 @Composable
-private fun NetworkStatsList(networkStats: Map<String, NativeSystemMonitor.InterfaceStats>) {
-    val isDummyData = networkStats.keys.any { it.startsWith("dummy:") }
-
+private fun NetworkStatsList(networkStats: Map<String, NativeSystemMonitor.InterfaceStats>, isSample: Boolean) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        if (isDummyData) {
+        if (isSample) {
             item {
-                DummyDataBanner()
+                SampleDataBanner("Sample data: /proc/net is not readable by apps")
             }
         }
 
         items(networkStats.entries.toList()) { (interfaceName, stats) ->
-            NetworkInterfaceCard(interfaceName, stats)
+            NetworkInterfaceCard(interfaceName, stats, isSample)
         }
     }
 }
 
 @Composable
-private fun DummyDataBanner() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Warning",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                text = "Displaying dummy network data",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun NetworkInterfaceCard(interfaceName: String, stats: NativeSystemMonitor.InterfaceStats) {
-    val isDummy = interfaceName.startsWith("dummy:")
-    val displayName = if (isDummy) interfaceName.substringAfter("dummy:") else interfaceName
-
+private fun NetworkInterfaceCard(interfaceName: String, stats: NativeSystemMonitor.InterfaceStats, isSample: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = if (isDummy) {
+        colors = if (isSample) {
             CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         } else {
             CardDefaults.cardColors()
@@ -199,13 +164,13 @@ private fun NetworkInterfaceCard(interfaceName: String, stats: NativeSystemMonit
                 )
                 Column(modifier = Modifier.padding(start = 8.dp)) {
                     Text(
-                        text = displayName,
+                        text = interfaceName,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    if (isDummy) {
+                    if (isSample) {
                         Text(
-                            text = "(Dummy Data)",
+                            text = "(Sample data)",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )

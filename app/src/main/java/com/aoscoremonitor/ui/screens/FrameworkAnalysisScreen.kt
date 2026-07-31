@@ -32,7 +32,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.FrameworkAnalyzer
+import com.aoscoremonitor.ui.components.SampleDataBanner
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -44,10 +46,12 @@ fun FrameworkAnalysisScreen(onNavigateBack: () -> Unit, modifier: Modifier = Mod
         mutableStateOf(
             FrameworkAnalyzer.FrameworkData(
                 binderTransactions = emptyList(),
-                apiCalls = emptyList(),
-                serviceData = FrameworkAnalyzer.ServiceManagerData(
-                    runningServices = emptyMap(),
-                    serviceConnections = emptyList()
+                apiCalls = Collected.real(emptyList()),
+                serviceData = Collected.real(
+                    FrameworkAnalyzer.ServiceManagerData(
+                        runningServices = emptyMap(),
+                        serviceConnections = emptyList()
+                    )
                 )
             )
         )
@@ -110,8 +114,8 @@ fun FrameworkAnalysisScreen(onNavigateBack: () -> Unit, modifier: Modifier = Mod
             // Content based on selected tab
             when (selectedTabIndex) {
                 0 -> BinderTransactionsTab(binderTransactions = frameworkData.binderTransactions)
-                1 -> ApiCallsTab(apiCalls = frameworkData.apiCalls)
-                2 -> ServicesTab(serviceData = frameworkData.serviceData)
+                1 -> ApiCallsTab(frameworkData.apiCalls)
+                2 -> ServicesTab(frameworkData.serviceData)
             }
         }
     }
@@ -199,7 +203,8 @@ fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTrans
 }
 
 @Composable
-fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
+fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>>) {
+    val apiCalls = collected.value
     val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
 
     LazyColumn(
@@ -216,6 +221,12 @@ fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: capturing real API calls needs instrumentation")
+            }
         }
 
         // Empty state or API calls list
@@ -275,7 +286,8 @@ fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
 }
 
 @Composable
-fun ServicesTab(serviceData: FrameworkAnalyzer.ServiceManagerData) {
+fun ServicesTab(collected: Collected<FrameworkAnalyzer.ServiceManagerData>) {
+    val serviceData = collected.value
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -290,6 +302,12 @@ fun ServicesTab(serviceData: FrameworkAnalyzer.ServiceManagerData) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: `dumpsys activity services` returned nothing")
+            }
         }
 
         // Empty state or services list
