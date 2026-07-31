@@ -20,8 +20,8 @@ class SystemInfoViewModel(context: Context) : ViewModel() {
 
     val uiState: StateFlow<SystemInfoCollector.SystemInfo> = callbackFlow {
         val collector = SystemInfoCollector(context) { info -> trySend(info) }
-        collector.startCollecting()
-        awaitClose { collector.stopCollecting() }
+        collector.start()
+        awaitClose { collector.stop() }
     }.stateIn(viewModelScope, WhileScreenVisible, EMPTY)
 
     private companion object {

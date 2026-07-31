@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.Collected
-import com.aoscoremonitor.diagnostics.HalInterfaceAnalyzer
+import com.aoscoremonitor.diagnostics.HalInterfaceCollector
 import com.aoscoremonitor.ui.components.EmptyState
 import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
@@ -57,10 +57,10 @@ fun HalInfoScreen(
 }
 
 @Composable
-private fun HalInfoContent(halData: HalInterfaceAnalyzer.HalData, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun HalInfoContent(halData: HalInterfaceCollector.HalData, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val tabs = listOf(
         MonitorTab(stringResource(R.string.hal_tab_interfaces), Icons.Default.Hardware, halData.halInterfaces.value.size),
-        MonitorTab(stringResource(R.string.hal_tab_services), Icons.Default.Devices, halData.hwservices.value.size),
+        MonitorTab(stringResource(R.string.hal_tab_services), Icons.Default.Devices, halData.hwServices.value.size),
         MonitorTab(stringResource(R.string.hal_tab_vndk), Icons.Default.Memory, halData.vndkInfo.libraries.size)
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -79,7 +79,7 @@ private fun HalInfoContent(halData: HalInterfaceAnalyzer.HalData, onNavigateBack
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
                 when (page) {
                     0 -> HalInterfacesTab(halData.halInterfaces)
-                    1 -> HwServicesTab(halData.hwservices)
+                    1 -> HwServicesTab(halData.hwServices)
                     else -> VndkInfoTab(halData.vndkInfo)
                 }
             }
@@ -88,7 +88,7 @@ private fun HalInfoContent(halData: HalInterfaceAnalyzer.HalData, onNavigateBack
 }
 
 @Composable
-private fun HalInterfacesTab(collected: Collected<List<HalInterfaceAnalyzer.HalInterface>>, modifier: Modifier = Modifier) {
+private fun HalInterfacesTab(collected: Collected<List<HalInterfaceCollector.HalInterface>>, modifier: Modifier = Modifier) {
     val interfaces = collected.value
 
     TabContentList(modifier = modifier) {
@@ -127,7 +127,7 @@ private fun HalInterfacesTab(collected: Collected<List<HalInterfaceAnalyzer.HalI
 }
 
 @Composable
-private fun HwServicesTab(collected: Collected<List<HalInterfaceAnalyzer.HwService>>, modifier: Modifier = Modifier) {
+private fun HwServicesTab(collected: Collected<List<HalInterfaceCollector.HwService>>, modifier: Modifier = Modifier) {
     val services = collected.value
 
     TabContentList(modifier = modifier) {
@@ -160,7 +160,7 @@ private fun HwServicesTab(collected: Collected<List<HalInterfaceAnalyzer.HwServi
 }
 
 @Composable
-private fun VndkInfoTab(vndkInfo: HalInterfaceAnalyzer.VndkInfo, modifier: Modifier = Modifier) {
+private fun VndkInfoTab(vndkInfo: HalInterfaceCollector.VndkInfo, modifier: Modifier = Modifier) {
     TabContentList(modifier = modifier) {
         item(key = "header") {
             SectionHeader(
@@ -206,11 +206,11 @@ private fun VndkInfoTab(vndkInfo: HalInterfaceAnalyzer.VndkInfo, modifier: Modif
 /**
  * Whether a HAL is up.
  *
- * [HalInterfaceAnalyzer.HalInterface.status] is a literal the analyzer writes in English, so the
+ * [HalInterfaceCollector.HalInterface.status] is a literal the collector writes in English, so the
  * comparison has to be against that literal. It was briefly compared against a string resource,
  * which would have made every HAL read as stopped the moment the app was translated.
  */
-private val HalInterfaceAnalyzer.HalInterface.readingStatus: ReadingStatus
+private val HalInterfaceCollector.HalInterface.readingStatus: ReadingStatus
     get() = if (status == RUNNING_STATUS) ReadingStatus.Ok else ReadingStatus.Problem
 
 private const val RUNNING_STATUS = "Running"
@@ -221,17 +221,17 @@ private const val RUNNING_STATUS = "Running"
 private fun HalInfoPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
         HalInfoContent(
-            halData = HalInterfaceAnalyzer.HalData(
+            halData = HalInterfaceCollector.HalData(
                 halInterfaces = Collected.real(
                     listOf(
-                        HalInterfaceAnalyzer.HalInterface(
+                        HalInterfaceCollector.HalInterface(
                             name = "android.hardware.audio@7.1::IDevicesFactory",
                             version = "7.1",
                             type = "HIDL",
                             implementation = "default",
                             status = "Running"
                         ),
-                        HalInterfaceAnalyzer.HalInterface(
+                        HalInterfaceCollector.HalInterface(
                             name = "android.hardware.camera.provider@2.7::ICameraProvider",
                             version = "2.7",
                             type = "HIDL",
@@ -240,8 +240,8 @@ private fun HalInfoPreview() {
                         )
                     )
                 ),
-                hwservices = Collected.real(emptyList()),
-                vndkInfo = HalInterfaceAnalyzer.VndkInfo(version = "36", libraries = listOf("libbase.so", "libcutils.so"))
+                hwServices = Collected.real(emptyList()),
+                vndkInfo = HalInterfaceCollector.VndkInfo(version = "36", libraries = listOf("libbase.so", "libcutils.so"))
             ),
             onNavigateBack = {}
         )

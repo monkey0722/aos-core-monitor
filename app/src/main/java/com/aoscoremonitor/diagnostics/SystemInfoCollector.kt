@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
  * A class that periodically collects various system information (CPU/Memory, Battery, Network)
  * and notifies through callbacks.
  */
-class SystemInfoCollector(private val context: Context, private val onInfoUpdated: (SystemInfo) -> Unit) {
+class SystemInfoCollector(private val context: Context, private val onUpdate: (SystemInfo) -> Unit) {
     companion object {
         // Android sets USER_HZ to 100, so one clock tick in /proc/self/stat is 10ms
         private const val MILLIS_PER_TICK = 10L
@@ -42,7 +42,7 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
     /**
      * Starts collecting system information.
      */
-    fun startCollecting() {
+    fun start() {
         if (job?.isActive == true) return
 
         job = scope.launch {
@@ -54,7 +54,7 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
                     val networkStatus = readNetworkStatus()
                     // Execute callback on the main thread
                     withContext(Dispatchers.Main) {
-                        onInfoUpdated(
+                        onUpdate(
                             SystemInfo(
                                 cpuUsage = cpuUsage,
                                 memoryUsage = memoryUsage,
@@ -75,7 +75,7 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
     /**
      * Stops collecting system information.
      */
-    fun stopCollecting() {
+    fun stop() {
         job?.cancel()
         job = null
     }

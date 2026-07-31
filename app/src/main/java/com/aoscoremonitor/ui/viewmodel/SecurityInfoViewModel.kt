@@ -19,8 +19,8 @@ class SecurityInfoViewModel(context: Context) : ViewModel() {
 
     val uiState: StateFlow<SecurityInfoCollector.SecurityInfo> = callbackFlow {
         val collector = SecurityInfoCollector(context) { info -> trySend(info) }
-        collector.startCollecting()
-        awaitClose { collector.stopCollecting() }
+        collector.start()
+        awaitClose { collector.stop() }
     }.stateIn(viewModelScope, WhileScreenVisible, EMPTY)
 
     private companion object {

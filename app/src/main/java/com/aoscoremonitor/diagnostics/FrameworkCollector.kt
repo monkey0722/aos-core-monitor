@@ -12,7 +12,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FrameworkAnalyzer(private val context: Context, private val onDataCollected: (FrameworkData) -> Unit) {
+/**
+ * Periodically reads what the Android framework is doing — Binder traffic, API calls, and the
+ * services registered with the activity manager — and hands each pass to [onUpdate].
+ */
+class FrameworkCollector(private val context: Context, private val onUpdate: (FrameworkData) -> Unit) {
     data class FrameworkData(
         val binderTransactions: List<BinderTransaction>,
         val apiCalls: Collected<List<ApiCallInfo>>,
@@ -68,7 +72,7 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
 
-    fun startAnalyzing() {
+    fun start() {
         if (job?.isActive == true) return
 
         job = scope.launch {
@@ -94,7 +98,7 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
                     )
 
                     withContext(Dispatchers.Main) {
-                        onDataCollected(frameworkData)
+                        onUpdate(frameworkData)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -105,7 +109,7 @@ class FrameworkAnalyzer(private val context: Context, private val onDataCollecte
         }
     }
 
-    fun stopAnalyzing() {
+    fun stop() {
         job?.cancel()
         job = null
     }

@@ -4,26 +4,26 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aoscoremonitor.diagnostics.Collected
-import com.aoscoremonitor.diagnostics.HalInterfaceAnalyzer
+import com.aoscoremonitor.diagnostics.HalInterfaceCollector
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
 
-/** Feeds the HAL screen from [HalInterfaceAnalyzer]. */
+/** Feeds the HAL screen from [HalInterfaceCollector]. */
 class HalInfoViewModel(context: Context) : ViewModel() {
 
-    val uiState: StateFlow<HalInterfaceAnalyzer.HalData> = callbackFlow {
-        val analyzer = HalInterfaceAnalyzer(context) { data -> trySend(data) }
-        analyzer.startAnalyzing()
-        awaitClose { analyzer.stopAnalyzing() }
+    val uiState: StateFlow<HalInterfaceCollector.HalData> = callbackFlow {
+        val collector = HalInterfaceCollector(context) { data -> trySend(data) }
+        collector.start()
+        awaitClose { collector.stop() }
     }.stateIn(viewModelScope, WhileScreenVisible, EMPTY)
 
     private companion object {
-        val EMPTY = HalInterfaceAnalyzer.HalData(
+        val EMPTY = HalInterfaceCollector.HalData(
             halInterfaces = Collected.real(emptyList()),
-            hwservices = Collected.real(emptyList()),
-            vndkInfo = HalInterfaceAnalyzer.VndkInfo(version = "—", libraries = emptyList())
+            hwServices = Collected.real(emptyList()),
+            vndkInfo = HalInterfaceCollector.VndkInfo(version = "—", libraries = emptyList())
         )
     }
 }

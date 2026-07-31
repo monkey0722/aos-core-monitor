@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 /**
  * A class that analyzes system state using public APIs of AOSP internal services.
  */
-class SystemDiagnosticsCollector(private val context: Context, private val onDiagnosticsUpdated: (DiagnosticsInfo) -> Unit) {
+class SystemDiagnosticsCollector(private val context: Context, private val onUpdate: (DiagnosticsInfo) -> Unit) {
     /**
      * Data class containing system diagnostic information.
      */
@@ -33,7 +33,7 @@ class SystemDiagnosticsCollector(private val context: Context, private val onDia
     /**
      * Starts collecting system diagnostic information periodically.
      */
-    fun startCollecting() {
+    fun start() {
         // Don't create a new job if collection is already in progress
         if (job?.isActive == true) return
 
@@ -69,7 +69,7 @@ class SystemDiagnosticsCollector(private val context: Context, private val onDia
                     )
 
                     withContext(Dispatchers.Main) {
-                        onDiagnosticsUpdated(diagnosticsInfo)
+                        onUpdate(diagnosticsInfo)
                     }
 
                     delay(2000L) // Update every 2 seconds
@@ -83,7 +83,7 @@ class SystemDiagnosticsCollector(private val context: Context, private val onDia
     /**
      * Stops collecting diagnostic information.
      */
-    fun stopCollecting() {
+    fun stop() {
         job?.cancel()
         job = null
     }

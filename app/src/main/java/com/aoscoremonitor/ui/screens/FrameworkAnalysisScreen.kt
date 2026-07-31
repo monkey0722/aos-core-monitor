@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.Collected
-import com.aoscoremonitor.diagnostics.FrameworkAnalyzer
+import com.aoscoremonitor.diagnostics.FrameworkCollector
 import com.aoscoremonitor.ui.components.EmptyState
 import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
@@ -57,7 +57,7 @@ fun FrameworkAnalysisScreen(
 
 @Composable
 private fun FrameworkAnalysisContent(
-    frameworkData: FrameworkAnalyzer.FrameworkData,
+    frameworkData: FrameworkCollector.FrameworkData,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -109,7 +109,7 @@ private fun rememberTimeFormatter(): DateTimeFormatter {
 }
 
 @Composable
-private fun BinderTransactionsTab(transactions: List<FrameworkAnalyzer.BinderTransaction>, modifier: Modifier = Modifier) {
+private fun BinderTransactionsTab(transactions: List<FrameworkCollector.BinderTransaction>, modifier: Modifier = Modifier) {
     val timeFormatter = rememberTimeFormatter()
 
     TabContentList(modifier = modifier) {
@@ -152,7 +152,7 @@ private fun BinderTransactionsTab(transactions: List<FrameworkAnalyzer.BinderTra
 }
 
 @Composable
-private fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>>, modifier: Modifier = Modifier) {
+private fun ApiCallsTab(collected: Collected<List<FrameworkCollector.ApiCallInfo>>, modifier: Modifier = Modifier) {
     val timeFormatter = rememberTimeFormatter()
     val apiCalls = collected.value
 
@@ -188,7 +188,7 @@ private fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>
 }
 
 @Composable
-private fun ServicesTab(collected: Collected<FrameworkAnalyzer.ServiceManagerData>, modifier: Modifier = Modifier) {
+private fun ServicesTab(collected: Collected<FrameworkCollector.ServiceManagerData>, modifier: Modifier = Modifier) {
     val serviceData = collected.value
     val services = remember(serviceData.runningServices) { serviceData.runningServices.entries.toList() }
 
@@ -248,9 +248,9 @@ private fun Timestamp(text: String, modifier: Modifier = Modifier) {
 private fun FrameworkAnalysisPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
         FrameworkAnalysisContent(
-            frameworkData = FrameworkAnalyzer.FrameworkData(
+            frameworkData = FrameworkCollector.FrameworkData(
                 binderTransactions = listOf(
-                    FrameworkAnalyzer.BinderTransaction(
+                    FrameworkCollector.BinderTransaction(
                         process = "system_server",
                         pid = 1731,
                         transactionCode = 26,
@@ -261,7 +261,7 @@ private fun FrameworkAnalysisPreview() {
                 ),
                 apiCalls = Collected.real(emptyList()),
                 serviceData = Collected.real(
-                    FrameworkAnalyzer.ServiceManagerData(
+                    FrameworkCollector.ServiceManagerData(
                         runningServices = mapOf("com.android.systemui/.SystemUIService" to "running"),
                         serviceConnections = emptyList()
                     )

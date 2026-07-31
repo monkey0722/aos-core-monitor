@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
  * A class to collect security-related information from the Android system.
  * Includes SELinux status, app permissions, and hardware security module information.
  */
-class SecurityInfoCollector(private val context: Context, private val onInfoUpdated: (SecurityInfo) -> Unit) {
+class SecurityInfoCollector(private val context: Context, private val onUpdate: (SecurityInfo) -> Unit) {
     /**
      * Data class representing the security information collected
      */
@@ -61,7 +61,7 @@ class SecurityInfoCollector(private val context: Context, private val onInfoUpda
     /**
      * Starts collecting security information.
      */
-    fun startCollecting() {
+    fun start() {
         if (job?.isActive == true) return
 
         job = scope.launch {
@@ -79,7 +79,7 @@ class SecurityInfoCollector(private val context: Context, private val onInfoUpda
                     )
 
                     withContext(Dispatchers.Main) {
-                        onInfoUpdated(securityInfo)
+                        onUpdate(securityInfo)
                     }
                 } catch (ex: Exception) {
                     ex.printStackTrace()
@@ -93,7 +93,7 @@ class SecurityInfoCollector(private val context: Context, private val onInfoUpda
     /**
      * Stops collecting security information.
      */
-    fun stopCollecting() {
+    fun stop() {
         job?.cancel()
         job = null
     }

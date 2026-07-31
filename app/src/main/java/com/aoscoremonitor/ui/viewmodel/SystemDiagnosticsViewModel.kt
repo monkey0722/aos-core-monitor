@@ -19,8 +19,8 @@ class SystemDiagnosticsViewModel(context: Context) : ViewModel() {
 
     val uiState: StateFlow<SystemDiagnosticsCollector.DiagnosticsInfo> = callbackFlow {
         val collector = SystemDiagnosticsCollector(context) { info -> trySend(info) }
-        collector.startCollecting()
-        awaitClose { collector.stopCollecting() }
+        collector.start()
+        awaitClose { collector.stop() }
     }.stateIn(viewModelScope, WhileScreenVisible, EMPTY)
 
     private companion object {

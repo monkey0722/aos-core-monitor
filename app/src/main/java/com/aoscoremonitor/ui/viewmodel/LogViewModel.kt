@@ -58,12 +58,12 @@ class LogViewModel : ViewModel() {
      *
      * Safe to call repeatedly — [LogCollector] ignores a start while it is already collecting.
      */
-    fun startCollecting() = collector.startCollecting()
+    fun startCollecting() = collector.start()
 
-    fun stopCollecting() = collector.stopCollecting()
+    fun stopCollecting() = collector.stop()
 
     override fun onCleared() {
-        collector.stopCollecting()
+        collector.stop()
     }
 
     private fun append(text: String) {
