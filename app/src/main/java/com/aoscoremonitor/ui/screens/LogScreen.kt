@@ -55,7 +55,7 @@ fun LogScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier, viewMod
         onStopOrDispose { viewModel.stopCollecting() }
     }
 
-    LogScreenContent(
+    LogContent(
         lines = viewModel.lines,
         droppedCount = viewModel.droppedCount,
         onNavigateBack = onNavigateBack,
@@ -64,7 +64,7 @@ fun LogScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier, viewMod
 }
 
 @Composable
-private fun LogScreenContent(lines: List<LogLine>, droppedCount: Int, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun LogContent(lines: List<LogLine>, droppedCount: Int, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val canScrollDown by remember { derivedStateOf { listState.canScrollForward } }
@@ -188,7 +188,7 @@ private val LogLevel.backgroundColor: Color
 @Composable
 private fun LogScreenPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
-        LogScreenContent(
+        LogContent(
             lines = listOf(
                 LogLine(0, "07-31 11:11:07.104  1731  1731 I ActivityManager: Start proc 4821", LogLevel.Info),
                 LogLine(1, "07-31 11:11:07.201  1731  1802 W BroadcastQueue: Background execution not allowed", LogLevel.Warn),

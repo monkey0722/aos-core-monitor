@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.aoscoremonitor.R
 import com.aoscoremonitor.ui.navigation.Destination
 import com.aoscoremonitor.ui.navigation.HomeDestinations
-import com.aoscoremonitor.ui.navigation.menuTitleRes
+import com.aoscoremonitor.ui.navigation.shortTitleRes
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.Spacing
 import kotlinx.coroutines.delay
@@ -160,7 +160,7 @@ private fun DestinationTile(destination: Destination, index: Int, onClick: () ->
                     }
                 }
                 Text(
-                    text = stringResource(destination.menuTitleRes),
+                    text = stringResource(destination.shortTitleRes),
                     style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = Spacing.Small),

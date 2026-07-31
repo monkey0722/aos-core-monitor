@@ -30,7 +30,7 @@ class MonitorNavigationTest {
         awaitText(string(R.string.destination_system_info))
 
         HomeDestinations.forEach { destination ->
-            composeRule.onNodeWithText(string(destination.menuTitleRes)).assertIsDisplayed()
+            composeRule.onNodeWithText(string(destination.shortTitleRes)).assertIsDisplayed()
         }
     }
 

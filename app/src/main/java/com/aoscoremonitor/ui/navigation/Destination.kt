@@ -141,7 +141,7 @@ val HomeDestinations: List<Destination> = listOf(
 
 /** The short label the home grid uses, which is not always the app bar title. */
 @get:StringRes
-val Destination.menuTitleRes: Int
+val Destination.shortTitleRes: Int
     get() = when (this) {
         Destination.Home -> R.string.app_name
         Destination.SystemInfo -> R.string.destination_system_info

@@ -24,7 +24,7 @@ import com.aoscoremonitor.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 /** One tab: what it is called, what it looks like, and how many things are behind it. */
-data class TabSpec(val title: String, val icon: ImageVector? = null, val count: Int? = null)
+data class MonitorTab(val title: String, val icon: ImageVector? = null, val count: Int? = null)
 
 /**
  * A tab row wired to a pager.
@@ -35,7 +35,7 @@ data class TabSpec(val title: String, val icon: ImageVector? = null, val count: 
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MonitorTabs(tabs: List<TabSpec>, pagerState: PagerState, modifier: Modifier = Modifier) {
+fun MonitorTabs(tabs: List<MonitorTab>, pagerState: PagerState, modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
 
     PrimaryTabRow(selectedTabIndex = pagerState.currentPage, modifier = modifier) {

@@ -28,11 +28,11 @@ import com.aoscoremonitor.ui.components.EmptyState
 import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.MonitorTab
 import com.aoscoremonitor.ui.components.MonitorTabs
 import com.aoscoremonitor.ui.components.SampleDataBanner
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.components.TabContentList
-import com.aoscoremonitor.ui.components.TabSpec
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.viewmodel.FrameworkAnalysisViewModel
 import com.aoscoremonitor.ui.viewmodel.monitorViewModel
@@ -62,9 +62,9 @@ private fun FrameworkAnalysisContent(
     modifier: Modifier = Modifier
 ) {
     val tabs = listOf(
-        TabSpec(stringResource(R.string.framework_tab_binder), Icons.Default.Sync, frameworkData.binderTransactions.size),
-        TabSpec(stringResource(R.string.framework_tab_api), Icons.Default.Api, frameworkData.apiCalls.value.size),
-        TabSpec(
+        MonitorTab(stringResource(R.string.framework_tab_binder), Icons.Default.Sync, frameworkData.binderTransactions.size),
+        MonitorTab(stringResource(R.string.framework_tab_api), Icons.Default.Api, frameworkData.apiCalls.value.size),
+        MonitorTab(
             stringResource(R.string.framework_tab_services),
             Icons.Default.Link,
             frameworkData.serviceData.value.runningServices.size

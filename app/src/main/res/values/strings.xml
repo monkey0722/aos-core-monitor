@@ -130,7 +130,6 @@
     <string name="hal_version">Version</string>
     <string name="hal_type">Type</string>
     <string name="hal_implementation">Implementation</string>
-    <string name="hal_status_running">Running</string>
     <string name="hal_service_server">Server</string>
     <string name="hal_service_clients">Clients</string>
     <string name="hal_service_no_clients">No clients bound</string>

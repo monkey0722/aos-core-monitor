@@ -28,13 +28,13 @@ import com.aoscoremonitor.ui.components.EmptyState
 import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.MonitorTab
 import com.aoscoremonitor.ui.components.MonitorTabs
 import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SampleDataBanner
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.components.StatusRow
 import com.aoscoremonitor.ui.components.TabContentList
-import com.aoscoremonitor.ui.components.TabSpec
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
@@ -59,9 +59,9 @@ fun HalInfoScreen(
 @Composable
 private fun HalInfoContent(halData: HalInterfaceAnalyzer.HalData, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val tabs = listOf(
-        TabSpec(stringResource(R.string.hal_tab_interfaces), Icons.Default.Hardware, halData.halInterfaces.value.size),
-        TabSpec(stringResource(R.string.hal_tab_services), Icons.Default.Devices, halData.hwservices.value.size),
-        TabSpec(stringResource(R.string.hal_tab_vndk), Icons.Default.Memory, halData.vndkInfo.libraries.size)
+        MonitorTab(stringResource(R.string.hal_tab_interfaces), Icons.Default.Hardware, halData.halInterfaces.value.size),
+        MonitorTab(stringResource(R.string.hal_tab_services), Icons.Default.Devices, halData.hwservices.value.size),
+        MonitorTab(stringResource(R.string.hal_tab_vndk), Icons.Default.Memory, halData.vndkInfo.libraries.size)
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
@@ -90,7 +90,6 @@ private fun HalInfoContent(halData: HalInterfaceAnalyzer.HalData, onNavigateBack
 @Composable
 private fun HalInterfacesTab(collected: Collected<List<HalInterfaceAnalyzer.HalInterface>>, modifier: Modifier = Modifier) {
     val interfaces = collected.value
-    val running = stringResource(R.string.hal_status_running)
 
     TabContentList(modifier = modifier) {
         item(key = "header") {
@@ -107,11 +106,10 @@ private fun HalInterfacesTab(collected: Collected<List<HalInterfaceAnalyzer.HalI
             item(key = "empty") { EmptyState(stringResource(R.string.hal_interfaces_empty)) }
         } else {
             items(interfaces, key = { "${it.name}-${it.version}" }) { halInterface ->
-                val isRunning = halInterface.status == running
                 MonitorCard {
                     StatusRow(
                         label = halInterface.name,
-                        status = if (isRunning) ReadingStatus.Ok else ReadingStatus.Problem,
+                        status = halInterface.readingStatus,
                         statusDescription = halInterface.status
                     )
                     Row(
@@ -204,6 +202,18 @@ private fun VndkInfoTab(vndkInfo: HalInterfaceAnalyzer.VndkInfo, modifier: Modif
         }
     }
 }
+
+/**
+ * Whether a HAL is up.
+ *
+ * [HalInterfaceAnalyzer.HalInterface.status] is a literal the analyzer writes in English, so the
+ * comparison has to be against that literal. It was briefly compared against a string resource,
+ * which would have made every HAL read as stopped the moment the app was translated.
+ */
+private val HalInterfaceAnalyzer.HalInterface.readingStatus: ReadingStatus
+    get() = if (status == RUNNING_STATUS) ReadingStatus.Ok else ReadingStatus.Problem
+
+private const val RUNNING_STATUS = "Running"
 
 @Preview(name = "HAL", showBackground = true)
 @Preview(name = "HAL (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)

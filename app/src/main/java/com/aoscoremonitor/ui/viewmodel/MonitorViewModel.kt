@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import kotlinx.coroutines.flow.SharingStarted
 
 /**
  * Obtains a [ViewModel] that needs a [Context], scoped to the current navigation entry.
@@ -30,16 +29,3 @@ inline fun <reified VM : ViewModel> monitorViewModel(crossinline create: (Contex
     }
     return viewModel(factory = factory)
 }
-
-/**
- * Sharing policy for readings that cost something to gather.
- *
- * Collection runs while a screen is actually watching and stops shortly after it stops watching,
- * so backgrounding the app also stops the logcat pipe, the `dumpsys` calls and the /proc polling.
- * The grace period covers a rotation, which briefly drops the subscriber and would otherwise
- * restart everything.
- *
- * Pair it with `collectAsStateWithLifecycle()` at the call site — plain `collectAsState()`
- * subscribes for as long as the composition exists and defeats this.
- */
-internal val WhileScreenVisible = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000)
