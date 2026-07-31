@@ -5,7 +5,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PermissionInfo as AndroidPermissionInfo
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
@@ -139,14 +138,9 @@ class SecurityInfoCollector(
 
         try {
             // Get all installed packages with requested permissions
-            val packages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getInstalledPackages(
-                    PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS)
-            }
+            val packages = packageManager.getInstalledPackages(
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
+            )
 
             for (packageInfo in packages) {
                 // Skip system apps to focus on user-installed apps
@@ -181,24 +175,13 @@ class SecurityInfoCollector(
             // Skip non-runtime permissions
             try {
                 if (permissionName.startsWith("android.permission.")) {
-                    val permInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        packageManager.getPermissionInfo(permissionName, 0)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        packageManager.getPermissionInfo(permissionName, 0)
-                    }
+                    val permInfo = packageManager.getPermissionInfo(permissionName, 0)
 
                     val isGranted =
                         requestedPermissionsFlags?.get(i)?.and(PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
                     val isProtectionDangerous =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                            (
-                                permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS
-                                ) == AndroidPermissionInfo.PROTECTION_DANGEROUS
-                        } else {
-                            @Suppress("DEPRECATION")
-                            permInfo.protectionLevel == AndroidPermissionInfo.PROTECTION_DANGEROUS
-                        }
+                        (permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS) ==
+                            AndroidPermissionInfo.PROTECTION_DANGEROUS
 
                     permissionInfoList.add(
                         AppPermissionInfo(
@@ -233,22 +216,15 @@ class SecurityInfoCollector(
             // Check for hardware-backed keystore
             isHardwareBackedKeyStoreSupported = isHardwareBackedKeyStoreAvailable()
 
-            // Check for StrongBox support (Android 9+)
-            isStrongBoxBackedKeyStoreSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // Check for StrongBox support
+            isStrongBoxBackedKeyStoreSupported =
                 context.packageManager.hasSystemFeature("android.hardware.strongbox_keystore")
-            } else {
-                false
-            }
 
             // Check for fingerprint support
             isFingerprintSupported = context.packageManager.hasSystemFeature("android.hardware.fingerprint")
 
-            // Check for biometric support (Android 9+)
-            isBiometricSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                context.packageManager.hasSystemFeature("android.hardware.biometrics")
-            } else {
-                isFingerprintSupported
-            }
+            // Check for biometric support
+            isBiometricSupported = context.packageManager.hasSystemFeature("android.hardware.biometrics")
 
             // Check for TEE support (using fingerprint as proxy since it requires TEE)
             isTeeSupported = isFingerprintSupported
@@ -316,15 +292,9 @@ class SecurityInfoCollector(
             // Clean up by deleting the test key
             keyStore.deleteEntry(keyAlias)
 
-            // Return whether the key is inside secure hardware.
-            // isInsideSecureHardware was deprecated in API 31 in favour of securityLevel.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_SOFTWARE &&
-                    keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_UNKNOWN
-            } else {
-                @Suppress("DEPRECATION")
-                keyInfo.isInsideSecureHardware
-            }
+            // Return whether the key is inside secure hardware
+            keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_SOFTWARE &&
+                keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_UNKNOWN
         } catch (e: Exception) {
             e.printStackTrace()
             false
