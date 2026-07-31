@@ -2,11 +2,14 @@ package com.aoscoremonitor.ui.screens.jni
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,8 +79,16 @@ fun NativeSystemMonitorScreen(onNavigateBack: () -> Unit, modifier: Modifier = M
         ) {
             // CPU Information Section
             SectionHeader("CPU Information")
-            cpuInfo.forEach { (key, value) ->
-                InfoItem(key, value.toString())
+            if (cpuInfo.isEmpty()) {
+                UnavailableNotice(
+                    "System-wide CPU statistics come from /proc/stat, which SELinux does not let " +
+                        "the app sandbox read on modern Android. Reading it requires a rooted or " +
+                        "userdebug build. Per-process counters below stay available."
+                )
+            } else {
+                cpuInfo.forEach { (key, value) ->
+                    InfoItem(key, value.toString())
+                }
             }
 
             // Memory Information Section
@@ -103,6 +114,22 @@ private fun SectionHeader(title: String) {
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
     )
+}
+
+@Composable
+private fun UnavailableNotice(message: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
 }
 
 @Composable

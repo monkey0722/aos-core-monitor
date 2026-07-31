@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Analytics
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 @Composable
@@ -224,7 +226,14 @@ private fun GridMenuItem(menuItem: MenuItem, visible: Boolean, modifier: Modifie
                         text = menuItem.title,
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        // Shrink to fit so long single words like "Diagnostics" are not
+                        // broken mid-word by the card's narrow width
+                        maxLines = 2,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 10.sp,
+                            maxFontSize = MaterialTheme.typography.bodyLarge.fontSize
+                        )
                     )
                 }
             }
