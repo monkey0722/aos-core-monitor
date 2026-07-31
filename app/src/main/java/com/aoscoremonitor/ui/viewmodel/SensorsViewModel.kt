@@ -39,7 +39,10 @@ data class SensorsUiState(
 
 class SensorsViewModel(context: Context) : ViewModel() {
 
-    private val sensorManager = context.getSystemService(SensorManager::class.java)
+    // Typed rather than left as the platform type getSystemService hands back: a device without the
+    // sensor service answers null, and inferring the type non-null would have turned the checks
+    // below into ones the compiler believes it can drop.
+    private val sensorManager: SensorManager? = context.getSystemService(SensorManager::class.java)
 
     /** Read once: the sensor list does not change under a running process, dynamic sensors aside. */
     private val inventory = readSensorInventory(sensorManager)
@@ -96,7 +99,9 @@ class SensorsViewModel(context: Context) : ViewModel() {
         }
 
         val registered = sensorManager?.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI) == true
-        awaitClose { if (registered) sensorManager?.unregisterListener(listener) }
+        // No safe call on the way out: `registered` can only be true if the manager was there to
+        // register with, which the compiler follows back through the val.
+        awaitClose { if (registered) sensorManager.unregisterListener(listener) }
     }
         // An accelerometer at SENSOR_DELAY_UI produces events faster than the screen can draw them,
         // and only the newest is worth drawing. Dropping the rest is the intent, not a side effect

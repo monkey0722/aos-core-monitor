@@ -88,6 +88,12 @@ fun sensorId(sensor: Sensor): String = "${sensor.type}:${sensor.name}"
  * be exercised off-device: the constants are compile-time integers, while every method on [Sensor]
  * needs a device to answer.
  */
+// TYPE_ORIENTATION and TYPE_TEMPERATURE are deprecated for apps to read, and named here anyway:
+// devices still publish both — an orientation sensor for apps written before rotation vectors, and a
+// temperature sensor on hardware predating TYPE_AMBIENT_TEMPERATURE — and this screen reports what a
+// device says it has. Leaving them out would not hide such a sensor, only file one the device really
+// carries under "Other" with no unit.
+@Suppress("DEPRECATION")
 fun sensorCategory(type: Int): SensorCategory = when (type) {
     Sensor.TYPE_ACCELEROMETER,
     Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
@@ -122,6 +128,8 @@ fun sensorCategory(type: Int): SensorCategory = when (type) {
  * The rotation vectors are the reason for the null rather than a "unit" of some kind: their values
  * are components of a unit quaternion and are not in anything.
  */
+// Deprecated types are named here for the reason given on [sensorCategory].
+@Suppress("DEPRECATION")
 fun sensorUnit(type: Int): SensorUnit? = when (type) {
     Sensor.TYPE_ACCELEROMETER,
     Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
