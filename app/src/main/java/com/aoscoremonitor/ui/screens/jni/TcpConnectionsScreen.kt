@@ -1,29 +1,56 @@
 package com.aoscoremonitor.ui.screens.jni
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Hearing
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.jni.NativeSystemMonitor
+import com.aoscoremonitor.ui.components.SampleDataBanner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TcpConnectionsScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var tcpConnections by remember { mutableStateOf<List<NativeSystemMonitor.TcpConnection>>(emptyList()) }
+fun TcpConnectionsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+    var tcpConnections by remember {
+        mutableStateOf(Collected.real(emptyList<NativeSystemMonitor.TcpConnection>()))
+    }
     var refreshing by remember { mutableStateOf(false) }
-    var isDummyData by remember { mutableStateOf(false) }
 
     val systemMonitor = remember { NativeSystemMonitor() }
 
@@ -32,16 +59,6 @@ fun TcpConnectionsScreen(
         while (isActive) {
             refreshing = true
             tcpConnections = systemMonitor.getTcpConnections()
-
-            // Check if this is dummy data by comparing with known dummy data patterns
-            // This is a simple heuristic - we check if the data contains the exact local addresses from dummy data
-            isDummyData = tcpConnections.any { conn ->
-                conn.localAddress == "0100007F:1F90" || // 127.0.0.1:8080
-                    conn.localAddress == "0100007F:01BB" || // 127.0.0.1:443
-                    conn.localAddress == "0100007F:0050" || // 127.0.0.1:80
-                    conn.localAddress == "78563412:0CEA" // 18.52.86.120:3338
-            }
-
             refreshing = false
             delay(3000) // Update every 3 seconds
         }
@@ -54,7 +71,7 @@ fun TcpConnectionsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -71,14 +88,14 @@ fun TcpConnectionsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (tcpConnections.isEmpty()) {
+            if (tcpConnections.value.isEmpty()) {
                 EmptyConnectionsView(refreshing)
             } else {
-                if (isDummyData) {
-                    DummyDataBanner()
+                if (tcpConnections.isSample) {
+                    SampleDataBanner("Sample data: /proc/net/tcp is not readable by apps")
                 }
-                ConnectionStatusSummary(tcpConnections)
-                TcpConnectionsList(tcpConnections, isDummyData)
+                ConnectionStatusSummary(tcpConnections.value)
+                TcpConnectionsList(tcpConnections.value, tcpConnections.isSample)
             }
         }
     }
@@ -128,59 +145,26 @@ private fun ConnectionStatusSummary(connections: List<NativeSystemMonitor.TcpCon
 }
 
 @Composable
-private fun DummyDataBanner() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Warning",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                text = "Displaying dummy TCP connection data",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun TcpConnectionsList(connections: List<NativeSystemMonitor.TcpConnection>, isDummyData: Boolean) {
+private fun TcpConnectionsList(connections: List<NativeSystemMonitor.TcpConnection>, isSample: Boolean) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
         items(connections) { connection ->
-            TcpConnectionItem(connection, isDummyData)
+            TcpConnectionItem(connection, isSample)
         }
     }
 }
 
 @Composable
-private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection, isDummyData: Boolean) {
+private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection, isSample: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = if (isDummyData) {
+        colors = if (isSample) {
             CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         } else {
             CardDefaults.cardColors()
@@ -192,10 +176,10 @@ private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection, isD
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isDummyData) {
+                if (isSample) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Dummy Data",
+                        contentDescription = "Sample data",
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(16.dp)
                     )

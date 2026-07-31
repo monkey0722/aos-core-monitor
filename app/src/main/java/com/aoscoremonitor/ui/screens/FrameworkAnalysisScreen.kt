@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,9 +15,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -29,28 +29,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.FrameworkAnalyzer
+import com.aoscoremonitor.ui.components.SampleDataBanner
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FrameworkAnalysisScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun FrameworkAnalysisScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var frameworkData by remember {
         mutableStateOf(
             FrameworkAnalyzer.FrameworkData(
                 binderTransactions = emptyList(),
-                apiCalls = emptyList(),
-                serviceData = FrameworkAnalyzer.ServiceManagerData(
-                    runningServices = emptyMap(),
-                    serviceConnections = emptyList()
+                apiCalls = Collected.real(emptyList()),
+                serviceData = Collected.real(
+                    FrameworkAnalyzer.ServiceManagerData(
+                        runningServices = emptyMap(),
+                        serviceConnections = emptyList()
+                    )
                 )
             )
         )
@@ -82,7 +83,7 @@ fun FrameworkAnalysisScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -100,7 +101,7 @@ fun FrameworkAnalysisScreen(
                 .padding(innerPadding)
         ) {
             // Simple tab row
-            TabRow(selectedTabIndex = selectedTabIndex) {
+            PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         text = { Text(title) },
@@ -113,8 +114,8 @@ fun FrameworkAnalysisScreen(
             // Content based on selected tab
             when (selectedTabIndex) {
                 0 -> BinderTransactionsTab(binderTransactions = frameworkData.binderTransactions)
-                1 -> ApiCallsTab(apiCalls = frameworkData.apiCalls)
-                2 -> ServicesTab(serviceData = frameworkData.serviceData)
+                1 -> ApiCallsTab(frameworkData.apiCalls)
+                2 -> ServicesTab(frameworkData.serviceData)
             }
         }
     }
@@ -122,7 +123,7 @@ fun FrameworkAnalysisScreen(
 
 @Composable
 fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTransaction>) {
-    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
 
     LazyColumn(
         modifier = Modifier
@@ -202,8 +203,9 @@ fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTrans
 }
 
 @Composable
-fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
-    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>>) {
+    val apiCalls = collected.value
+    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
 
     LazyColumn(
         modifier = Modifier
@@ -219,6 +221,12 @@ fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: capturing real API calls needs instrumentation")
+            }
         }
 
         // Empty state or API calls list
@@ -278,7 +286,8 @@ fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
 }
 
 @Composable
-fun ServicesTab(serviceData: FrameworkAnalyzer.ServiceManagerData) {
+fun ServicesTab(collected: Collected<FrameworkAnalyzer.ServiceManagerData>) {
+    val serviceData = collected.value
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -293,6 +302,12 @@ fun ServicesTab(serviceData: FrameworkAnalyzer.ServiceManagerData) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: `dumpsys activity services` returned nothing")
+            }
         }
 
         // Empty state or services list

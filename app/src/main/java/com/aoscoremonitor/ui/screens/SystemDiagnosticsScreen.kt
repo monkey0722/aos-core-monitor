@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Visibility
@@ -42,10 +42,7 @@ import com.aoscoremonitor.diagnostics.SystemDiagnosticsCollector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SystemDiagnosticsScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SystemDiagnosticsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var diagnosticsInfo by remember {
@@ -79,7 +76,7 @@ fun SystemDiagnosticsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -123,7 +120,7 @@ fun SystemDiagnosticsScreen(
                 } else {
                     diagnosticsInfo.runningProcesses.joinToString("\n")
                 },
-                icon = Icons.Default.List,
+                icon = Icons.AutoMirrored.Filled.List,
                 color = MaterialTheme.colorScheme.error,
                 expandable = true,
                 maxHeight = 200.dp

@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -35,20 +35,17 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogDisplay(
-    logs: List<String>,
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun LogDisplay(logs: List<String>, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
     // Show "Scroll to bottom" button only if there are enough logs at the bottom
     val showScrollToBottom by remember {
         derivedStateOf {
-            lazyListState.canScrollForward || (
-                logs.isNotEmpty() && !lazyListState.isScrolledToEnd() && lazyListState.firstVisibleItemIndex > 0
-                )
+            lazyListState.canScrollForward ||
+                (
+                    logs.isNotEmpty() && !lazyListState.isScrolledToEnd() && lazyListState.firstVisibleItemIndex > 0
+                    )
         }
     }
 
@@ -59,7 +56,7 @@ fun LogDisplay(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -141,33 +138,31 @@ fun LogItem(log: String) {
 }
 
 @Composable
-private fun getLogColors(log: String): Pair<Color, Color> {
-    return when {
-        log.contains(" E ", ignoreCase = true) ||
-            log.contains("error", ignoreCase = true) ||
-            log.contains(
-                "exception",
-                ignoreCase = true
-            ) -> {
-            // Error logs
-            MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        }
-        log.contains(" W ", ignoreCase = true) || log.contains("warning", ignoreCase = true) -> {
-            // Warning logs
-            MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-        }
-        log.contains(" I ", ignoreCase = true) || log.contains("info", ignoreCase = true) -> {
-            // Info logs
-            MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
-        }
-        log.contains(" D ", ignoreCase = true) || log.contains("debug", ignoreCase = true) -> {
-            // Debug logs
-            MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
-        }
-        else -> {
-            // Other logs
-            MaterialTheme.colorScheme.onSurface to MaterialTheme.colorScheme.surface
-        }
+private fun getLogColors(log: String): Pair<Color, Color> = when {
+    log.contains(" E ", ignoreCase = true) ||
+        log.contains("error", ignoreCase = true) ||
+        log.contains(
+            "exception",
+            ignoreCase = true
+        ) -> {
+        // Error logs
+        MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+    }
+    log.contains(" W ", ignoreCase = true) || log.contains("warning", ignoreCase = true) -> {
+        // Warning logs
+        MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+    }
+    log.contains(" I ", ignoreCase = true) || log.contains("info", ignoreCase = true) -> {
+        // Info logs
+        MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+    }
+    log.contains(" D ", ignoreCase = true) || log.contains("debug", ignoreCase = true) -> {
+        // Debug logs
+        MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
+    }
+    else -> {
+        // Other logs
+        MaterialTheme.colorScheme.onSurface to MaterialTheme.colorScheme.surface
     }
 }
 

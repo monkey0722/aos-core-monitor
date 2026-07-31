@@ -5,7 +5,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PermissionInfo as AndroidPermissionInfo
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
@@ -27,10 +26,7 @@ import kotlinx.coroutines.withContext
  * A class to collect security-related information from the Android system.
  * Includes SELinux status, app permissions, and hardware security module information.
  */
-class SecurityInfoCollector(
-    private val context: Context,
-    private val onInfoUpdated: (SecurityInfo) -> Unit
-) {
+class SecurityInfoCollector(private val context: Context, private val onInfoUpdated: (SecurityInfo) -> Unit) {
     /**
      * Data class representing the security information collected
      */
@@ -44,11 +40,7 @@ class SecurityInfoCollector(
     /**
      * Data class for app permission details
      */
-    data class AppPermissionInfo(
-        val permissionName: String,
-        val isGranted: Boolean,
-        val isProtectionDangerous: Boolean
-    )
+    data class AppPermissionInfo(val permissionName: String, val isGranted: Boolean, val isProtectionDangerous: Boolean)
 
     /**
      * Data class for hardware security information
@@ -139,14 +131,9 @@ class SecurityInfoCollector(
 
         try {
             // Get all installed packages with requested permissions
-            val packages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getInstalledPackages(
-                    PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS)
-            }
+            val packages = packageManager.getInstalledPackages(
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
+            )
 
             for (packageInfo in packages) {
                 // Skip system apps to focus on user-installed apps
@@ -181,24 +168,13 @@ class SecurityInfoCollector(
             // Skip non-runtime permissions
             try {
                 if (permissionName.startsWith("android.permission.")) {
-                    val permInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        packageManager.getPermissionInfo(permissionName, 0)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        packageManager.getPermissionInfo(permissionName, 0)
-                    }
+                    val permInfo = packageManager.getPermissionInfo(permissionName, 0)
 
                     val isGranted =
                         requestedPermissionsFlags?.get(i)?.and(PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
                     val isProtectionDangerous =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                            (
-                                permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS
-                                ) == AndroidPermissionInfo.PROTECTION_DANGEROUS
-                        } else {
-                            @Suppress("DEPRECATION")
-                            permInfo.protectionLevel == AndroidPermissionInfo.PROTECTION_DANGEROUS
-                        }
+                        (permInfo.protection and AndroidPermissionInfo.PROTECTION_DANGEROUS) ==
+                            AndroidPermissionInfo.PROTECTION_DANGEROUS
 
                     permissionInfoList.add(
                         AppPermissionInfo(
@@ -233,22 +209,15 @@ class SecurityInfoCollector(
             // Check for hardware-backed keystore
             isHardwareBackedKeyStoreSupported = isHardwareBackedKeyStoreAvailable()
 
-            // Check for StrongBox support (Android 9+)
-            isStrongBoxBackedKeyStoreSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // Check for StrongBox support
+            isStrongBoxBackedKeyStoreSupported =
                 context.packageManager.hasSystemFeature("android.hardware.strongbox_keystore")
-            } else {
-                false
-            }
 
             // Check for fingerprint support
             isFingerprintSupported = context.packageManager.hasSystemFeature("android.hardware.fingerprint")
 
-            // Check for biometric support (Android 9+)
-            isBiometricSupported = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                context.packageManager.hasSystemFeature("android.hardware.biometrics")
-            } else {
-                isFingerprintSupported
-            }
+            // Check for biometric support
+            isBiometricSupported = context.packageManager.hasSystemFeature("android.hardware.biometrics")
 
             // Check for TEE support (using fingerprint as proxy since it requires TEE)
             isTeeSupported = isFingerprintSupported
@@ -280,47 +249,46 @@ class SecurityInfoCollector(
      * a key and checking if it's stored in secure hardware.
      * @return true if hardware-backed keystore is supported, false otherwise
      */
-    private fun isHardwareBackedKeyStoreAvailable(): Boolean {
-        return try {
-            // Try to generate a temporary key in the Android Keystore
-            val keyAlias = "HardwareBackedKeyStoreTest"
-            val keyStore = KeyStore.getInstance("AndroidKeyStore")
-            keyStore.load(null)
+    private fun isHardwareBackedKeyStoreAvailable(): Boolean = try {
+        // Try to generate a temporary key in the Android Keystore
+        val keyAlias = "HardwareBackedKeyStoreTest"
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
 
-            // Delete any existing key with this alias first
-            if (keyStore.containsAlias(keyAlias)) {
-                keyStore.deleteEntry(keyAlias)
-            }
-
-            // Generate a new key
-            val keyGenerator = KeyPairGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_RSA,
-                "AndroidKeyStore"
-            )
-            val keyGenSpec = KeyGenParameterSpec.Builder(
-                keyAlias,
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setDigests(KeyProperties.DIGEST_SHA256)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-                .build()
-
-            keyGenerator.initialize(keyGenSpec)
-            val keyPair = keyGenerator.generateKeyPair()
-
-            // Get KeyInfo to check if the key is in secure hardware
-            val privateKey = keyStore.getKey(keyAlias, null)
-            val keyFactory = KeyFactory.getInstance(privateKey.algorithm, "AndroidKeyStore")
-            val keyInfo = keyFactory.getKeySpec(privateKey, KeyInfo::class.java)
-
-            // Clean up by deleting the test key
+        // Delete any existing key with this alias first
+        if (keyStore.containsAlias(keyAlias)) {
             keyStore.deleteEntry(keyAlias)
-
-            // Return whether the key is inside secure hardware
-            keyInfo.isInsideSecureHardware
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
         }
+
+        // Generate a new key
+        val keyGenerator = KeyPairGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_RSA,
+            "AndroidKeyStore"
+        )
+        val keyGenSpec = KeyGenParameterSpec.Builder(
+            keyAlias,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setDigests(KeyProperties.DIGEST_SHA256)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+            .build()
+
+        keyGenerator.initialize(keyGenSpec)
+        val keyPair = keyGenerator.generateKeyPair()
+
+        // Get KeyInfo to check if the key is in secure hardware
+        val privateKey = keyStore.getKey(keyAlias, null)
+        val keyFactory = KeyFactory.getInstance(privateKey.algorithm, "AndroidKeyStore")
+        val keyInfo = keyFactory.getKeySpec(privateKey, KeyInfo::class.java)
+
+        // Clean up by deleting the test key
+        keyStore.deleteEntry(keyAlias)
+
+        // Return whether the key is inside secure hardware
+        keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_SOFTWARE &&
+            keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_UNKNOWN
+    } catch (e: Exception) {
+        e.printStackTrace()
+        false
     }
 }

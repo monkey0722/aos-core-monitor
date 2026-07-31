@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
@@ -39,10 +39,7 @@ import com.aoscoremonitor.diagnostics.SecurityInfoCollector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecurityInfoScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SecurityInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var securityInfo by remember {
         mutableStateOf(
@@ -82,7 +79,7 @@ fun SecurityInfoScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -251,10 +248,7 @@ fun SecurityFeatureItem(title: String, isSupported: Boolean) {
 }
 
 @Composable
-fun AppPermissionCard(
-    packageName: String,
-    permissions: List<SecurityInfoCollector.AppPermissionInfo>
-) {
+fun AppPermissionCard(packageName: String, permissions: List<SecurityInfoCollector.AppPermissionInfo>) {
     val hasDangerousPermissions = permissions.any { it.isProtectionDangerous && it.isGranted }
 
     Card(

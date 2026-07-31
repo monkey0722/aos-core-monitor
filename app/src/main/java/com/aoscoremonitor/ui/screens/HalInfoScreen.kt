@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Error
@@ -23,14 +23,14 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,20 +46,19 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.HalInterfaceAnalyzer
+import com.aoscoremonitor.ui.components.SampleDataBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HalInfoScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun HalInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var halData by remember {
         mutableStateOf(
             HalInterfaceAnalyzer.HalData(
-                halInterfaces = emptyList(),
-                hwservices = emptyList(),
+                halInterfaces = Collected.real(emptyList()),
+                hwservices = Collected.real(emptyList()),
                 vndkInfo = HalInterfaceAnalyzer.VndkInfo(
                     version = "Unknown",
                     libraries = emptyList()
@@ -71,8 +70,8 @@ fun HalInfoScreen(
     // Tab selection state
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf(
-        TabInfo("HAL Interfaces", Icons.Default.Hardware, halData.halInterfaces.size),
-        TabInfo("HW Services", Icons.Default.Devices, halData.hwservices.size),
+        TabInfo("HAL Interfaces", Icons.Default.Hardware, halData.halInterfaces.value.size),
+        TabInfo("HW Services", Icons.Default.Devices, halData.hwservices.value.size),
         TabInfo("VNDK Info", Icons.Default.Memory, halData.vndkInfo.libraries.size)
     )
 
@@ -98,7 +97,7 @@ fun HalInfoScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -116,7 +115,7 @@ fun HalInfoScreen(
                 .padding(innerPadding)
         ) {
             // Custom styled tab row
-            TabRow(
+            PrimaryTabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary
@@ -153,8 +152,8 @@ fun HalInfoScreen(
 
             // Content based on selected tab
             when (selectedTabIndex) {
-                0 -> HalInterfacesTab(halInterfaces = halData.halInterfaces)
-                1 -> HwServicesTab(hwservices = halData.hwservices)
+                0 -> HalInterfacesTab(halData.halInterfaces)
+                1 -> HwServicesTab(halData.hwservices)
                 2 -> VndkInfoTab(vndkInfo = halData.vndkInfo)
             }
         }
@@ -162,7 +161,8 @@ fun HalInfoScreen(
 }
 
 @Composable
-fun HalInterfacesTab(halInterfaces: List<HalInterfaceAnalyzer.HalInterface>) {
+fun HalInterfacesTab(collected: Collected<List<HalInterfaceAnalyzer.HalInterface>>) {
+    val halInterfaces = collected.value
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -175,6 +175,12 @@ fun HalInterfacesTab(halInterfaces: List<HalInterfaceAnalyzer.HalInterface>) {
                 subtitle = "HALs provide standardized interfaces to hardware components",
                 icon = Icons.Default.Hardware
             )
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: lshal returned nothing on this device")
+            }
         }
 
         // Empty state message
@@ -271,7 +277,8 @@ fun HalInterfaceCard(halInterface: HalInterfaceAnalyzer.HalInterface) {
 }
 
 @Composable
-fun HwServicesTab(hwservices: List<HalInterfaceAnalyzer.HwService>) {
+fun HwServicesTab(collected: Collected<List<HalInterfaceAnalyzer.HwService>>) {
+    val hwservices = collected.value
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -284,6 +291,12 @@ fun HwServicesTab(hwservices: List<HalInterfaceAnalyzer.HwService>) {
                 subtitle = "System services that provide hardware functionality",
                 icon = Icons.Default.Devices
             )
+        }
+
+        if (collected.isSample) {
+            item {
+                SampleDataBanner("Sample data: `service list` returned nothing on this device")
+            }
         }
 
         // Empty state message
@@ -500,7 +513,7 @@ fun HalInfoHeader(title: String, subtitle: String, icon: ImageVector) {
         )
 
         // Divider
-        Divider(modifier = Modifier.padding(top = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
 }
 
@@ -534,8 +547,4 @@ fun EmptyStateMessage(message: String) {
 }
 
 // Data class to represent tab information
-private data class TabInfo(
-    val title: String,
-    val icon: ImageVector,
-    val count: Int
-)
+private data class TabInfo(val title: String, val icon: ImageVector, val count: Int)

@@ -12,14 +12,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FrameworkAnalyzer(
-    private val context: Context,
-    private val onDataCollected: (FrameworkData) -> Unit
-) {
+class FrameworkAnalyzer(private val context: Context, private val onDataCollected: (FrameworkData) -> Unit) {
     data class FrameworkData(
         val binderTransactions: List<BinderTransaction>,
-        val apiCalls: List<ApiCallInfo>,
-        val serviceData: ServiceManagerData
+        val apiCalls: Collected<List<ApiCallInfo>>,
+        val serviceData: Collected<ServiceManagerData>
     )
 
     data class BinderTransaction(
@@ -31,17 +28,42 @@ class FrameworkAnalyzer(
         val timestamp: Long
     )
 
-    data class ApiCallInfo(
-        val apiName: String,
-        val callerPackage: String,
-        val timestamp: Long,
-        val duration: Long
-    )
+    data class ApiCallInfo(val apiName: String, val callerPackage: String, val timestamp: Long, val duration: Long)
 
-    data class ServiceManagerData(
-        val runningServices: Map<String, String>,
-        val serviceConnections: List<Pair<String, String>>
-    )
+    data class ServiceManagerData(val runningServices: Map<String, String>, val serviceConnections: List<Pair<String, String>>)
+
+    companion object {
+        /**
+         * Shown when `dumpsys activity asm` yields nothing. Capturing real API calls needs
+         * instrumentation this app does not perform, so these are illustrative only.
+         */
+        private val SAMPLE_API_CALLS = listOf(
+            ApiCallInfo(
+                apiName = "android.app.ActivityManager.getRunningAppProcesses",
+                callerPackage = "com.aoscoremonitor",
+                timestamp = 0L,
+                duration = 3L
+            ),
+            ApiCallInfo(
+                apiName = "android.content.pm.PackageManager.getInstalledPackages",
+                callerPackage = "com.aoscoremonitor",
+                timestamp = 0L,
+                duration = 120L
+            )
+        )
+
+        /** Shown when `dumpsys activity services` yields nothing. */
+        private val SAMPLE_SERVICE_DATA = ServiceManagerData(
+            runningServices = mapOf(
+                "com.android.systemui/.SystemUIService" to "Running",
+                "com.android.phone/.TelephonyDebugService" to "Running",
+                "android/com.android.server.telecom.TelecomLoaderService" to "Running"
+            ),
+            serviceConnections = listOf(
+                Pair("com.aoscoremonitor", "com.android.systemui/.SystemUIService")
+            )
+        )
+    }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
@@ -63,8 +85,12 @@ class FrameworkAnalyzer(
 
                     val frameworkData = FrameworkData(
                         binderTransactions = binderTransactions,
-                        apiCalls = apiCalls,
-                        serviceData = serviceData
+                        apiCalls = Collected.realOrSample(apiCalls, SAMPLE_API_CALLS),
+                        serviceData = if (serviceData.runningServices.isEmpty()) {
+                            Collected.sample(SAMPLE_SERVICE_DATA)
+                        } else {
+                            Collected.real(serviceData)
+                        }
                     )
 
                     withContext(Dispatchers.Main) {
@@ -92,24 +118,24 @@ class FrameworkAnalyzer(
             val process = Runtime.getRuntime().exec("dumpsys binder_txns")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-            var line: String?
             var currentPid = -1
             var currentProcess = ""
 
-            while (reader.readLine().also { line = it } != null) {
-                if (line?.startsWith("Process") == true) {
+            while (true) {
+                val line = reader.readLine() ?: break
+                if (line.startsWith("Process")) {
                     // Extract PID and process name
-                    val parts = line?.split(" ") ?: continue
+                    val parts = line.split(" ")
                     if (parts.size >= 2) {
                         currentPid = parts[1].replace(":", "").toIntOrNull() ?: -1
                         currentProcess = parts.getOrNull(2) ?: ""
                     }
-                } else if (line?.contains("transaction") == true && currentPid > 0) {
+                } else if (line.contains("transaction") && currentPid > 0) {
                     // Parse transaction data
                     // Example format: "transaction 0x123 to 0x456 code 789 (data: 1024 bytes)"
-                    val transactionCode = extractTransactionCode(line ?: "")
-                    val destination = extractDestination(line ?: "")
-                    val dataSize = extractDataSize(line ?: "")
+                    val transactionCode = extractTransactionCode(line)
+                    val destination = extractDestination(line)
+                    val dataSize = extractDataSize(line)
 
                     if (transactionCode != -1) {
                         transactions.add(
@@ -146,10 +172,9 @@ class FrameworkAnalyzer(
             val process = Runtime.getRuntime().exec("dumpsys activity asm")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-            var line: String?
-
-            while (reader.readLine().also { line = it } != null) {
-                if (line?.contains("API calls") == true) {
+            while (true) {
+                val line = reader.readLine() ?: break
+                if (line.contains("API calls")) {
                     // Parse API call data (simplified for example)
                     val apiName = "android.app.ActivityManager.getRunningAppProcesses"
                     val callerPackage = "com.android.settings"
@@ -159,7 +184,8 @@ class FrameworkAnalyzer(
                             apiName = apiName,
                             callerPackage = callerPackage,
                             timestamp = System.currentTimeMillis(),
-                            duration = 5L // milliseconds, placeholder
+                            // milliseconds, placeholder
+                            duration = 5L
                         )
                     )
                 }
@@ -169,26 +195,6 @@ class FrameworkAnalyzer(
             process.destroy()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-
-        // For demo purposes if no actual data is found
-        if (apiCalls.isEmpty()) {
-            apiCalls.add(
-                ApiCallInfo(
-                    apiName = "android.app.ActivityManager.getRunningAppProcesses",
-                    callerPackage = "com.aoscoremonitor",
-                    timestamp = System.currentTimeMillis(),
-                    duration = 3L
-                )
-            )
-            apiCalls.add(
-                ApiCallInfo(
-                    apiName = "android.content.pm.PackageManager.getInstalledPackages",
-                    callerPackage = "com.aoscoremonitor",
-                    timestamp = System.currentTimeMillis() - 1000,
-                    duration = 120L
-                )
-            )
         }
 
         return apiCalls
@@ -203,21 +209,21 @@ class FrameworkAnalyzer(
             val process = Runtime.getRuntime().exec("dumpsys activity services")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-            var line: String?
             var currentService = ""
 
-            while (reader.readLine().also { line = it } != null) {
-                if (line?.contains("* ServiceRecord{") == true) {
+            while (true) {
+                val line = reader.readLine() ?: break
+                if (line.contains("* ServiceRecord{")) {
                     // Parse service record data
-                    val parts = line?.split(" ") ?: continue
+                    val parts = line.split(" ")
                     if (parts.size >= 3) {
                         currentService = parts[2]
-                        val serviceState = if (line?.contains("running") == true) "Running" else "Stopped"
+                        val serviceState = if (line.contains("running")) "Running" else "Stopped"
                         runningServices[currentService] = serviceState
                     }
-                } else if (line?.contains("ConnectionRecord{") == true && currentService.isNotEmpty()) {
+                } else if (line.contains("ConnectionRecord{") && currentService.isNotEmpty()) {
                     // Parse connection information
-                    val clientApp = extractClientApp(line ?: "")
+                    val clientApp = extractClientApp(line)
                     if (clientApp.isNotEmpty()) {
                         serviceConnections.add(Pair(clientApp, currentService))
                     }
@@ -228,17 +234,6 @@ class FrameworkAnalyzer(
             process.destroy()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-
-        // Add some demo data if needed
-        if (runningServices.isEmpty()) {
-            runningServices["com.android.systemui/.SystemUIService"] = "Running"
-            runningServices["com.android.phone/.TelephonyDebugService"] = "Running"
-            runningServices["android/com.android.server.telecom.TelecomLoaderService"] = "Running"
-        }
-
-        if (serviceConnections.isEmpty()) {
-            serviceConnections.add(Pair("com.aoscoremonitor", "com.android.systemui/.SystemUIService"))
         }
 
         return ServiceManagerData(
