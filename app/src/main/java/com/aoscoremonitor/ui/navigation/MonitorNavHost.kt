@@ -15,8 +15,12 @@ import com.aoscoremonitor.ui.screens.LogScreen
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
+import com.aoscoremonitor.ui.screens.jni.CpuCoresScreen
+import com.aoscoremonitor.ui.screens.jni.LoadedLibrariesScreen
+import com.aoscoremonitor.ui.screens.jni.MemoryMapScreen
 import com.aoscoremonitor.ui.screens.jni.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.screens.jni.NetworkStatsScreen
+import com.aoscoremonitor.ui.screens.jni.StorageMountsScreen
 import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
 
 /**
@@ -61,6 +65,10 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.NativeSystemMonitor> { NativeSystemMonitorScreen(onNavigateBack = goBack) }
                 entry<Destination.NetworkStats> { NetworkStatsScreen(onNavigateBack = goBack) }
                 entry<Destination.TcpConnections> { TcpConnectionsScreen(onNavigateBack = goBack) }
+                entry<Destination.CpuCores> { CpuCoresScreen(onNavigateBack = goBack) }
+                entry<Destination.MemoryMap> { MemoryMapScreen(onNavigateBack = goBack) }
+                entry<Destination.LoadedLibraries> { LoadedLibrariesScreen(onNavigateBack = goBack) }
+                entry<Destination.StorageMounts> { StorageMountsScreen(onNavigateBack = goBack) }
             }
         }
     )

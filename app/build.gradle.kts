@@ -75,6 +75,10 @@ dependencies {
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
+    // The android.jar the unit tests compile against stubs org.json out with methods that throw,
+    // so the JSON the native collectors return could not be parsed off-device without a real
+    // implementation on the test classpath.
+    testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
