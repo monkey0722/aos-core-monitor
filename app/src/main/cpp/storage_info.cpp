@@ -19,7 +19,7 @@ bool IsReadOnly(const char* options) {
     return false;
   }
   const std::string_view text(options);
-  return text == "ro" || text.compare(0, 3, "ro,") == 0;
+  return text == "ro" || text.starts_with("ro,");
 }
 
 void WriteUsage(JsonWriter* writer, const char* target) {

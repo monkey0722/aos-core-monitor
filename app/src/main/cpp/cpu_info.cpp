@@ -3,9 +3,11 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-#include <cstdlib>
+#include <charconv>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <vector>
 
 #include "native_util.h"
@@ -20,8 +22,20 @@ using aoscm::JsonWriter;
 using aoscm::ReadTrimmedLine;
 using aoscm::ReadUint64;
 
+/** A guard against a malformed `present` range asking for millions of directory reads. */
+constexpr int kMaxCoresPerRange = 1024;
+
 std::string CpuDir(int id) {
   return "/sys/devices/system/cpu/cpu" + std::to_string(id);
+}
+
+std::optional<int> ParseInt(std::string_view text) {
+  int value = 0;
+  const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
+  if (error != std::errc() || end == text.data()) {
+    return std::nullopt;
+  }
+  return value;
 }
 
 /**
@@ -36,21 +50,25 @@ std::vector<int> PresentCpus() {
   const std::optional<std::string> present = ReadTrimmedLine("/sys/devices/system/cpu/present");
 
   if (present.has_value()) {
-    size_t position = 0;
-    while (position < present->size()) {
-      const size_t comma = present->find(',', position);
-      const std::string range = present->substr(
-          position, comma == std::string::npos ? std::string::npos : comma - position);
+    std::string_view remaining(*present);
+    while (!remaining.empty()) {
+      const size_t comma = remaining.find(',');
+      const std::string_view range = remaining.substr(0, comma);
       const size_t dash = range.find('-');
-      const int first = std::atoi(range.c_str());
-      const int last = (dash == std::string::npos) ? first : std::atoi(range.c_str() + dash + 1);
-      for (int id = first; id <= last && id - first < 1024; ++id) {
-        ids.push_back(id);
+
+      const std::optional<int> first = ParseInt(range.substr(0, dash));
+      const std::optional<int> last =
+          (dash == std::string_view::npos) ? first : ParseInt(range.substr(dash + 1));
+      if (first.has_value() && last.has_value()) {
+        for (int id = *first; id <= *last && id - *first < kMaxCoresPerRange; ++id) {
+          ids.push_back(id);
+        }
       }
-      if (comma == std::string::npos) {
+
+      if (comma == std::string_view::npos) {
         break;
       }
-      position = comma + 1;
+      remaining.remove_prefix(comma + 1);
     }
   }
 

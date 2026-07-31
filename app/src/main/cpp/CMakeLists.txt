@@ -3,8 +3,12 @@ cmake_minimum_required(VERSION 3.22.1)
 # Set project name
 project(aoscoremonitor)
 
-# Set C++ standard to C++17
-set(CMAKE_CXX_STANDARD 17)
+# Set C++ standard to C++23
+#
+# NDK r29 ships Clang 21, whose C++23 support is complete enough for everything here — the
+# collectors use string_view::contains, std::to_underlying and the starts_with/ends_with members
+# that replaced three hand-written helpers.
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -28,17 +32,6 @@ add_library(
 )
 
 target_compile_options(system_monitor PRIVATE -Wall -Wextra -Wno-unused-parameter)
-
-# Align the load segments for a 16 KB page.
-#
-# Android 15 introduced devices — and emulator images — whose pages are 16 KB rather than 4 KB.
-# A library laid out for 4 KB pages cannot be mapped there, and the failure is not obvious from
-# the message the linker gives: it maps the segments at the wrong offsets and then reports the
-# symbol hash table as "empty/missing DT_HASH/DT_GNU_HASH". Every native reading in the app was
-# silently unavailable on such a device, with the screens falling back to sample data.
-#
-# NDK r28 makes this the default; this project builds against r27, which does not.
-target_link_options(system_monitor PRIVATE "-Wl,-z,max-page-size=16384")
 
 # Find Android log library
 find_library(

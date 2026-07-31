@@ -1,10 +1,10 @@
 #include "native_util.h"
 
-#include <cerrno>
+#include <charconv>
 #include <cstdio>
-#include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <system_error>
 
 namespace aoscm {
 namespace {
@@ -103,13 +103,15 @@ std::optional<uint64_t> ReadUint64(const std::string& path) {
   if (!line.has_value()) {
     return std::nullopt;
   }
-  errno = 0;
-  char* end = nullptr;
-  const unsigned long long parsed = std::strtoull(line->c_str(), &end, 10);
-  if (errno != 0 || end == line->c_str()) {
+  // from_chars rather than strtoull: it reports an overflow through its own result instead of
+  // through errno, and it cannot read past the end of the string it was given.
+  uint64_t value = 0;
+  const char* const first = line->data();
+  const auto [end, error] = std::from_chars(first, first + line->size(), value);
+  if (error != std::errc() || end == first) {
     return std::nullopt;
   }
-  return static_cast<uint64_t>(parsed);
+  return value;
 }
 
 void JsonWriter::Separate() {

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "native_util.h"
@@ -35,42 +36,35 @@ enum class Category {
   kCount,
 };
 
-constexpr std::array<const char*, static_cast<size_t>(Category::kCount)> kCategoryKeys = {
+constexpr std::array<const char*, std::to_underlying(Category::kCount)> kCategoryKeys = {
     "native_lib", "art", "dalvik", "native_heap", "stack", "anon", "other",
 };
-
-bool EndsWith(std::string_view text, std::string_view suffix) {
-  return text.size() >= suffix.size() &&
-         text.compare(text.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
-bool StartsWith(std::string_view text, std::string_view prefix) {
-  return text.size() >= prefix.size() && text.compare(0, prefix.size(), prefix) == 0;
-}
 
 Category Classify(std::string_view path) {
   if (path.empty()) {
     return Category::kAnon;
   }
-  if (StartsWith(path, "[stack") || StartsWith(path, "[anon:stack_and_tls")) {
+  if (path.starts_with("[stack") || path.starts_with("[anon:stack_and_tls")) {
     return Category::kStack;
   }
-  if (path == "[heap]" || StartsWith(path, "[anon:libc_malloc") ||
-      StartsWith(path, "[anon:scudo") || StartsWith(path, "[anon:GWP-ASan")) {
+  if (path == "[heap]" || path.starts_with("[anon:libc_malloc") ||
+      path.starts_with("[anon:scudo") || path.starts_with("[anon:GWP-ASan")) {
     return Category::kNativeHeap;
   }
-  if (path.find("dalvik") != std::string_view::npos) {
+  if (path.contains("dalvik")) {
     return Category::kDalvik;
   }
-  if (EndsWith(path, ".so") || path.find(".so ") != std::string_view::npos) {
+  // A deleted file keeps its name and gains a " (deleted)" suffix, so a library is matched at
+  // either the end of the path or before that marker.
+  if (path.ends_with(".so") || path.contains(".so ")) {
     return Category::kNativeLib;
   }
-  if (EndsWith(path, ".art") || EndsWith(path, ".oat") || EndsWith(path, ".odex") ||
-      EndsWith(path, ".vdex") || EndsWith(path, ".dex") || EndsWith(path, ".jar") ||
-      EndsWith(path, ".apk")) {
+  if (path.ends_with(".art") || path.ends_with(".oat") || path.ends_with(".odex") ||
+      path.ends_with(".vdex") || path.ends_with(".dex") || path.ends_with(".jar") ||
+      path.ends_with(".apk")) {
     return Category::kArt;
   }
-  if (StartsWith(path, "[")) {
+  if (path.starts_with("[")) {
     return Category::kAnon;
   }
   return Category::kOther;
@@ -85,7 +79,7 @@ struct MapsSummary {
   uint64_t total_regions = 0;
   uint64_t reserved_regions = 0;
   uint64_t reserved_kb = 0;
-  std::array<CategoryTotals, static_cast<size_t>(Category::kCount)> categories = {};
+  std::array<CategoryTotals, std::to_underlying(Category::kCount)> categories = {};
 };
 
 /**
@@ -151,7 +145,7 @@ MapsSummary SummarizeMaps() {
             ? std::string_view(line).substr(position)
             : std::string_view();
 
-    auto& totals = summary.categories[static_cast<size_t>(Classify(path))];
+    auto& totals = summary.categories[std::to_underlying(Classify(path))];
     totals.count += 1;
     totals.size_kb += (end - start) / 1024;
   }
