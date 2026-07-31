@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
+    id("org.jlleitschuh.gradle.ktlint") version "12.3.0"
 }
 
 ktlint {
@@ -16,7 +16,7 @@ ktlint {
 
 android {
     namespace = "com.aoscoremonitor"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.1.12297006"
 
     externalNativeBuild {
