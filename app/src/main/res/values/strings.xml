@@ -6,6 +6,7 @@
     <string name="action_scroll_to_bottom">Scroll to bottom</string>
     <string name="action_expand">Show all</string>
     <string name="action_collapse">Show less</string>
+    <string name="action_refresh">Take a new reading</string>
     <string name="sample_data_label">Sample data</string>
     <string name="status_supported">Supported</string>
     <string name="status_not_supported">Not supported</string>
@@ -21,6 +22,10 @@
     <string name="destination_native_monitor">Native Monitor</string>
     <string name="destination_network_stats">Network Stats</string>
     <string name="destination_tcp_connections">TCP Connections</string>
+    <string name="destination_cpu_cores">CPU Cores</string>
+    <string name="destination_memory_map">Memory Map</string>
+    <string name="destination_loaded_libraries">Libraries</string>
+    <string name="destination_storage">Storage</string>
 
     <!-- System logs -->
     <string name="logs_title">System Logs</string>
@@ -170,4 +175,115 @@
     <string name="tcp_remote">Remote</string>
     <string name="tcp_uid">UID</string>
     <string name="tcp_sample">/proc/net/tcp is not readable by apps</string>
+
+    <!-- CPU cores -->
+    <string name="cpu_title">CPU Cores</string>
+    <string name="cpu_loading">Reading CPU topology…</string>
+    <string name="cpu_unavailable">The native library did not load, so no CPU readings are available on this device.</string>
+    <string name="cpu_overview_section">Processor</string>
+    <string name="cpu_overview_subtitle">What the kernel reports about this CPU</string>
+    <string name="cpu_core_count">%1$d cores configured · %2$d online</string>
+    <string name="cpu_machine">Machine</string>
+    <string name="cpu_kernel">Kernel</string>
+    <string name="cpu_page_size">Page size</string>
+    <string name="cpu_clock_ticks">Clock ticks per second</string>
+    <string name="cpu_bytes">%1$d bytes</string>
+    <string name="cpu_cores_section">Cores</string>
+    <string name="cpu_cores_subtitle">Current frequency and governor, per core</string>
+    <string name="cpu_core_label">Core %1$d</string>
+    <string name="cpu_core_cluster">Cluster %1$d</string>
+    <string name="cpu_core_offline">Offline</string>
+    <string name="cpu_megahertz">%1$d MHz</string>
+    <string name="cpu_kilohertz">%1$d kHz</string>
+    <string name="cpu_frequency_range">%1$d – %2$d MHz</string>
+    <string name="cpu_frequency_range_khz">%1$d – %2$d kHz</string>
+    <string name="cpu_frequency_unavailable">Current frequency not readable</string>
+    <string name="cpu_frequency_denied">Current frequency: the sandbox may not read it</string>
+    <string name="cpu_frequency_absent">Current frequency: this kernel does not expose it</string>
+    <string name="cpu_governor">Governor · %1$s</string>
+    <string name="cpu_features_section">Instruction set</string>
+    <string name="cpu_features_subtitle">Extensions the kernel advertises through the ELF auxiliary vector</string>
+    <string name="cpu_features_empty">The kernel advertised no instruction set extensions for this CPU.</string>
+
+    <!-- Memory map -->
+    <string name="memory_title">Memory Map</string>
+    <string name="memory_loading">Reading /proc/self…</string>
+    <string name="memory_unavailable">The native library did not load, so this process\'s memory map cannot be read.</string>
+    <string name="memory_footprint_section">Footprint</string>
+    <string name="memory_footprint_subtitle">Resident memory, totalled over every mapping this process owns</string>
+    <string name="memory_rss">Resident (RSS)</string>
+    <string name="memory_pss">Proportional (PSS)</string>
+    <string name="memory_private_clean">Private clean</string>
+    <string name="memory_private_dirty">Private dirty</string>
+    <string name="memory_shared_clean">Shared clean</string>
+    <string name="memory_shared_dirty">Shared dirty</string>
+    <string name="memory_swap">Swapped</string>
+    <string name="memory_swap_pss">Swapped (proportional)</string>
+    <string name="memory_smaps_notice">Totalled from /proc/self/smaps. The kernel\'s own smaps_rollup summary is not available here.</string>
+    <string name="memory_regions_section">Address space</string>
+    <plurals name="memory_regions_subtitle">
+        <item quantity="one">%1$d mapping. Sizes are address space, not resident memory.</item>
+        <item quantity="other">%1$d mappings. Sizes are address space, not resident memory — ART maps its heap in full whether or not it has filled it.</item>
+    </plurals>
+    <string name="memory_category_native_lib">Shared libraries</string>
+    <string name="memory_category_art">ART and dex files</string>
+    <string name="memory_category_dalvik">Dalvik heap</string>
+    <string name="memory_category_native_heap">Native heap</string>
+    <string name="memory_category_stack">Thread stacks</string>
+    <string name="memory_category_anon">Anonymous</string>
+    <string name="memory_category_other">Other files</string>
+    <string name="memory_category_detail">%1$s · %2$d mappings · %3$d%%</string>
+    <string name="memory_reserved">Leaves out %1$s across %2$d mappings with no access — the CFI shadow, WebView\'s reservation and the allocator\'s reserve. They hold nothing.</string>
+    <string name="memory_heap_section">Native heap</string>
+    <string name="memory_heap_subtitle">libc\'s own accounting, from mallinfo2</string>
+    <string name="memory_malloc_arena">Arena</string>
+    <string name="memory_malloc_in_use">In use</string>
+    <string name="memory_malloc_free">Free</string>
+    <string name="memory_malloc_free_chunks">Free chunks</string>
+    <string name="memory_malloc_mmapped">Mapped directly</string>
+    <string name="memory_malloc_peak">Peak</string>
+    <string name="memory_malloc_releasable">Releasable by a trim</string>
+    <string name="memory_status_section">Process</string>
+    <string name="memory_status_subtitle">Counters from /proc/self/status</string>
+    <string name="memory_limits_section">Limits</string>
+    <string name="memory_limits_subtitle">Resource ceilings this process runs under. Unlimited resources are not listed.</string>
+    <string name="memory_limit_address_space">Address space</string>
+    <string name="memory_limit_data">Data segment</string>
+    <string name="memory_limit_stack">Stack</string>
+    <string name="memory_limit_open_files">Open files</string>
+    <string name="memory_count">%1$d</string>
+
+    <!-- Loaded libraries -->
+    <string name="libraries_title">Loaded Libraries</string>
+    <string name="libraries_loading">Walking the linker\'s module list…</string>
+    <string name="libraries_unavailable">The native library did not load, so the linker\'s module list cannot be read.</string>
+    <string name="libraries_summary_section">Linked objects</string>
+    <string name="libraries_summary">%1$d objects · %2$s mapped</string>
+    <string name="libraries_load_events">%1$d loads · %2$d unloads since the process started</string>
+    <string name="libraries_main_executable">(main executable)</string>
+    <string name="libraries_build_id">Build ID %1$s</string>
+    <string name="libraries_no_build_id">No build ID</string>
+    <string name="libraries_relro">RELRO</string>
+    <string name="libraries_tls">TLS</string>
+    <plurals name="libraries_segments">
+        <item quantity="one">%1$d loadable segment</item>
+        <item quantity="other">%1$d loadable segments</item>
+    </plurals>
+
+    <!-- Storage and mounts -->
+    <string name="storage_title">Storage</string>
+    <string name="storage_loading">Reading the mount table…</string>
+    <string name="storage_empty">No mounts were reported for this process.</string>
+    <string name="storage_filesystems_section">Filesystems</string>
+    <string name="storage_filesystems_subtitle">Mounts that hold files, fullest first</string>
+    <string name="storage_pseudo_section">Pseudo filesystems</string>
+    <string name="storage_pseudo_subtitle">Kernel interfaces mounted like filesystems. They hold no files, so they have no capacity.</string>
+    <string name="storage_usage">%1$s used of %2$s</string>
+    <string name="storage_available">%1$s available</string>
+    <string name="storage_unmeasurable">Capacity not readable</string>
+    <string name="storage_unmeasurable_denied">Capacity: the sandbox may not read it</string>
+    <string name="storage_unmeasurable_absent">Capacity: nothing mounted here to measure</string>
+    <string name="storage_readonly">Read-only</string>
+    <string name="storage_source">Device · %1$s</string>
+    <string name="storage_inodes">Inodes · %1$s free of %2$s</string>
 </resources>

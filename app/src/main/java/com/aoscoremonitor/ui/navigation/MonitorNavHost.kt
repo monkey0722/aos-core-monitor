@@ -15,8 +15,12 @@ import com.aoscoremonitor.ui.screens.LogScreen
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
+import com.aoscoremonitor.ui.screens.jni.CpuCoresScreen
+import com.aoscoremonitor.ui.screens.jni.LoadedLibrariesScreen
+import com.aoscoremonitor.ui.screens.jni.MemoryMapScreen
 import com.aoscoremonitor.ui.screens.jni.NativeSystemMonitorScreen
 import com.aoscoremonitor.ui.screens.jni.NetworkStatsScreen
+import com.aoscoremonitor.ui.screens.jni.StorageMountsScreen
 import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
 
 /**
@@ -39,7 +43,19 @@ import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
 @Composable
 fun MonitorNavHost(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Destination.Home)
-    val goBack: () -> Unit = { backStack.removeLastOrNull() }
+
+    // Guarded because [NavDisplay] throws IllegalArgumentException — "backstack cannot be empty" —
+    // the moment the last entry goes, and this app was seen to crash with exactly that message.
+    //
+    // The trigger was not reproduced: system back, a double back, the edge-swipe gesture, rotation
+    // and process death were all tried against the unguarded version without emptying the stack,
+    // because NavDisplay does not route back here once Home is the only entry. So this does not
+    // fix a known path; it makes the state the crash reported unreachable from this callback,
+    // which is one comparison.
+    //
+    // What it must not do is turn back at the root into a no-op, leaving the user unable to leave
+    // the app. MonitorNavigationTest.backingOutPastHomeLeavesTheApp pins that.
+    val goBack: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
 
     NavDisplay(
         backStack = backStack,
@@ -61,6 +77,10 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.NativeSystemMonitor> { NativeSystemMonitorScreen(onNavigateBack = goBack) }
                 entry<Destination.NetworkStats> { NetworkStatsScreen(onNavigateBack = goBack) }
                 entry<Destination.TcpConnections> { TcpConnectionsScreen(onNavigateBack = goBack) }
+                entry<Destination.CpuCores> { CpuCoresScreen(onNavigateBack = goBack) }
+                entry<Destination.MemoryMap> { MemoryMapScreen(onNavigateBack = goBack) }
+                entry<Destination.LoadedLibraries> { LoadedLibrariesScreen(onNavigateBack = goBack) }
+                entry<Destination.StorageMounts> { StorageMountsScreen(onNavigateBack = goBack) }
             }
         }
     )

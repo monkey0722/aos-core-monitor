@@ -7,10 +7,14 @@ import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.DataUsage
+import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.aoscoremonitor.R
@@ -119,13 +123,47 @@ sealed interface Destination : NavKey {
         @Transient
         override val icon: ImageVector = Icons.Default.Cloud
     }
+
+    @Serializable
+    data object CpuCores : Destination {
+        override val titleRes get() = R.string.cpu_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.DeveloperBoard
+    }
+
+    @Serializable
+    data object MemoryMap : Destination {
+        override val titleRes get() = R.string.memory_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.DataUsage
+    }
+
+    @Serializable
+    data object LoadedLibraries : Destination {
+        override val titleRes get() = R.string.libraries_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.Layers
+    }
+
+    @Serializable
+    data object StorageMounts : Destination {
+        override val titleRes get() = R.string.storage_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.Storage
+    }
 }
 
 /**
  * What the home screen offers, in the order it offers it.
  *
  * Grouped by layer — the Android framework first, then the native and network views underneath —
- * rather than the arbitrary order the grid grew in.
+ * rather than the arbitrary order the grid grew in. The four screens added last read the CPU,
+ * the process's own address space, the linker and the mount table, so they continue the native
+ * run rather than starting a group of their own.
  */
 val HomeDestinations: List<Destination> = listOf(
     Destination.SystemInfo,
@@ -135,6 +173,10 @@ val HomeDestinations: List<Destination> = listOf(
     Destination.FrameworkAnalysis,
     Destination.HalInfo,
     Destination.NativeSystemMonitor,
+    Destination.CpuCores,
+    Destination.MemoryMap,
+    Destination.LoadedLibraries,
+    Destination.StorageMounts,
     Destination.NetworkStats,
     Destination.TcpConnections
 )
@@ -153,4 +195,8 @@ val Destination.shortTitleRes: Int
         Destination.NativeSystemMonitor -> R.string.destination_native_monitor
         Destination.NetworkStats -> R.string.destination_network_stats
         Destination.TcpConnections -> R.string.destination_tcp_connections
+        Destination.CpuCores -> R.string.destination_cpu_cores
+        Destination.MemoryMap -> R.string.destination_memory_map
+        Destination.LoadedLibraries -> R.string.destination_loaded_libraries
+        Destination.StorageMounts -> R.string.destination_storage
     }

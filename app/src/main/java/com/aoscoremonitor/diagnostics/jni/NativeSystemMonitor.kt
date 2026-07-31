@@ -2,6 +2,7 @@ package com.aoscoremonitor.diagnostics.jni
 
 import android.util.Log
 import com.aoscoremonitor.diagnostics.Collected
+import com.aoscoremonitor.diagnostics.formatBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -13,21 +14,10 @@ class NativeSystemMonitor {
         /**
          * Whether libsystem_monitor loaded. Every `external fun` below throws without it.
          *
-         * The load failure was already being caught and logged, but nothing recorded the result,
-         * so the `external fun` calls went ahead anyway and threw [UnsatisfiedLinkError]. That is
-         * an [Error], not an [Exception], so the `catch (e: Exception)` around each call did not
-         * stop it and the app crashed — on a device where the library will not load, three of the
-         * nine screens were unreachable. The fallbacks those catch blocks guard were written for
-         * exactly this case; they just never ran.
+         * The check itself moved to [NativeLibrary] once the newer collectors started sharing the
+         * same library; the guard it provides is unchanged.
          */
-        private val isLibraryAvailable: Boolean = try {
-            System.loadLibrary("system_monitor")
-            Log.i(TAG, "Native library loaded successfully")
-            true
-        } catch (e: UnsatisfiedLinkError) {
-            Log.e(TAG, "Failed to load native library; native readings are unavailable", e)
-            false
-        }
+        private val isLibraryAvailable: Boolean get() = NativeLibrary.isAvailable
     }
 
     // Native methods
@@ -111,15 +101,10 @@ class NativeSystemMonitor {
         val txErrors: Long,
         val txDropped: Long
     ) {
+        // The formatter this class used to carry now lives in ByteFormat, shared with the screens
+        // that report memory and filesystem sizes.
         fun getFormattedRxBytes(): String = formatBytes(rxBytes)
         fun getFormattedTxBytes(): String = formatBytes(txBytes)
-
-        private fun formatBytes(bytes: Long): String = when {
-            bytes < 1024 -> "$bytes B"
-            bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-            bytes < 1024 * 1024 * 1024 -> "${bytes / (1024 * 1024)} MB"
-            else -> "${bytes / (1024 * 1024 * 1024)} GB"
-        }
     }
 
     suspend fun getNetworkStats(): Collected<Map<String, InterfaceStats>> = withContext(Dispatchers.IO) {

@@ -1,31 +1,44 @@
-cmake_minimum_required(VERSION 3.22.1)
+# 3.31 or newer: earlier releases have no flag mapping for C++23 and fail to configure rather than
+# compile. Which CMake AGP runs is pinned in app/build.gradle.kts.
+cmake_minimum_required(VERSION 3.31)
 
-# Set project name
-project(aoscoremonitor)
+# LANGUAGES CXX so that configuring does not go looking for a C compiler this never uses.
+project(aoscoremonitor LANGUAGES CXX)
 
-# Set C++ standard to C++17
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Create shared library (.so)
+# One library rather than one per screen: every reading loads through the same System.loadLibrary
+# call, so splitting the sources adds no second thing that can fail to load.
 add_library(
-    # Library name
     system_monitor
-    # SHARED: specify the shared library type
     SHARED
-    # Source files
+    native_util.cpp
     system_monitor.cpp
+    cpu_info.cpp
+    memory_map.cpp
+    elf_modules.cpp
+    storage_info.cpp
 )
 
-# Find Android log library
-find_library(
-    log-lib
-    log
+# The conversion warnings earn their place here: this code carries kernel counters — size_t,
+# fsfilcnt64_t — into JSON as uint64_t, where a silent narrowing is a wrong reading rather than a
+# crash.
+target_compile_options(system_monitor PRIVATE
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wconversion
+    -Wsign-conversion
 )
 
-# Link libraries
-target_link_libraries(
-    system_monitor
-    ${log-lib}
-)
+# The NDK links libc++ statically, and a static archive's symbols are re-exported by whatever links
+# it, so without a version script this library publishes the whole standard library into the
+# process's global symbol lookup. libsystem_monitor.map.txt says what it exports instead.
+set(version_script "${CMAKE_CURRENT_SOURCE_DIR}/libsystem_monitor.map.txt")
+target_link_options(system_monitor PRIVATE "-Wl,--version-script=${version_script}")
+# Editing the script alone is a reason to relink.
+set_target_properties(system_monitor PROPERTIES LINK_DEPENDS "${version_script}")
+
+target_link_libraries(system_monitor PRIVATE log)

@@ -17,11 +17,20 @@ ktlint {
 android {
     namespace = "com.aoscoremonitor"
     compileSdk = 37
-    ndkVersion = "27.1.12297006"
+
+    // r28 is the floor, not just a preference: earlier NDKs align a library's load segments for a
+    // 4 KB page, and such a library cannot be mapped on the 16 KB-page devices Android 15
+    // introduced. Every native reading in the app was unavailable there, reported as a missing
+    // symbol hash table rather than as an alignment problem. NativeInspectorTest catches a
+    // regression on any 16 KB device.
+    ndkVersion = "29.0.14206865"
 
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
+            // Pinned rather than left to AGP's bundled 3.22.1, which predates Clang 17 and so has
+            // no flag mapping for C++23 — it fails the configure step rather than compiling.
+            version = "3.31.6"
         }
     }
 
@@ -75,6 +84,10 @@ dependencies {
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
+    // The android.jar the unit tests compile against stubs org.json out with methods that throw,
+    // so the JSON the native collectors return could not be parsed off-device without a real
+    // implementation on the test classpath.
+    testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

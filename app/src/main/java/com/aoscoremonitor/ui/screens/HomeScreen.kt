@@ -182,7 +182,9 @@ private val TileMinSize = 108.dp
 private val IconWellSize = 48.dp
 private val IconSize = 24.dp
 private const val STAGGER_STEP_MS = 35L
-private const val MAX_STAGGER_STEPS = 8
+
+/** One less than the number of tiles, so the last one still arrives after the one before it. */
+private const val MAX_STAGGER_STEPS = 12
 
 @Preview(name = "Home", showBackground = true)
 @Preview(name = "Home (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)

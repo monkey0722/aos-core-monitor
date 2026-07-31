@@ -1,0 +1,18 @@
+# The library's ABI: the JNI entry points, and nothing else.
+#
+# Everything else is local because the NDK links libc++ statically, and a static archive's symbols
+# are re-exported by whatever links it — otherwise this library publishes the standard library into
+# the process's global symbol lookup, where it can bind another library's std:: calls to this copy.
+#
+# The pattern matches the Java package the native methods are bound to, so adding a method, or a
+# class under the same package, needs no change here.
+#
+# Getting the pattern wrong fails quietly: the linker does not warn about a wildcard that matches no
+# symbol, so the library links, exports nothing, and throws UnsatisfiedLinkError on the first call
+# into it. NativeInspectorTest makes that call.
+LIBSYSTEM_MONITOR {
+  global:
+    Java_com_aoscoremonitor_diagnostics_jni_*;
+  local:
+    *;
+};
