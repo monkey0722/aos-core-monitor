@@ -37,7 +37,7 @@ import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
  * as the activity.
  */
 @Composable
-fun MonitorNavDisplay(modifier: Modifier = Modifier) {
+fun MonitorNavHost(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Home)
     val goBack: () -> Unit = { backStack.removeLastOrNull() }
 
