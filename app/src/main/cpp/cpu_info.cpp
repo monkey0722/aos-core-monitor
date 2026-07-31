@@ -19,6 +19,7 @@
 namespace {
 
 using aoscm::JsonWriter;
+using aoscm::Reading;
 using aoscm::ReadTrimmedLine;
 using aoscm::ReadUint64;
 
@@ -47,7 +48,7 @@ std::optional<int> ParseInt(std::string_view text) {
  */
 std::vector<int> PresentCpus() {
   std::vector<int> ids;
-  const std::optional<std::string> present = ReadTrimmedLine("/sys/devices/system/cpu/present");
+  const Reading<std::string> present = ReadTrimmedLine("/sys/devices/system/cpu/present");
 
   if (present.has_value()) {
     std::string_view remaining(*present);
@@ -88,7 +89,7 @@ std::vector<int> PresentCpus() {
  * file therefore means online, not unknown.
  */
 bool IsOnline(int id) {
-  const std::optional<uint64_t> online = ReadUint64(CpuDir(id) + "/online");
+  const Reading<uint64_t> online = ReadUint64(CpuDir(id) + "/online");
   return online.value_or(1) != 0;
 }
 
@@ -251,9 +252,15 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeCpuInspector_getCpuFrequenciesNati
       writer.BeginObject();
       writer.Field("id", static_cast<uint64_t>(id));
       writer.Field("online", IsOnline(id));
-      // scaling_cur_freq is denied to apps on some devices and absent for an offline core; the key
-      // is then left out and the screen says so rather than showing a stale or zero frequency.
-      writer.FieldIfSet("cur_khz", ReadUint64(dir + "/cpufreq/scaling_cur_freq"));
+
+      // scaling_cur_freq is denied to apps on some devices and missing entirely on others. The
+      // screen says which rather than showing a stale or zero frequency.
+      const Reading<uint64_t> current = ReadUint64(dir + "/cpufreq/scaling_cur_freq");
+      writer.FieldIfSet("cur_khz", current);
+      if (!current.has_value()) {
+        writer.Field("cur_khz_unavailable", aoscm::DescribeFailure(current.error()));
+      }
+
       writer.FieldIfSet("governor", ReadTrimmedLine(dir + "/cpufreq/scaling_governor"));
       writer.EndObject();
     }

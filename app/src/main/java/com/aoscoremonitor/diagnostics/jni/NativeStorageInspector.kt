@@ -22,7 +22,8 @@ data class MountPoint(
     val freeBytes: Long? = null,
     val availableBytes: Long? = null,
     val inodesTotal: Long? = null,
-    val inodesFree: Long? = null
+    val inodesFree: Long? = null,
+    val capacityUnavailable: Unavailable? = null
 ) {
     /**
      * Space in use.
@@ -102,6 +103,7 @@ internal fun parseMounts(json: String): List<MountPoint> = JSONObject(json).optJ
         freeBytes = if (measured) mount.longOrNull("free_bytes") else null,
         availableBytes = if (measured) mount.longOrNull("available_bytes") else null,
         inodesTotal = if (measured) mount.longOrNull("inodes_total") else null,
-        inodesFree = if (measured) mount.longOrNull("inodes_free") else null
+        inodesFree = if (measured) mount.longOrNull("inodes_free") else null,
+        capacityUnavailable = if (measured) null else mount.unavailable("statvfs_unavailable")
     )
 }.orEmpty()

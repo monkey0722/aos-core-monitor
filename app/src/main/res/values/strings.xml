@@ -198,6 +198,8 @@
     <string name="cpu_frequency_range">%1$d – %2$d MHz</string>
     <string name="cpu_frequency_range_khz">%1$d – %2$d kHz</string>
     <string name="cpu_frequency_unavailable">Current frequency not readable</string>
+    <string name="cpu_frequency_denied">Current frequency: the sandbox may not read it</string>
+    <string name="cpu_frequency_absent">Current frequency: this kernel does not expose it</string>
     <string name="cpu_governor">Governor · %1$s</string>
     <string name="cpu_features_section">Instruction set</string>
     <string name="cpu_features_subtitle">Extensions the kernel advertises through the ELF auxiliary vector</string>
@@ -278,7 +280,9 @@
     <string name="storage_pseudo_subtitle">Kernel interfaces mounted like filesystems. They hold no files, so they have no capacity.</string>
     <string name="storage_usage">%1$s used of %2$s</string>
     <string name="storage_available">%1$s available</string>
-    <string name="storage_unmeasurable">Capacity not readable from the app sandbox</string>
+    <string name="storage_unmeasurable">Capacity not readable</string>
+    <string name="storage_unmeasurable_denied">Capacity: the sandbox may not read it</string>
+    <string name="storage_unmeasurable_absent">Capacity: nothing mounted here to measure</string>
     <string name="storage_readonly">Read-only</string>
     <string name="storage_source">Device · %1$s</string>
     <string name="storage_inodes">Inodes · %1$s free of %2$s</string>

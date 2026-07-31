@@ -67,6 +67,39 @@ class CpuParsingTest {
     }
 
     @Test
+    fun aMissingFrequencyCarriesTheReasonItIsMissing() {
+        val cores = parseCpuFrequencies(
+            """
+            {"cores":[{"id":0,"online":true,"cur_khz_unavailable":"denied"},
+                      {"id":1,"online":true,"cur_khz_unavailable":"absent"},
+                      {"id":2,"online":true,"cur_khz":900000}]}
+            """.trimIndent()
+        )
+
+        assertEquals(Unavailable.Denied, cores[0].frequencyUnavailable)
+        assertEquals(Unavailable.Absent, cores[1].frequencyUnavailable)
+        // A reading that succeeded has no reason attached to it.
+        assertNull(cores[2].frequencyUnavailable)
+    }
+
+    @Test
+    fun anUnknownReasonIsNoReasonRatherThanACrash() {
+        val cores = parseCpuFrequencies("""{"cores":[{"id":0,"cur_khz_unavailable":"something new"}]}""")
+
+        assertNull(cores.single().frequencyUnavailable)
+    }
+
+    @Test
+    fun theReasonSurvivesTheMergeIntoTheTopology() {
+        val topology = parseCpuStatic("""{"configured":1,"cores":[{"id":0}],"features":[]}""")
+        val merged = topology.withFrequencies(
+            parseCpuFrequencies("""{"cores":[{"id":0,"cur_khz_unavailable":"denied"}]}""")
+        )
+
+        assertEquals(Unavailable.Denied, merged.cores.single().frequencyUnavailable)
+    }
+
+    @Test
     fun frequencyFractionNeedsBothLimitsAndAReading() {
         assertEquals(0.5f, CpuCore(id = 0, minKhz = 0, maxKhz = 2000, curKhz = 1000).frequencyFraction)
         assertNull(CpuCore(id = 0, minKhz = 0, maxKhz = 2000).frequencyFraction)

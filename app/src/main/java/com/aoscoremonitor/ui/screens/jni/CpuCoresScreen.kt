@@ -1,5 +1,6 @@
 package com.aoscoremonitor.ui.screens.jni
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.jni.CpuCore
 import com.aoscoremonitor.diagnostics.jni.CpuSnapshot
+import com.aoscoremonitor.diagnostics.jni.Unavailable
 import com.aoscoremonitor.ui.components.EmptyState
 import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.LabeledValue
@@ -154,16 +156,17 @@ private fun CoreCard(core: CpuCore, modifier: Modifier = Modifier) {
             badge?.let { Chip(text = it) }
         }
 
-        Text(
-            text = core.curKhz?.let { frequency(it) }
-                ?: stringResource(R.string.cpu_frequency_unavailable),
-            style = MaterialTheme.typography.titleLarge,
-            color = if (core.curKhz != null) {
-                MaterialTheme.colorScheme.onSurface
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
-        )
+        // A frequency is a number to be read at a glance; the reason it is missing is a sentence.
+        // They do not belong at the same weight.
+        if (core.curKhz != null) {
+            Text(text = frequency(core.curKhz), style = MaterialTheme.typography.titleLarge)
+        } else {
+            Text(
+                text = stringResource(unavailableReason(core.frequencyUnavailable)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         core.frequencyFraction?.let { fraction ->
             LinearProgressIndicator(
@@ -210,6 +213,20 @@ private fun frequency(khz: Long): String = if (khz >= KHZ_PER_MHZ) {
 }
 
 private const val KHZ_PER_MHZ = 1000L
+
+/**
+ * What to say in place of a frequency.
+ *
+ * The reason travels up from the errno the read failed with, so the screen can separate a value
+ * the sandbox is refused from one this kernel never had. Without a reason it says only that the
+ * reading is missing, which is all it used to be able to say.
+ */
+@StringRes
+private fun unavailableReason(reason: Unavailable?): Int = when (reason) {
+    Unavailable.Denied -> R.string.cpu_frequency_denied
+    Unavailable.Absent -> R.string.cpu_frequency_absent
+    else -> R.string.cpu_frequency_unavailable
+}
 
 /**
  * The instruction set extensions, as a wrapping run of chips.

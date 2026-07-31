@@ -2,6 +2,7 @@
 #include <mntent.h>
 #include <sys/statvfs.h>
 
+#include <cerrno>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -29,8 +30,9 @@ void WriteUsage(JsonWriter* writer, const char* target) {
   struct statvfs64 usage = {};
   if (statvfs64(target, &usage) != 0) {
     // Denied or gone: /proc, /sys and most of /mnt answer this way for an app. The mount is still
-    // listed — knowing it exists is part of the picture — just without its capacity.
+    // listed — knowing it exists is part of the picture — with the reason in place of a capacity.
     writer->Field("statvfs_ok", false);
+    writer->Field("statvfs_unavailable", aoscm::DescribeFailure(errno));
     return;
   }
 

@@ -4,6 +4,35 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
+ * Why a reading is missing, as the native side classified the errno that stopped it.
+ *
+ * The distinction is worth carrying: a path SELinux refuses is a property of the app sandbox, and
+ * one that does not exist is a property of the kernel. The screens word the two differently, and
+ * neither is the same as "the value is zero".
+ */
+enum class Unavailable {
+    /** The sandbox may not read it — EACCES or EPERM. */
+    Denied,
+
+    /** The kernel does not expose it — ENOENT and friends. */
+    Absent,
+
+    /** Read, but not usable: empty, malformed, or a failure with no better name. */
+    Error;
+
+    internal companion object {
+        fun of(token: String?): Unavailable? = when (token) {
+            "denied" -> Denied
+            "absent" -> Absent
+            "error" -> Error
+            else -> null
+        }
+    }
+}
+
+internal fun JSONObject.unavailable(key: String): Unavailable? = Unavailable.of(stringOrNull(key))
+
+/**
  * Reading helpers for the JSON the native collectors return.
  *
  * The native side leaves a key out when it could not take the reading, rather than sending a zero

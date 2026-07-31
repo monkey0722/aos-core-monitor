@@ -1,10 +1,11 @@
 #include "native_util.h"
 
 #include <android/log.h>
+#include <fcntl.h>
+#include <unistd.h>
 
+#include <cerrno>
 #include <charconv>
-#include <fstream>
-#include <sstream>
 #include <system_error>
 
 namespace aoscm {
@@ -70,20 +71,53 @@ void AppendUtf16Escape(std::string* out, uint32_t unit) {
   }
 }
 
-/** Reads a whole file. Used only to back ReadTrimmedLine — nothing outside needs raw contents. */
-std::optional<std::string> ReadFile(const std::string& path) {
-  std::ifstream file(path, std::ios::in | std::ios::binary);
-  if (!file.is_open()) {
-    return std::nullopt;
+/** Closes the descriptor however the scope is left. */
+class ScopedFd {
+ public:
+  explicit ScopedFd(int fd) : fd_(fd) {}
+  ~ScopedFd() {
+    if (fd_ >= 0) {
+      ::close(fd_);
+    }
   }
-  std::stringstream contents;
-  contents << file.rdbuf();
-  // A sysfs attribute can open and then fail on read — an offline CPU's cpufreq node does exactly
-  // that — so an unreadable file must not come back as an empty string.
-  if (file.bad()) {
-    return std::nullopt;
+  ScopedFd(const ScopedFd&) = delete;
+  ScopedFd& operator=(const ScopedFd&) = delete;
+
+  [[nodiscard]] int get() const { return fd_; }
+  [[nodiscard]] bool valid() const { return fd_ >= 0; }
+
+ private:
+  int fd_;
+};
+
+/**
+ * Reads a whole file, or reports the errno that stopped it.
+ *
+ * open and read rather than ifstream: the standard says nothing about errno after a stream fails,
+ * and reporting which failure it was is the whole point here. Sysfs also reports a file size it
+ * does not have, so the length has to come from reading to the end.
+ */
+Reading<std::string> ReadFile(const std::string& path) {
+  const ScopedFd file(::open(path.c_str(), O_RDONLY | O_CLOEXEC));
+  if (!file.valid()) {
+    return std::unexpected(errno);
   }
-  return contents.str();
+
+  std::string contents;
+  char buffer[4096];
+  while (true) {
+    const ssize_t count = ::read(file.get(), buffer, sizeof(buffer));
+    if (count < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      return std::unexpected(errno);
+    }
+    if (count == 0) {
+      return contents;
+    }
+    contents.append(buffer, static_cast<size_t>(count));
+  }
 }
 
 }  // namespace
@@ -92,22 +126,37 @@ void LogCollectorFailure(const char* what) {
   __android_log_print(ANDROID_LOG_ERROR, "NativeCollector", "Collector failed: %s", what);
 }
 
-std::optional<std::string> ReadTrimmedLine(const std::string& path) {
-  const std::optional<std::string> contents = ReadFile(path);
-  if (!contents.has_value()) {
-    return std::nullopt;
+std::string_view DescribeFailure(int error) {
+  switch (error) {
+    case EACCES:
+    case EPERM:
+      return "denied";
+    case ENOENT:
+    case ENODEV:
+    case ENXIO:
+      return "absent";
+    default:
+      return "error";
   }
-  const std::string trimmed = Trim(*contents);
+}
+
+Reading<std::string> ReadTrimmedLine(const std::string& path) {
+  const Reading<std::string> contents = ReadFile(path);
+  if (!contents.has_value()) {
+    return std::unexpected(contents.error());
+  }
+  std::string trimmed = Trim(*contents);
   if (trimmed.empty()) {
-    return std::nullopt;
+    // The file opened and held nothing, which is not the same as being refused.
+    return std::unexpected(ENODATA);
   }
   return trimmed;
 }
 
-std::optional<uint64_t> ReadUint64(const std::string& path) {
-  const std::optional<std::string> line = ReadTrimmedLine(path);
+Reading<uint64_t> ReadUint64(const std::string& path) {
+  const Reading<std::string> line = ReadTrimmedLine(path);
   if (!line.has_value()) {
-    return std::nullopt;
+    return std::unexpected(line.error());
   }
   // from_chars rather than strtoull: it reports an overflow through its own result instead of
   // through errno, and it cannot read past the end of the string it was given.
@@ -115,7 +164,7 @@ std::optional<uint64_t> ReadUint64(const std::string& path) {
   const char* const first = line->data();
   const auto [end, error] = std::from_chars(first, first + line->size(), value);
   if (error != std::errc() || end == first) {
-    return std::nullopt;
+    return std::unexpected(EINVAL);
   }
   return value;
 }
@@ -278,14 +327,14 @@ JsonWriter& JsonWriter::FieldHex(std::string_view key, uint64_t value) {
   return Key(key).ValueHex(value);
 }
 
-JsonWriter& JsonWriter::FieldIfSet(std::string_view key, const std::optional<uint64_t>& value) {
+JsonWriter& JsonWriter::FieldIfSet(std::string_view key, const Reading<uint64_t>& value) {
   if (value.has_value()) {
     Field(key, *value);
   }
   return *this;
 }
 
-JsonWriter& JsonWriter::FieldIfSet(std::string_view key, const std::optional<std::string>& value) {
+JsonWriter& JsonWriter::FieldIfSet(std::string_view key, const Reading<std::string>& value) {
   if (value.has_value()) {
     Field(key, *value);
   }

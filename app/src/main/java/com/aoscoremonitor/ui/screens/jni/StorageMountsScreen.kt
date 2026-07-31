@@ -1,5 +1,6 @@
 package com.aoscoremonitor.ui.screens.jni
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.formatBytes
 import com.aoscoremonitor.diagnostics.jni.MountPoint
+import com.aoscoremonitor.diagnostics.jni.Unavailable
 import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
@@ -150,7 +152,7 @@ private fun MountCard(mount: MountPoint, modifier: Modifier = Modifier) {
             }
         } else {
             Text(
-                text = stringResource(R.string.storage_unmeasurable),
+                text = stringResource(unmeasurableReason(mount.capacityUnavailable)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -217,6 +219,14 @@ private fun MountTag(text: String, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
         )
     }
+}
+
+/** Why the capacity is missing, when statvfs said why. */
+@StringRes
+private fun unmeasurableReason(reason: Unavailable?): Int = when (reason) {
+    Unavailable.Denied -> R.string.storage_unmeasurable_denied
+    Unavailable.Absent -> R.string.storage_unmeasurable_absent
+    else -> R.string.storage_unmeasurable
 }
 
 private const val NEARLY_FULL = 0.9f

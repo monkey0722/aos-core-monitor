@@ -5,7 +5,7 @@
 
 #include <cstdint>
 #include <exception>
-#include <optional>
+#include <expected>
 #include <string>
 #include <string_view>
 
@@ -36,17 +36,30 @@ jstring ReturnJson(JNIEnv* env, Collect collect) noexcept {
 }
 
 /**
- * Reads the first line of a file with surrounding whitespace removed, or nothing at all.
+ * A reading, or the errno that stopped it.
  *
- * Sysfs and procfs reads fail routinely from the app sandbox — SELinux denies some paths outright,
- * and others exist only on some kernels. Returning an empty optional keeps "could not read" apart
- * from "read a zero", which matters because the screens present the two differently: a missing
- * reading is shown as unavailable rather than as 0.
+ * Sysfs and procfs reads fail routinely from the app sandbox, and the two common reasons mean
+ * different things to whoever is reading the screen: SELinux refusing a path is a property of the
+ * sandbox, while a path that does not exist is a property of the kernel. An optional could say
+ * only that the value was missing, so the reason was thrown away at the point it was known.
  */
-[[nodiscard]] std::optional<std::string> ReadTrimmedLine(const std::string& path);
+template <typename T>
+using Reading = std::expected<T, int>;
+
+/** Reads the first line of a file with surrounding whitespace removed. */
+[[nodiscard]] Reading<std::string> ReadTrimmedLine(const std::string& path);
 
 /** Reads a file holding a single decimal number, as sysfs counters do. */
-[[nodiscard]] std::optional<uint64_t> ReadUint64(const std::string& path);
+[[nodiscard]] Reading<uint64_t> ReadUint64(const std::string& path);
+
+/**
+ * Why a reading is missing, in the three words the screens distinguish.
+ *
+ * Returns "denied", "absent" or "error". The errno itself does not cross to Kotlin: a number would
+ * push the decision of what it means out to the UI layer, which is further from the syscall than
+ * this is, and the wording belongs in strings.xml either way.
+ */
+[[nodiscard]] std::string_view DescribeFailure(int error);
 
 /**
  * Builds JSON for the JNI boundary.
@@ -92,8 +105,8 @@ class JsonWriter {
    *
    * Absent keys, rather than nulls or zeros, are how an unavailable reading crosses to Kotlin.
    */
-  JsonWriter& FieldIfSet(std::string_view key, const std::optional<uint64_t>& value);
-  JsonWriter& FieldIfSet(std::string_view key, const std::optional<std::string>& value);
+  JsonWriter& FieldIfSet(std::string_view key, const Reading<uint64_t>& value);
+  JsonWriter& FieldIfSet(std::string_view key, const Reading<std::string>& value);
 
   /** Hands over the finished document. The writer is empty afterwards. */
   [[nodiscard]] std::string Take();

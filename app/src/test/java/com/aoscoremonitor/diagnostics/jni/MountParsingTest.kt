@@ -67,6 +67,24 @@ class MountParsingTest {
     }
 
     @Test
+    fun aRefusedStatvfsSaysWhyItWasRefused() {
+        val mounts = parseMounts(
+            """{"mounts":[{"source":"proc","target":"/proc","fs_type":"proc","options":"rw","readonly":false,"statvfs_ok":false,"statvfs_unavailable":"denied"}]}"""
+        )
+
+        assertEquals(Unavailable.Denied, mounts.single().capacityUnavailable)
+    }
+
+    @Test
+    fun aMeasuredMountCarriesNoReason() {
+        val mounts = parseMounts(
+            """{"mounts":[{"source":"x","target":"/x","fs_type":"f2fs","options":"rw","readonly":false,"statvfs_ok":true,"total_bytes":100,"free_bytes":40}]}"""
+        )
+
+        assertNull(mounts.single().capacityUnavailable)
+    }
+
+    @Test
     fun readOnlyMountsAreMarked() {
         val mounts = parseMounts(
             """{"mounts":[{"source":"/dev/block/dm-0","target":"/","fs_type":"erofs","options":"ro,seclabel","readonly":true,"statvfs_ok":false}]}"""

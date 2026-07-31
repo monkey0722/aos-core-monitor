@@ -41,6 +41,22 @@ class NativeInspectorTest {
         assertTrue("No cores reported", cores.isNotEmpty())
     }
 
+    /**
+     * A reading that is missing says why it is missing.
+     *
+     * Vacuous on a device that lets the app read every core's frequency, which this emulator does.
+     * It is the phones that deny `scaling_cur_freq` — the reason the field is nullable at all —
+     * where this has something to check.
+     */
+    @Test
+    fun aMissingFrequencyCarriesItsReason() = runBlocking {
+        val cores = NativeCpuInspector().readFrequencies()
+
+        cores.filter { it.curKhz == null }.forEach { core ->
+            assertNotNull("core ${core.id} reports no frequency and no reason", core.frequencyUnavailable)
+        }
+    }
+
     @Test
     fun memoryInspectorReadsThisProcess() = runBlocking {
         val snapshot = NativeMemoryInspector().read()

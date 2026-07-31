@@ -19,6 +19,7 @@ data class CpuCore(
     val minKhz: Long? = null,
     val maxKhz: Long? = null,
     val curKhz: Long? = null,
+    val frequencyUnavailable: Unavailable? = null,
     val online: Boolean = true,
     val governor: String? = null
 ) {
@@ -57,7 +58,12 @@ data class CpuSnapshot(
         return copy(
             cores = cores.map { core ->
                 val reading = byId[core.id] ?: return@map core
-                core.copy(curKhz = reading.curKhz, online = reading.online, governor = reading.governor)
+                core.copy(
+                    curKhz = reading.curKhz,
+                    frequencyUnavailable = reading.frequencyUnavailable,
+                    online = reading.online,
+                    governor = reading.governor
+                )
             }
         )
     }
@@ -133,6 +139,7 @@ internal fun parseCpuFrequencies(json: String): List<CpuCore> = JSONObject(json)
     CpuCore(
         id = core.optInt("id"),
         curKhz = core.longOrNull("cur_khz"),
+        frequencyUnavailable = core.unavailable("cur_khz_unavailable"),
         online = core.optBoolean("online", true),
         governor = core.stringOrNull("governor")
     )
