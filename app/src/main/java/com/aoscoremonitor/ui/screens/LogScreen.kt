@@ -35,11 +35,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogDisplay(
-    logs: List<String>,
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun LogDisplay(logs: List<String>, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 

@@ -25,7 +25,8 @@ class HalInterfaceAnalyzer(
     data class HalInterface(
         val name: String,
         val version: String,
-        val type: String, // HIDL, AIDL, etc.
+        // HIDL, AIDL, etc.
+        val type: String,
         val implementation: String,
         val status: String
     )
@@ -199,7 +200,8 @@ class HalInterfaceAnalyzer(
                         services.add(
                             HwService(
                                 name = serviceName,
-                                server = "system_server", // Most services run in system_server
+                                // Most services run in system_server
+                                server = "system_server",
                                 clients = listOf("com.android.systemui", "com.android.settings")
                             )
                         )

@@ -176,11 +176,7 @@ fun WelcomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GridMenuItem(
-    menuItem: MenuItem,
-    visible: Boolean,
-    modifier: Modifier = Modifier
-) {
+private fun GridMenuItem(menuItem: MenuItem, visible: Boolean, modifier: Modifier = Modifier) {
     var itemVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(visible) {

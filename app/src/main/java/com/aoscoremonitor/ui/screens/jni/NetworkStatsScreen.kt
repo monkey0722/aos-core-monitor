@@ -43,10 +43,7 @@ import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NetworkStatsScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun NetworkStatsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     var networkStats by remember { mutableStateOf<Map<String, NativeSystemMonitor.InterfaceStats>>(emptyMap()) }
     var refreshing by remember { mutableStateOf(false) }
 

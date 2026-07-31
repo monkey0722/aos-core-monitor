@@ -30,10 +30,7 @@ import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NativeSystemMonitorScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun NativeSystemMonitorScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val scrollState = rememberScrollState()
     var cpuInfo by remember { mutableStateOf(mapOf<String, Long>()) }
     var memInfo by remember { mutableStateOf(mapOf<String, Long>()) }

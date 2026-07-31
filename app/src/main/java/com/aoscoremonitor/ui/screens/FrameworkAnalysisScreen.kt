@@ -29,19 +29,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aoscoremonitor.diagnostics.FrameworkAnalyzer
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FrameworkAnalysisScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun FrameworkAnalysisScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var frameworkData by remember {
         mutableStateOf(
@@ -122,7 +119,7 @@ fun FrameworkAnalysisScreen(
 
 @Composable
 fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTransaction>) {
-    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
 
     LazyColumn(
         modifier = Modifier
@@ -203,7 +200,7 @@ fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTrans
 
 @Composable
 fun ApiCallsTab(apiCalls: List<FrameworkAnalyzer.ApiCallInfo>) {
-    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
 
     LazyColumn(
         modifier = Modifier

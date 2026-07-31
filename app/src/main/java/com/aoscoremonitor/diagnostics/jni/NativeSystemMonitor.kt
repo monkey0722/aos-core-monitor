@@ -148,31 +148,37 @@ class NativeSystemMonitor {
     private fun getDummyNetworkStats(): Map<String, InterfaceStats> {
         return mapOf(
             "dummy:wlan0" to InterfaceStats(
-                rxBytes = 1024 * 1024 * 50, // 50 MB
+                // 50 MB
+                rxBytes = 1024 * 1024 * 50,
                 rxPackets = 1500,
                 rxErrors = 2,
                 rxDropped = 0,
-                txBytes = 1024 * 1024 * 10, // 10 MB
+                // 10 MB
+                txBytes = 1024 * 1024 * 10,
                 txPackets = 800,
                 txErrors = 0,
                 txDropped = 1
             ),
             "dummy:eth0" to InterfaceStats(
-                rxBytes = 1024 * 1024 * 25, // 25 MB
+                // 25 MB
+                rxBytes = 1024 * 1024 * 25,
                 rxPackets = 1200,
                 rxErrors = 1,
                 rxDropped = 0,
-                txBytes = 1024 * 1024 * 5, // 5 MB
+                // 5 MB
+                txBytes = 1024 * 1024 * 5,
                 txPackets = 600,
                 txErrors = 0,
                 txDropped = 0
             ),
             "dummy:rmnet0" to InterfaceStats(
-                rxBytes = 1024 * 1024 * 120, // 120 MB
+                // 120 MB
+                rxBytes = 1024 * 1024 * 120,
                 rxPackets = 3500,
                 rxErrors = 5,
                 rxDropped = 2,
-                txBytes = 1024 * 1024 * 30, // 30 MB
+                // 30 MB
+                txBytes = 1024 * 1024 * 30,
                 txPackets = 2200,
                 txErrors = 1,
                 txDropped = 3
@@ -245,36 +251,46 @@ class NativeSystemMonitor {
     private fun getDummyTcpConnections(): List<TcpConnection> {
         return listOf(
             TcpConnection(
-                localAddress = "0100007F:1F90", // 127.0.0.1:8080
-                remoteAddress = "00000000:0000", // 0.0.0.0:0
+                // 127.0.0.1:8080
+                localAddress = "0100007F:1F90",
+                // 0.0.0.0:0
+                remoteAddress = "00000000:0000",
                 status = "LISTEN",
                 uid = 10123,
                 inode = "12345"
             ),
             TcpConnection(
-                localAddress = "0100007F:01BB", // 127.0.0.1:443
-                remoteAddress = "630A000A:C642", // 10.0.10.99:50754
+                // 127.0.0.1:443
+                localAddress = "0100007F:01BB",
+                // 10.0.10.99:50754
+                remoteAddress = "630A000A:C642",
                 status = "ESTABLISHED",
                 uid = 10045,
                 inode = "23456"
             ),
             TcpConnection(
-                localAddress = "0100007F:0050", // 127.0.0.1:80
-                remoteAddress = "540B000A:A2B6", // 10.0.11.84:41654
+                // 127.0.0.1:80
+                localAddress = "0100007F:0050",
+                // 10.0.11.84:41654
+                remoteAddress = "540B000A:A2B6",
                 status = "TIME_WAIT",
                 uid = 10045,
                 inode = "34567"
             ),
             TcpConnection(
-                localAddress = "0100007F:0050", // 127.0.0.1:80
-                remoteAddress = "2C0A000A:F1A2", // 10.0.10.44:61858
+                // 127.0.0.1:80
+                localAddress = "0100007F:0050",
+                // 10.0.10.44:61858
+                remoteAddress = "2C0A000A:F1A2",
                 status = "ESTABLISHED",
                 uid = 10045,
                 inode = "45678"
             ),
             TcpConnection(
-                localAddress = "78563412:0CEA", // 18.52.86.120:3338
-                remoteAddress = "9A3C7856:01BB", // 86.120.60.154:443
+                // 18.52.86.120:3338
+                localAddress = "78563412:0CEA",
+                // 86.120.60.154:443
+                remoteAddress = "9A3C7856:01BB",
                 status = "ESTABLISHED",
                 uid = 10073,
                 inode = "56789"

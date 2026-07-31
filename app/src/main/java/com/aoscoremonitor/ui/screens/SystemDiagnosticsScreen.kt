@@ -42,10 +42,7 @@ import com.aoscoremonitor.diagnostics.SystemDiagnosticsCollector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SystemDiagnosticsScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SystemDiagnosticsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var diagnosticsInfo by remember {

@@ -50,10 +50,7 @@ import com.aoscoremonitor.diagnostics.HalInterfaceAnalyzer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HalInfoScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun HalInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var halData by remember {
         mutableStateOf(

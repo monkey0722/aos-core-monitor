@@ -40,10 +40,7 @@ import com.aoscoremonitor.diagnostics.SystemInfoCollector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SystemInfoScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SystemInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var systemInfo by remember {
         mutableStateOf(

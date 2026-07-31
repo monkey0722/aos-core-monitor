@@ -159,7 +159,8 @@ class FrameworkAnalyzer(
                             apiName = apiName,
                             callerPackage = callerPackage,
                             timestamp = System.currentTimeMillis(),
-                            duration = 5L // milliseconds, placeholder
+                            // milliseconds, placeholder
+                            duration = 5L
                         )
                     )
                 }

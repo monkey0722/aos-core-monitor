@@ -39,10 +39,7 @@ import com.aoscoremonitor.diagnostics.SecurityInfoCollector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecurityInfoScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SecurityInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var securityInfo by remember {
         mutableStateOf(
@@ -251,10 +248,7 @@ fun SecurityFeatureItem(title: String, isSupported: Boolean) {
 }
 
 @Composable
-fun AppPermissionCard(
-    packageName: String,
-    permissions: List<SecurityInfoCollector.AppPermissionInfo>
-) {
+fun AppPermissionCard(packageName: String, permissions: List<SecurityInfoCollector.AppPermissionInfo>) {
     val hasDangerousPermissions = permissions.any { it.isProtectionDangerous && it.isGranted }
 
     Card(
