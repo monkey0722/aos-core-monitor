@@ -8,8 +8,9 @@ BLUE='\033[0;34m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Exit script if an error occurs
-set -e
+# Note: 'set -e' is intentionally not used. Each formatter reports its own
+# status so that a failure in one still lets the other run, and so the summary
+# at the end is always printed.
 
 echo -e "\n${BLUE}${BOLD}========== Format Tool ==========${NC}"
 
@@ -23,13 +24,11 @@ format_kotlin() {
     fi
     
     # Run KtLint
-    ./gradlew ktlintFormat
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}${BOLD}✅ Kotlin formatting completed${NC}"
+    if ./gradlew ktlintFormat; then
+        echo -e "${GREEN}${BOLD}Kotlin formatting completed${NC}"
         return 0
     else
-        echo -e "${RED}${BOLD}❌ Error during Kotlin formatting${NC}"
+        echo -e "${RED}${BOLD}Error during Kotlin formatting${NC}"
         return 1
     fi
 }
@@ -40,7 +39,7 @@ format_cpp() {
     
     # Check if clang-format is installed
     if ! command -v clang-format &> /dev/null; then
-        echo -e "${RED}${BOLD}❌ clang-format is not installed${NC}"
+        echo -e "${RED}${BOLD}clang-format is not installed${NC}"
         echo -e "${YELLOW}brew install clang-format${NC}"
         return 1
     fi
@@ -49,29 +48,41 @@ format_cpp() {
     CPP_FILES=$(find app/src/main/cpp -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" -o -name "*.c" -o -name "*.cc" \))
     
     if [ -z "$CPP_FILES" ]; then
-        echo -e "${YELLOW}${BOLD}⚠️  No C++ files found${NC}"
+        echo -e "${YELLOW}${BOLD}No C++ files found${NC}"
         return 0
     fi
     
     # Format C++ files
+    local status=0
     for file in $CPP_FILES; do
         echo -e "  ${BLUE}•${NC} $file"
-        clang-format -style=file -i "$file"
+        if ! clang-format -style=file -i "$file"; then
+            status=1
+        fi
     done
-    
-    echo -e "${GREEN}${BOLD}✅ C++ formatting completed${NC}"
+
+    if [ $status -ne 0 ]; then
+        echo -e "${RED}${BOLD}Error during C++ formatting${NC}"
+        return 1
+    fi
+
+    echo -e "${GREEN}${BOLD}C++ formatting completed${NC}"
+    return 0
 }
 
 # Check for changes
 check_changes() {
     echo -e "\n${YELLOW}${BOLD}Detecting and reporting changes...${NC}"
     
-    # Check Git changes
-    if git diff --quiet; then
-        echo -e "${GREEN}${BOLD}✅ No changes from formatting${NC}"
+    # Check Git changes, staged and unstaged alike
+    if git diff --quiet HEAD; then
+        echo -e "${GREEN}${BOLD}No uncommitted changes${NC}"
     else
-        echo -e "${YELLOW}${BOLD}ℹ️  The following files were modified:${NC}"
-        git diff --name-only | sed "s/^/  ${BLUE}•${NC} /"
+        echo -e "${YELLOW}${BOLD}The following files have uncommitted changes:${NC}"
+        # Use echo -e per line: sed would emit the color escapes literally
+        git diff --name-only HEAD | while read -r changed_file; do
+            echo -e "  ${BLUE}•${NC} ${changed_file}"
+        done
     fi
 }
 
@@ -94,9 +105,9 @@ main() {
     echo -e "\n${BLUE}${BOLD}=================================================${NC}"
     
     if [ $KOTLIN_STATUS -eq 0 ] && [ $CPP_STATUS -eq 0 ]; then
-        echo -e "${GREEN}${BOLD}✅ All formatting tasks completed successfully${NC}"
+        echo -e "${GREEN}${BOLD}All formatting tasks completed successfully${NC}"
     else
-        echo -e "${RED}${BOLD}❌ Some formatting tasks failed${NC}"
+        echo -e "${RED}${BOLD}Some formatting tasks failed${NC}"
     fi
     
     echo -e "${BLUE}${BOLD}=================================================${NC}"
