@@ -9,7 +9,7 @@ lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 composeBom = "2026.06.01"
 nav3Core = "1.1.5"
-kotlinxSerializationCore = "1.9.0"
+kotlinxSerializationCore = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

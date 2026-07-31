@@ -89,12 +89,12 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
      * "N/A" that could mean either "still measuring" or "blocked by the platform".
      */
     private fun readCpuUsage(): String {
-        readSystemCpuUsage()?.let { return "CPU: $it%" }
-        readOwnCpuUsage()?.let { return "CPU (this app): $it%" }
+        readSystemCpuUsage()?.let { return "$it%" }
+        readOwnCpuUsage()?.let { return "$it% (this app)" }
         return if (lastCpuStats == null && lastOwnCpuStats == null) {
-            "CPU: Restricted (/proc/stat is not readable by apps)"
+            "Restricted — /proc/stat is not readable by apps"
         } else {
-            "CPU: Measuring..."
+            "Measuring…"
         }
     }
 
@@ -165,7 +165,7 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
         val memoryInfo = ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memoryInfo)
         val availMemMB = memoryInfo.availMem / (1024 * 1024)
-        return "Available Memory: $availMemMB MB"
+        return "$availMemMB MB available"
     }
 
     /**
@@ -174,7 +174,7 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
     private fun readBatteryStatus(): String {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val batteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        return "Battery: $batteryLevel%"
+        return "$batteryLevel%"
     }
 
     /**
@@ -188,13 +188,10 @@ class SystemInfoCollector(private val context: Context, private val onInfoUpdate
         val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
             ?: return "Not connected"
         return when {
-            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ->
-                "Connected: WIFI"
-            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ->
-                "Connected: Cellular"
-            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ->
-                "Connected: Ethernet"
-            else -> "Connected: Other"
+            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "Wi-Fi"
+            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "Cellular"
+            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "Ethernet"
+            else -> "Connected"
         }
     }
 }

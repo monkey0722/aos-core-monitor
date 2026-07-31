@@ -2,254 +2,182 @@ package com.aoscoremonitor.ui.screens.jni
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Hearing
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.jni.NativeSystemMonitor
+import com.aoscoremonitor.ui.components.FullScreenMessage
+import com.aoscoremonitor.ui.components.LabeledValue
+import com.aoscoremonitor.ui.components.MonitorCard
+import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SampleDataBanner
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import com.aoscoremonitor.ui.components.StatusRow
+import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorTypography
+import com.aoscoremonitor.ui.theme.Spacing
+import com.aoscoremonitor.ui.viewmodel.TcpConnectionsUiState
+import com.aoscoremonitor.ui.viewmodel.TcpConnectionsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TcpConnectionsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    var tcpConnections by remember {
-        mutableStateOf(Collected.real(emptyList<NativeSystemMonitor.TcpConnection>()))
-    }
-    var refreshing by remember { mutableStateOf(false) }
+fun TcpConnectionsScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier, viewModel: TcpConnectionsViewModel = viewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val systemMonitor = remember { NativeSystemMonitor() }
+    TcpConnectionsContent(state = state, onNavigateBack = onNavigateBack, modifier = modifier)
+}
 
-    // Periodically update information
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            refreshing = true
-            tcpConnections = systemMonitor.getTcpConnections()
-            refreshing = false
-            delay(3000) // Update every 3 seconds
-        }
-    }
+@Composable
+private fun TcpConnectionsContent(state: TcpConnectionsUiState, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+    val connections = state.connections.value
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("TCP Connections") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        }
+    MonitorScaffold(
+        title = stringResource(R.string.tcp_title),
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
     ) { innerPadding ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            if (tcpConnections.value.isEmpty()) {
-                EmptyConnectionsView(refreshing)
-            } else {
-                if (tcpConnections.isSample) {
-                    SampleDataBanner("Sample data: /proc/net/tcp is not readable by apps")
+        if (connections.isEmpty()) {
+            FullScreenMessage(
+                message = stringResource(if (state.hasLoaded) R.string.tcp_empty else R.string.tcp_loading),
+                icon = Icons.Default.CloudOff,
+                modifier = Modifier.padding(innerPadding)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(Spacing.Large),
+                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            ) {
+                if (state.connections.isSample) {
+                    item(key = "sample") { SampleDataBanner(stringResource(R.string.tcp_sample)) }
                 }
-                ConnectionStatusSummary(tcpConnections.value)
-                TcpConnectionsList(tcpConnections.value, tcpConnections.isSample)
+                item(key = "summary") { ConnectionSummary(state) }
+                // The inode is the kernel's own identifier for the socket, so it keys the row
+                // stably even as addresses churn between polls.
+                items(connections, key = { it.inode }) { connection ->
+                    TcpConnectionCard(connection)
+                }
             }
         }
     }
 }
 
+/**
+ * The four counts at the top of the screen.
+ *
+ * Previously the summary sat outside the list, so it stayed pinned while the connections scrolled
+ * under it and ate a fixed slice of a phone screen. It scrolls with the list now.
+ */
 @Composable
-private fun ConnectionStatusSummary(connections: List<NativeSystemMonitor.TcpConnection>) {
-    val established = connections.count { it.status == "ESTABLISHED" }
-    val listening = connections.count { it.status == "LISTEN" }
-    val waiting = connections.count { it.status == "TIME_WAIT" || it.status == "CLOSE_WAIT" }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
+private fun ConnectionSummary(state: TcpConnectionsUiState, modifier: Modifier = Modifier) {
+    MonitorCard(modifier = modifier) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = established.toString(), style = MaterialTheme.typography.titleLarge)
-                Text(text = "Established", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = listening.toString(), style = MaterialTheme.typography.titleLarge)
-                Text(text = "Listening", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = waiting.toString(), style = MaterialTheme.typography.titleLarge)
-                Text(text = "Waiting", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = connections.size.toString(), style = MaterialTheme.typography.titleLarge)
-                Text(text = "Total", style = MaterialTheme.typography.bodyMedium)
-            }
+            SummaryCount(state.established, stringResource(R.string.tcp_established))
+            SummaryCount(state.listening, stringResource(R.string.tcp_listening))
+            SummaryCount(state.waiting, stringResource(R.string.tcp_waiting))
+            SummaryCount(state.total, stringResource(R.string.tcp_total))
         }
     }
 }
 
 @Composable
-private fun TcpConnectionsList(connections: List<NativeSystemMonitor.TcpConnection>, isSample: Boolean) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        items(connections) { connection ->
-            TcpConnectionItem(connection, isSample)
-        }
-    }
-}
-
-@Composable
-private fun TcpConnectionItem(connection: NativeSystemMonitor.TcpConnection, isSample: Boolean) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = if (isSample) {
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        } else {
-            CardDefaults.cardColors()
-        }
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Status row
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (isSample) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Sample data",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
-                val (icon, color) = when (connection.status) {
-                    "ESTABLISHED" -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.primary
-                    "LISTEN" -> Icons.Default.Hearing to MaterialTheme.colorScheme.tertiary
-                    "TIME_WAIT", "CLOSE_WAIT" -> Icons.Default.Timer to MaterialTheme.colorScheme.error
-                    else -> Icons.Default.Info to MaterialTheme.colorScheme.onSurface
-                }
-
-                Icon(
-                    imageVector = icon,
-                    contentDescription = connection.status,
-                    tint = color,
-                    modifier = Modifier.size(24.dp)
-                )
-
-                Text(
-                    text = connection.status,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = color,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-
-            // Address information
-            Text(
-                text = "Local: ${connection.getFormattedLocalAddress()}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
-            Text(
-                text = "Remote: ${connection.getFormattedRemoteAddress()}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            // UID information (app identification)
-            Text(
-                text = "UID: ${connection.uid}",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun EmptyConnectionsView(refreshing: Boolean) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.CloudOff,
-            contentDescription = null,
-            modifier = Modifier.size(56.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+private fun SummaryCount(count: Int, label: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = count.toString(), style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = if (refreshing) "Loading TCP connections..." else "No active TCP connections found",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(top = 16.dp)
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun TcpConnectionCard(connection: NativeSystemMonitor.TcpConnection, modifier: Modifier = Modifier) {
+    MonitorCard(modifier = modifier) {
+        StatusRow(
+            label = connection.status,
+            status = connection.readingStatus,
+            statusDescription = connection.status
+        )
+        LabeledValue(
+            label = stringResource(R.string.tcp_local),
+            value = connection.getFormattedLocalAddress(),
+            valueStyle = MonitorTypography.machineText
+        )
+        LabeledValue(
+            label = stringResource(R.string.tcp_remote),
+            value = connection.getFormattedRemoteAddress(),
+            valueStyle = MonitorTypography.machineText
+        )
+        LabeledValue(label = stringResource(R.string.tcp_uid), value = connection.uid.toString())
+    }
+}
+
+/**
+ * A socket state, read as health.
+ *
+ * TIME_WAIT and CLOSE_WAIT used to be drawn in the error color, which overstates them — they are
+ * ordinary states in a connection's teardown, not failures.
+ */
+private val NativeSystemMonitor.TcpConnection.readingStatus: ReadingStatus
+    get() = when (status) {
+        "ESTABLISHED" -> ReadingStatus.Ok
+        "LISTEN" -> ReadingStatus.Neutral
+        "TIME_WAIT", "CLOSE_WAIT" -> ReadingStatus.Warning
+        else -> ReadingStatus.Neutral
+    }
+
+@Preview(name = "TCP", showBackground = true)
+@Preview(name = "TCP (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun TcpConnectionsPreview() {
+    AOSCoreMonitorTheme(dynamicColor = false) {
+        TcpConnectionsContent(
+            state = TcpConnectionsUiState(
+                connections = Collected.sample(
+                    listOf(
+                        NativeSystemMonitor.TcpConnection(
+                            localAddress = "0100007F:1F90",
+                            remoteAddress = "00000000:0000",
+                            status = "LISTEN",
+                            uid = 1000,
+                            inode = "31427"
+                        ),
+                        NativeSystemMonitor.TcpConnection(
+                            localAddress = "0A00020F:B3C2",
+                            remoteAddress = "8EFAB48E:01BB",
+                            status = "ESTABLISHED",
+                            uid = 10123,
+                            inode = "31892"
+                        )
+                    )
+                ),
+                hasLoaded = true
+            ),
+            onNavigateBack = {}
         )
     }
 }

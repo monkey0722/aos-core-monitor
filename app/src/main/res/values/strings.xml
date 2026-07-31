@@ -4,6 +4,8 @@
     <!-- Shared -->
     <string name="action_back">Back</string>
     <string name="action_scroll_to_bottom">Scroll to bottom</string>
+    <string name="action_expand">Show all</string>
+    <string name="action_collapse">Show less</string>
     <string name="sample_data_label">Sample data</string>
     <string name="status_supported">Supported</string>
     <string name="status_not_supported">Not supported</string>
@@ -84,7 +86,6 @@
     <string name="framework_binder_section">Binder Transactions</string>
     <string name="framework_binder_subtitle">Cross-process calls observed on this device</string>
     <string name="framework_binder_empty">No Binder transactions detected. Reading them needs root access or a userdebug build.</string>
-    <string name="framework_binder_process">Process</string>
     <string name="framework_binder_code">Transaction code</string>
     <string name="framework_binder_destination">Destination</string>
     <string name="framework_binder_size">Data size</string>
@@ -100,11 +101,13 @@
     <string name="framework_connections_subtitle">Which client is bound to which service</string>
     <string name="framework_connections_empty">No connection data available.</string>
     <string name="framework_service_state">State</string>
-    <string name="framework_connection_client">Client</string>
     <string name="framework_connection_target">Connected to</string>
-    <string name="framework_sample_api">Sample data: capturing real API calls needs instrumentation</string>
-    <string name="framework_sample_services">Sample data: `dumpsys activity services` returned nothing</string>
-    <string name="framework_bytes">%1$d bytes</string>
+    <string name="framework_sample_api">Capturing real API calls needs instrumentation</string>
+    <string name="framework_sample_services">`dumpsys activity services` returned nothing on this device</string>
+    <plurals name="framework_bytes">
+        <item quantity="one">%1$d byte</item>
+        <item quantity="other">%1$d bytes</item>
+    </plurals>
     <string name="framework_millis">%1$d ms</string>
 
     <!-- HAL interfaces -->
@@ -131,8 +134,8 @@
     <string name="hal_service_server">Server</string>
     <string name="hal_service_clients">Clients</string>
     <string name="hal_service_no_clients">No clients bound</string>
-    <string name="hal_sample_interfaces">Sample data: lshal returned nothing on this device</string>
-    <string name="hal_sample_services">Sample data: `service list` returned nothing on this device</string>
+    <string name="hal_sample_interfaces">lshal returned nothing on this device</string>
+    <string name="hal_sample_services">`service list` returned nothing on this device</string>
 
     <!-- Native system monitor -->
     <string name="native_title">Native System Monitor</string>
@@ -153,8 +156,8 @@
     <string name="network_empty">No network interfaces found</string>
     <string name="network_received">Received</string>
     <string name="network_transmitted">Transmitted</string>
-    <string name="network_packet_detail">%1$d packets · %2$d errors · %3$d dropped</string>
-    <string name="network_sample">Sample data: /proc/net is not readable by apps</string>
+    <string name="network_packet_detail">Packets %1$d · Errors %2$d · Dropped %3$d</string>
+    <string name="network_sample">/proc/net is not readable by apps</string>
 
     <!-- TCP connections -->
     <string name="tcp_title">TCP Connections</string>
@@ -167,5 +170,5 @@
     <string name="tcp_local">Local</string>
     <string name="tcp_remote">Remote</string>
     <string name="tcp_uid">UID</string>
-    <string name="tcp_sample">Sample data: /proc/net/tcp is not readable by apps</string>
+    <string name="tcp_sample">/proc/net/tcp is not readable by apps</string>
 </resources>

@@ -2,200 +2,149 @@ package com.aoscoremonitor.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.Collected
 import com.aoscoremonitor.diagnostics.FrameworkAnalyzer
+import com.aoscoremonitor.ui.components.EmptyState
+import com.aoscoremonitor.ui.components.LabeledValue
+import com.aoscoremonitor.ui.components.MonitorCard
+import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.MonitorTabs
 import com.aoscoremonitor.ui.components.SampleDataBanner
-import java.text.SimpleDateFormat
-import java.util.Date
+import com.aoscoremonitor.ui.components.SectionHeader
+import com.aoscoremonitor.ui.components.TabContentList
+import com.aoscoremonitor.ui.components.TabSpec
+import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.viewmodel.FrameworkAnalysisViewModel
+import com.aoscoremonitor.ui.viewmodel.monitorViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FrameworkAnalysisScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var frameworkData by remember {
-        mutableStateOf(
-            FrameworkAnalyzer.FrameworkData(
-                binderTransactions = emptyList(),
-                apiCalls = Collected.real(emptyList()),
-                serviceData = Collected.real(
-                    FrameworkAnalyzer.ServiceManagerData(
-                        runningServices = emptyMap(),
-                        serviceConnections = emptyList()
-                    )
-                )
-            )
+fun FrameworkAnalysisScreen(
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: FrameworkAnalysisViewModel = monitorViewModel { FrameworkAnalysisViewModel(it) }
+) {
+    val frameworkData by viewModel.frameworkData.collectAsStateWithLifecycle()
+
+    FrameworkAnalysisContent(
+        frameworkData = frameworkData,
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun FrameworkAnalysisContent(
+    frameworkData: FrameworkAnalyzer.FrameworkData,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tabs = listOf(
+        TabSpec(stringResource(R.string.framework_tab_binder), Icons.Default.Sync, frameworkData.binderTransactions.size),
+        TabSpec(stringResource(R.string.framework_tab_api), Icons.Default.Api, frameworkData.apiCalls.value.size),
+        TabSpec(
+            stringResource(R.string.framework_tab_services),
+            Icons.Default.Link,
+            frameworkData.serviceData.value.runningServices.size
         )
-    }
+    )
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
 
-    // Tab selection state
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Binder Transactions", "API Calls", "Services")
-
-    // Initialize framework analyzer
-    val frameworkAnalyzer = remember {
-        FrameworkAnalyzer(context) { data ->
-            frameworkData = data
-        }
-    }
-
-    // Start/stop analyzer based on component lifecycle
-    DisposableEffect(frameworkAnalyzer) {
-        frameworkAnalyzer.startAnalyzing()
-        onDispose {
-            frameworkAnalyzer.stopAnalyzing()
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Framework Analysis") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        }
+    MonitorScaffold(
+        title = stringResource(R.string.framework_title),
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
     ) { innerPadding ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Simple tab row
-            PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        text = { Text(title) },
-                        selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index }
-                    )
+            MonitorTabs(tabs = tabs, pagerState = pagerState)
+            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                when (page) {
+                    0 -> BinderTransactionsTab(frameworkData.binderTransactions)
+                    1 -> ApiCallsTab(frameworkData.apiCalls)
+                    else -> ServicesTab(frameworkData.serviceData)
                 }
-            }
-
-            // Content based on selected tab
-            when (selectedTabIndex) {
-                0 -> BinderTransactionsTab(binderTransactions = frameworkData.binderTransactions)
-                1 -> ApiCallsTab(frameworkData.apiCalls)
-                2 -> ServicesTab(frameworkData.serviceData)
             }
         }
     }
 }
 
+/**
+ * The timestamp format shared by the Binder and API tabs.
+ *
+ * Held as a [DateTimeFormatter] rather than the `SimpleDateFormat` these tabs each built inline:
+ * that one was reconstructed on every recomposition, and being mutable it was never safe to hoist.
+ */
 @Composable
-fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTransaction>) {
-    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
+private fun rememberTimeFormatter(): DateTimeFormatter {
+    val locale = LocalLocale.current.platformLocale
+    return remember(locale) {
+        DateTimeFormatter.ofPattern("HH:mm:ss.SSS", locale).withZone(ZoneId.systemDefault())
+    }
+}
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Section title
-        item {
-            Text(
-                text = "Binder Transactions",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+@Composable
+private fun BinderTransactionsTab(transactions: List<FrameworkAnalyzer.BinderTransaction>, modifier: Modifier = Modifier) {
+    val timeFormatter = rememberTimeFormatter()
+
+    TabContentList(modifier = modifier) {
+        item(key = "header") {
+            SectionHeader(
+                title = stringResource(R.string.framework_binder_section),
+                subtitle = stringResource(R.string.framework_binder_subtitle)
             )
-            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
         }
-
-        // Empty state or transactions list
-        if (binderTransactions.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Text(
-                        text = "No Binder transactions detected. " +
-                            "The device may need root access or special permissions to access this data.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
+        if (transactions.isEmpty()) {
+            item(key = "empty") { EmptyState(stringResource(R.string.framework_binder_empty)) }
         } else {
-            items(binderTransactions) { transaction ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
+            items(transactions, key = { "${it.pid}-${it.timestamp}-${it.transactionCode}" }) { transaction ->
+                MonitorCard {
+                    Text(
+                        text = "${transaction.process} (${transaction.pid})",
+                        style = MaterialTheme.typography.titleMedium
                     )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Process: ${transaction.process} (PID: ${transaction.pid})",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
+                    LabeledValue(
+                        label = stringResource(R.string.framework_binder_destination),
+                        value = transaction.destination
+                    )
+                    LabeledValue(
+                        label = stringResource(R.string.framework_binder_code),
+                        value = "0x${transaction.transactionCode.toString(16)}"
+                    )
+                    LabeledValue(
+                        label = stringResource(R.string.framework_binder_size),
+                        value = pluralStringResource(
+                            R.plurals.framework_bytes,
+                            transaction.dataSize,
+                            transaction.dataSize
                         )
-                        Text(
-                            text = "Transaction Code: 0x${transaction.transactionCode.toString(16)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                        Text(
-                            text = "Destination: ${transaction.destination}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "Data Size: ${transaction.dataSize} bytes",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "Time: ${dateFormat.format(Date(transaction.timestamp))}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
+                    )
+                    Timestamp(timeFormatter.format(Instant.ofEpochMilli(transaction.timestamp)))
                 }
             }
         }
@@ -203,82 +152,35 @@ fun BinderTransactionsTab(binderTransactions: List<FrameworkAnalyzer.BinderTrans
 }
 
 @Composable
-fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>>) {
+private fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>>, modifier: Modifier = Modifier) {
+    val timeFormatter = rememberTimeFormatter()
     val apiCalls = collected.value
-    val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", LocalLocale.current.platformLocale)
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Section title
-        item {
-            Text(
-                text = "API Calls",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+    TabContentList(modifier = modifier) {
+        item(key = "header") {
+            SectionHeader(
+                title = stringResource(R.string.framework_api_section),
+                subtitle = stringResource(R.string.framework_api_subtitle)
             )
-            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
         }
-
         if (collected.isSample) {
-            item {
-                SampleDataBanner("Sample data: capturing real API calls needs instrumentation")
-            }
+            item(key = "sample") { SampleDataBanner(stringResource(R.string.framework_sample_api)) }
         }
-
-        // Empty state or API calls list
         if (apiCalls.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Text(
-                        text = "No API calls detected. API tracing requires special instrumentation.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
+            item(key = "empty") { EmptyState(stringResource(R.string.framework_api_empty)) }
         } else {
-            items(apiCalls) { call ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
+            items(apiCalls, key = { "${it.apiName}-${it.timestamp}" }) { call ->
+                MonitorCard {
+                    Text(text = call.apiName, style = MaterialTheme.typography.titleMedium)
+                    LabeledValue(
+                        label = stringResource(R.string.framework_api_caller),
+                        value = call.callerPackage
                     )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "API: ${call.apiName}",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Caller: ${call.callerPackage}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                        Text(
-                            text = "Duration: ${call.duration}ms",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "Time: ${dateFormat.format(Date(call.timestamp))}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
+                    LabeledValue(
+                        label = stringResource(R.string.framework_api_duration),
+                        value = stringResource(R.string.framework_millis, call.duration)
+                    )
+                    Timestamp(timeFormatter.format(Instant.ofEpochMilli(call.timestamp)))
                 }
             }
         }
@@ -286,130 +188,86 @@ fun ApiCallsTab(collected: Collected<List<FrameworkAnalyzer.ApiCallInfo>>) {
 }
 
 @Composable
-fun ServicesTab(collected: Collected<FrameworkAnalyzer.ServiceManagerData>) {
+private fun ServicesTab(collected: Collected<FrameworkAnalyzer.ServiceManagerData>, modifier: Modifier = Modifier) {
     val serviceData = collected.value
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Running Services section
-        item {
-            Text(
-                text = "Running Services",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-        }
+    val services = remember(serviceData.runningServices) { serviceData.runningServices.entries.toList() }
 
+    TabContentList(modifier = modifier) {
+        item(key = "services-header") {
+            SectionHeader(
+                title = stringResource(R.string.framework_services_section),
+                subtitle = stringResource(R.string.framework_services_subtitle)
+            )
+        }
         if (collected.isSample) {
-            item {
-                SampleDataBanner("Sample data: `dumpsys activity services` returned nothing")
-            }
+            item(key = "sample") { SampleDataBanner(stringResource(R.string.framework_sample_services)) }
         }
-
-        // Empty state or services list
-        if (serviceData.runningServices.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Text(
-                        text = "No service data available. Some information may require elevated permissions.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
+        if (services.isEmpty()) {
+            item(key = "services-empty") { EmptyState(stringResource(R.string.framework_services_empty)) }
         } else {
-            items(serviceData.runningServices.entries.toList()) { (service, state) ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = service,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "State: $state",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
+            items(services, key = { "service-${it.key}" }) { (service, state) ->
+                MonitorCard {
+                    Text(text = service, style = MaterialTheme.typography.titleMedium)
+                    LabeledValue(label = stringResource(R.string.framework_service_state), value = state)
                 }
             }
         }
 
-        // Service Connections section
-        item {
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-            Text(
-                text = "Service Connections",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+        item(key = "connections-header") {
+            SectionHeader(
+                title = stringResource(R.string.framework_connections_section),
+                subtitle = stringResource(R.string.framework_connections_subtitle)
             )
-            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
         }
-
-        // Empty state or connections list
         if (serviceData.serviceConnections.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Text(
-                        text = "No connection data available.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
+            item(key = "connections-empty") { EmptyState(stringResource(R.string.framework_connections_empty)) }
         } else {
-            items(serviceData.serviceConnections) { (client, service) ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Client: $client",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Connected to: $service",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
+            items(serviceData.serviceConnections, key = { "connection-${it.first}-${it.second}" }) { (client, service) ->
+                MonitorCard {
+                    Text(text = client, style = MaterialTheme.typography.titleMedium)
+                    LabeledValue(label = stringResource(R.string.framework_connection_target), value = service)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun Timestamp(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+    )
+}
+
+@Preview(name = "Framework", showBackground = true)
+@Preview(name = "Framework (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun FrameworkAnalysisPreview() {
+    AOSCoreMonitorTheme(dynamicColor = false) {
+        FrameworkAnalysisContent(
+            frameworkData = FrameworkAnalyzer.FrameworkData(
+                binderTransactions = listOf(
+                    FrameworkAnalyzer.BinderTransaction(
+                        process = "system_server",
+                        pid = 1731,
+                        transactionCode = 26,
+                        destination = "android.app.IActivityManager",
+                        dataSize = 148,
+                        timestamp = 1_754_000_000_000
+                    )
+                ),
+                apiCalls = Collected.real(emptyList()),
+                serviceData = Collected.real(
+                    FrameworkAnalyzer.ServiceManagerData(
+                        runningServices = mapOf("com.android.systemui/.SystemUIService" to "running"),
+                        serviceConnections = emptyList()
+                    )
+                )
+            ),
+            onNavigateBack = {}
+        )
     }
 }

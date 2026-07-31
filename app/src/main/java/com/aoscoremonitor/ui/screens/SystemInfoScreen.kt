@@ -1,175 +1,100 @@
 package com.aoscoremonitor.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Battery6Bar
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SystemInfoCollector
+import com.aoscoremonitor.ui.components.InfoCard
+import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.Spacing
+import com.aoscoremonitor.ui.viewmodel.SystemInfoViewModel
+import com.aoscoremonitor.ui.viewmodel.monitorViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SystemInfoScreen(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var systemInfo by remember {
-        mutableStateOf(
-            SystemInfoCollector.SystemInfo(
-                cpuUsage = "CPU: N/A",
-                memoryUsage = "Memory: N/A",
-                batteryStatus = "Battery: N/A",
-                networkStatus = "Network: N/A"
-            )
-        )
-    }
+fun SystemInfoScreen(
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SystemInfoViewModel = monitorViewModel { SystemInfoViewModel(it) }
+) {
+    // collectAsStateWithLifecycle rather than collectAsState: the subscription ends when the
+    // screen stops, which is what tells the view model to stop collecting.
+    val systemInfo by viewModel.systemInfo.collectAsStateWithLifecycle()
 
-    val systemInfoCollector = remember {
-        SystemInfoCollector(context) { info ->
-            systemInfo = info
-        }
-    }
+    SystemInfoContent(
+        systemInfo = systemInfo,
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
+    )
+}
 
-    DisposableEffect(systemInfoCollector) {
-        systemInfoCollector.startCollecting()
-        onDispose {
-            systemInfoCollector.stopCollecting()
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("System Information") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        }
+@Composable
+private fun SystemInfoContent(systemInfo: SystemInfoCollector.SystemInfo, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
+    MonitorScaffold(
+        title = stringResource(R.string.system_info_title),
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
     ) { innerPadding ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.Large),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
         ) {
             InfoCard(
-                title = "CPU Usage",
+                title = stringResource(R.string.system_info_cpu),
                 value = systemInfo.cpuUsage,
-                icon = Icons.Default.Speed,
-                color = MaterialTheme.colorScheme.primary
+                icon = Icons.Default.Speed
             )
-
             InfoCard(
-                title = "Memory",
+                title = stringResource(R.string.system_info_memory),
                 value = systemInfo.memoryUsage,
-                icon = Icons.Default.Memory,
-                color = MaterialTheme.colorScheme.secondary
+                icon = Icons.Default.Memory
             )
-
             InfoCard(
-                title = "Battery",
+                title = stringResource(R.string.system_info_battery),
                 value = systemInfo.batteryStatus,
-                icon = Icons.Default.Battery6Bar,
-                color = MaterialTheme.colorScheme.tertiary
+                icon = Icons.Default.Battery6Bar
             )
-
             InfoCard(
-                title = "Network",
+                title = stringResource(R.string.system_info_network),
                 value = systemInfo.networkStatus,
-                icon = Icons.Default.NetworkCell,
-                color = MaterialTheme.colorScheme.error
+                icon = Icons.Default.NetworkCell
             )
         }
     }
 }
 
+@Preview(name = "System info", showBackground = true)
+@Preview(name = "System info (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun InfoCard(
-    title: String,
-    value: String,
-    icon: ImageVector,
-    color: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
+private fun SystemInfoPreview() {
+    AOSCoreMonitorTheme(dynamicColor = false) {
+        SystemInfoContent(
+            systemInfo = SystemInfoCollector.SystemInfo(
+                cpuUsage = "2% (this app)",
+                memoryUsage = "1686 MB available",
+                batteryStatus = "100%",
+                networkStatus = "Wi-Fi"
+            ),
+            onNavigateBack = {}
         )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = color,
-                modifier = Modifier.size(32.dp)
-            )
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        }
     }
 }
