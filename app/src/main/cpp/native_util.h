@@ -1,12 +1,39 @@
 #ifndef AOSCM_NATIVE_UTIL_H_
 #define AOSCM_NATIVE_UTIL_H_
 
+#include <jni.h>
+
 #include <cstdint>
+#include <exception>
 #include <optional>
 #include <string>
 #include <string_view>
 
 namespace aoscm {
+
+/** Records why a collector produced nothing. Not shown to the user; logcat is where it lands. */
+void LogCollectorFailure(const char* what);
+
+/**
+ * Runs a collector and hands its JSON to the JVM, containing anything it throws.
+ *
+ * "C++ exceptions ... must not be thrown across the JNI transition boundary from C++ code to
+ * managed code" — every collector here builds strings and vectors, any of which can throw
+ * std::bad_alloc, and none of these entry points is otherwise in a position to stop one. An empty
+ * object is returned instead, which each parser turns into the same "no reading" the screens
+ * already handle.
+ */
+template <typename Collect>
+jstring ReturnJson(JNIEnv* env, Collect collect) noexcept {
+  try {
+    return env->NewStringUTF(collect().c_str());
+  } catch (const std::exception& failure) {
+    LogCollectorFailure(failure.what());
+  } catch (...) {
+    LogCollectorFailure("unknown exception");
+  }
+  return env->NewStringUTF("{}");
+}
 
 /**
  * Reads the first line of a file with surrounding whitespace removed, or nothing at all.
@@ -16,10 +43,10 @@ namespace aoscm {
  * from "read a zero", which matters because the screens present the two differently: a missing
  * reading is shown as unavailable rather than as 0.
  */
-std::optional<std::string> ReadTrimmedLine(const std::string& path);
+[[nodiscard]] std::optional<std::string> ReadTrimmedLine(const std::string& path);
 
 /** Reads a file holding a single decimal number, as sysfs counters do. */
-std::optional<uint64_t> ReadUint64(const std::string& path);
+[[nodiscard]] std::optional<uint64_t> ReadUint64(const std::string& path);
 
 /**
  * Builds JSON for the JNI boundary.
@@ -69,7 +96,7 @@ class JsonWriter {
   JsonWriter& FieldIfSet(std::string_view key, const std::optional<std::string>& value);
 
   /** Hands over the finished document. The writer is empty afterwards. */
-  std::string Take();
+  [[nodiscard]] std::string Take();
 
  private:
   JsonWriter& ValueHex(uint64_t value);

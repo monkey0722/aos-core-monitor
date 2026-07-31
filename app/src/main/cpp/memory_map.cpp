@@ -258,61 +258,63 @@ void WriteLimit(JsonWriter* writer, const char* key, int resource) {
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeMemoryInspector_getMemoryMapNative(
     JNIEnv* env, jobject /* this */) {
-  JsonWriter writer;
-  writer.BeginObject();
-
-  Rollup rollup = ReadSmaps("/proc/self/smaps_rollup", true);
-  if (!rollup.present) {
-    rollup = ReadSmaps("/proc/self/smaps", false);
-  }
-  if (rollup.present) {
-    writer.Key("rollup").BeginObject();
-    for (size_t i = 0; i < kRollupJsonKeys.size(); ++i) {
-      writer.Field(kRollupJsonKeys[i], rollup.values[i]);
-    }
-    writer.Field("from_rollup_file", rollup.from_rollup_file);
-    writer.EndObject();
-  }
-
-  WriteStatus(&writer);
-
-  const MapsSummary maps = SummarizeMaps();
-  writer.Key("regions").BeginObject();
-  writer.Field("total", maps.total_regions);
-  writer.Field("reserved_count", maps.reserved_regions);
-  writer.Field("reserved_kb", maps.reserved_kb);
-  writer.Key("categories").BeginArray();
-  for (size_t i = 0; i < kCategoryKeys.size(); ++i) {
-    if (maps.categories[i].count == 0) {
-      continue;
-    }
+  return aoscm::ReturnJson(env, [] {
+    JsonWriter writer;
     writer.BeginObject();
-    writer.Field("key", kCategoryKeys[i]);
-    writer.Field("count", maps.categories[i].count);
-    writer.Field("size_kb", maps.categories[i].size_kb);
+
+    Rollup rollup = ReadSmaps("/proc/self/smaps_rollup", true);
+    if (!rollup.present) {
+      rollup = ReadSmaps("/proc/self/smaps", false);
+    }
+    if (rollup.present) {
+      writer.Key("rollup").BeginObject();
+      for (size_t i = 0; i < kRollupJsonKeys.size(); ++i) {
+        writer.Field(kRollupJsonKeys[i], rollup.values[i]);
+      }
+      writer.Field("from_rollup_file", rollup.from_rollup_file);
+      writer.EndObject();
+    }
+
+    WriteStatus(&writer);
+
+    const MapsSummary maps = SummarizeMaps();
+    writer.Key("regions").BeginObject();
+    writer.Field("total", maps.total_regions);
+    writer.Field("reserved_count", maps.reserved_regions);
+    writer.Field("reserved_kb", maps.reserved_kb);
+    writer.Key("categories").BeginArray();
+    for (size_t i = 0; i < kCategoryKeys.size(); ++i) {
+      if (maps.categories[i].count == 0) {
+        continue;
+      }
+      writer.BeginObject();
+      writer.Field("key", kCategoryKeys[i]);
+      writer.Field("count", maps.categories[i].count);
+      writer.Field("size_kb", maps.categories[i].size_kb);
+      writer.EndObject();
+    }
+    writer.EndArray();
     writer.EndObject();
-  }
-  writer.EndArray();
-  writer.EndObject();
 
-  const struct mallinfo2 heap = mallinfo2();
-  writer.Key("malloc").BeginObject();
-  writer.Field("arena", static_cast<uint64_t>(heap.arena));
-  writer.Field("in_use", static_cast<uint64_t>(heap.uordblks));
-  writer.Field("free", static_cast<uint64_t>(heap.fordblks));
-  writer.Field("free_chunks", static_cast<uint64_t>(heap.ordblks));
-  writer.Field("mmapped", static_cast<uint64_t>(heap.hblkhd));
-  writer.Field("peak", static_cast<uint64_t>(heap.usmblks));
-  writer.Field("releasable", static_cast<uint64_t>(heap.keepcost));
-  writer.EndObject();
+    const struct mallinfo2 heap = mallinfo2();
+    writer.Key("malloc").BeginObject();
+    writer.Field("arena", static_cast<uint64_t>(heap.arena));
+    writer.Field("in_use", static_cast<uint64_t>(heap.uordblks));
+    writer.Field("free", static_cast<uint64_t>(heap.fordblks));
+    writer.Field("free_chunks", static_cast<uint64_t>(heap.ordblks));
+    writer.Field("mmapped", static_cast<uint64_t>(heap.hblkhd));
+    writer.Field("peak", static_cast<uint64_t>(heap.usmblks));
+    writer.Field("releasable", static_cast<uint64_t>(heap.keepcost));
+    writer.EndObject();
 
-  writer.Key("limits").BeginObject();
-  WriteLimit(&writer, "address_space", RLIMIT_AS);
-  WriteLimit(&writer, "data", RLIMIT_DATA);
-  WriteLimit(&writer, "stack", RLIMIT_STACK);
-  WriteLimit(&writer, "open_files", RLIMIT_NOFILE);
-  writer.EndObject();
+    writer.Key("limits").BeginObject();
+    WriteLimit(&writer, "address_space", RLIMIT_AS);
+    WriteLimit(&writer, "data", RLIMIT_DATA);
+    WriteLimit(&writer, "stack", RLIMIT_STACK);
+    WriteLimit(&writer, "open_files", RLIMIT_NOFILE);
+    writer.EndObject();
 
-  writer.EndObject();
-  return env->NewStringUTF(writer.Take().c_str());
+    writer.EndObject();
+    return writer.Take();
+  });
 }

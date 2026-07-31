@@ -196,66 +196,70 @@ std::vector<std::string> IsaFeatures() {
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeCpuInspector_getCpuStaticNative(JNIEnv* env,
                                                                               jobject /* this */) {
-  JsonWriter writer;
-  writer.BeginObject();
-
-  const long configured = sysconf(_SC_NPROCESSORS_CONF);
-  const long online = sysconf(_SC_NPROCESSORS_ONLN);
-  writer.Field("configured", static_cast<uint64_t>(configured > 0 ? configured : 0));
-  writer.Field("online", static_cast<uint64_t>(online > 0 ? online : 0));
-  writer.Field("page_size", static_cast<uint64_t>(sysconf(_SC_PAGESIZE)));
-  writer.Field("clock_ticks", static_cast<uint64_t>(sysconf(_SC_CLK_TCK)));
-
-  utsname system_name = {};
-  if (uname(&system_name) == 0) {
-    writer.Field("machine", system_name.machine);
-    writer.Field("kernel_release", system_name.release);
-  }
-
-  writer.Key("cores").BeginArray();
-  for (const int id : PresentCpus()) {
-    const std::string dir = CpuDir(id);
+  return aoscm::ReturnJson(env, [] {
+    JsonWriter writer;
     writer.BeginObject();
-    writer.Field("id", static_cast<uint64_t>(id));
-    writer.FieldIfSet("core_id", ReadUint64(dir + "/topology/core_id"));
-    writer.FieldIfSet("package_id", ReadUint64(dir + "/topology/physical_package_id"));
-    writer.FieldIfSet("min_khz", ReadUint64(dir + "/cpufreq/cpuinfo_min_freq"));
-    writer.FieldIfSet("max_khz", ReadUint64(dir + "/cpufreq/cpuinfo_max_freq"));
+
+    const long configured = sysconf(_SC_NPROCESSORS_CONF);
+    const long online = sysconf(_SC_NPROCESSORS_ONLN);
+    writer.Field("configured", static_cast<uint64_t>(configured > 0 ? configured : 0));
+    writer.Field("online", static_cast<uint64_t>(online > 0 ? online : 0));
+    writer.Field("page_size", static_cast<uint64_t>(sysconf(_SC_PAGESIZE)));
+    writer.Field("clock_ticks", static_cast<uint64_t>(sysconf(_SC_CLK_TCK)));
+
+    utsname system_name = {};
+    if (uname(&system_name) == 0) {
+      writer.Field("machine", system_name.machine);
+      writer.Field("kernel_release", system_name.release);
+    }
+
+    writer.Key("cores").BeginArray();
+    for (const int id : PresentCpus()) {
+      const std::string dir = CpuDir(id);
+      writer.BeginObject();
+      writer.Field("id", static_cast<uint64_t>(id));
+      writer.FieldIfSet("core_id", ReadUint64(dir + "/topology/core_id"));
+      writer.FieldIfSet("package_id", ReadUint64(dir + "/topology/physical_package_id"));
+      writer.FieldIfSet("min_khz", ReadUint64(dir + "/cpufreq/cpuinfo_min_freq"));
+      writer.FieldIfSet("max_khz", ReadUint64(dir + "/cpufreq/cpuinfo_max_freq"));
+      writer.EndObject();
+    }
+    writer.EndArray();
+
+    writer.Key("features").BeginArray();
+    for (const std::string& feature : IsaFeatures()) {
+      writer.Value(feature);
+    }
+    writer.EndArray();
+
     writer.EndObject();
-  }
-  writer.EndArray();
-
-  writer.Key("features").BeginArray();
-  for (const std::string& feature : IsaFeatures()) {
-    writer.Value(feature);
-  }
-  writer.EndArray();
-
-  writer.EndObject();
-  return env->NewStringUTF(writer.Take().c_str());
+    return writer.Take();
+  });
 }
 
 /** The part that moves: which cores are up, how fast they are running, and under which governor. */
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeCpuInspector_getCpuFrequenciesNative(
     JNIEnv* env, jobject /* this */) {
-  JsonWriter writer;
-  writer.BeginObject();
-  writer.Key("cores").BeginArray();
-
-  for (const int id : PresentCpus()) {
-    const std::string dir = CpuDir(id);
+  return aoscm::ReturnJson(env, [] {
+    JsonWriter writer;
     writer.BeginObject();
-    writer.Field("id", static_cast<uint64_t>(id));
-    writer.Field("online", IsOnline(id));
-    // scaling_cur_freq is denied to apps on some devices and absent for an offline core; the key
-    // is then left out and the screen says so rather than showing a stale or zero frequency.
-    writer.FieldIfSet("cur_khz", ReadUint64(dir + "/cpufreq/scaling_cur_freq"));
-    writer.FieldIfSet("governor", ReadTrimmedLine(dir + "/cpufreq/scaling_governor"));
-    writer.EndObject();
-  }
+    writer.Key("cores").BeginArray();
 
-  writer.EndArray();
-  writer.EndObject();
-  return env->NewStringUTF(writer.Take().c_str());
+    for (const int id : PresentCpus()) {
+      const std::string dir = CpuDir(id);
+      writer.BeginObject();
+      writer.Field("id", static_cast<uint64_t>(id));
+      writer.Field("online", IsOnline(id));
+      // scaling_cur_freq is denied to apps on some devices and absent for an offline core; the key
+      // is then left out and the screen says so rather than showing a stale or zero frequency.
+      writer.FieldIfSet("cur_khz", ReadUint64(dir + "/cpufreq/scaling_cur_freq"));
+      writer.FieldIfSet("governor", ReadTrimmedLine(dir + "/cpufreq/scaling_governor"));
+      writer.EndObject();
+    }
+
+    writer.EndArray();
+    writer.EndObject();
+    return writer.Take();
+  });
 }

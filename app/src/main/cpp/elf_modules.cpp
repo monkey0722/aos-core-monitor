@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -78,8 +79,12 @@ std::string ReadBuildId(const ElfW(Phdr) & header, ElfW(Addr) base) {
  * program headers and copying what they say. Anything else — JNI calls, building the JSON — waits
  * until the walk is over. `dlpi_name` points into the linker's own storage and is copied for the
  * same reason.
+ *
+ * `noexcept` because the caller is C: the copies below allocate, and an exception leaving here
+ * would unwind through the linker's frames while it holds that lock. Terminating is not a good
+ * outcome, but it is a defined one.
  */
-int CollectModule(dl_phdr_info* info, size_t size, void* data) {
+int CollectModule(dl_phdr_info* info, size_t size, void* data) noexcept {
   auto* collector = static_cast<Collector*>(data);
 
   // dlpi_adds and dlpi_subs were added after the original struct, so they are only there when the
@@ -97,8 +102,9 @@ int CollectModule(dl_phdr_info* info, size_t size, void* data) {
 
   uint64_t lowest = UINT64_MAX;
   uint64_t highest = 0;
-  for (size_t i = 0; i < info->dlpi_phnum; ++i) {
-    const ElfW(Phdr) & header = info->dlpi_phdr[i];
+  // A pointer and a count are what the linker hands over; a span is what the loop should see.
+  const std::span headers(info->dlpi_phdr, info->dlpi_phnum);
+  for (const ElfW(Phdr) & header : headers) {
     switch (header.p_type) {
       case PT_LOAD:
         lowest = std::min<uint64_t>(lowest, header.p_vaddr);
@@ -140,32 +146,34 @@ int CollectModule(dl_phdr_info* info, size_t size, void* data) {
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeModuleInspector_getLoadedModulesNative(
     JNIEnv* env, jobject /* this */) {
-  Collector collector;
-  dl_iterate_phdr(CollectModule, &collector);
+  return aoscm::ReturnJson(env, [] {
+    Collector collector;
+    dl_iterate_phdr(CollectModule, &collector);
 
-  JsonWriter writer;
-  writer.BeginObject();
-  if (collector.counts_valid) {
-    writer.Field("adds", static_cast<uint64_t>(collector.adds));
-    writer.Field("subs", static_cast<uint64_t>(collector.subs));
-  }
-
-  writer.Key("modules").BeginArray();
-  for (const Module& module : collector.modules) {
+    JsonWriter writer;
     writer.BeginObject();
-    writer.Field("path", module.path);
-    writer.FieldHex("base", module.base);
-    writer.Field("mapped_size", module.mapped_size);
-    writer.Field("segment_count", module.segment_count);
-    writer.Field("relro", module.has_relro);
-    writer.Field("tls", module.has_tls);
-    if (!module.build_id.empty()) {
-      writer.Field("build_id", module.build_id);
+    if (collector.counts_valid) {
+      writer.Field("adds", static_cast<uint64_t>(collector.adds));
+      writer.Field("subs", static_cast<uint64_t>(collector.subs));
     }
-    writer.EndObject();
-  }
-  writer.EndArray();
 
-  writer.EndObject();
-  return env->NewStringUTF(writer.Take().c_str());
+    writer.Key("modules").BeginArray();
+    for (const Module& module : collector.modules) {
+      writer.BeginObject();
+      writer.Field("path", module.path);
+      writer.FieldHex("base", module.base);
+      writer.Field("mapped_size", module.mapped_size);
+      writer.Field("segment_count", module.segment_count);
+      writer.Field("relro", module.has_relro);
+      writer.Field("tls", module.has_tls);
+      if (!module.build_id.empty()) {
+        writer.Field("build_id", module.build_id);
+      }
+      writer.EndObject();
+    }
+    writer.EndArray();
+
+    writer.EndObject();
+    return writer.Take();
+  });
 }

@@ -3,6 +3,8 @@
 #include <sys/statvfs.h>
 
 #include <cstdio>
+#include <memory>
+#include <string>
 #include <string_view>
 
 #include "native_util.h"
@@ -10,6 +12,9 @@
 namespace {
 
 using aoscm::JsonWriter;
+
+/** Closes the mount table however the scope is left, exception included. */
+using MountTable = std::unique_ptr<FILE, decltype([](FILE* table) { endmntent(table); })>;
 
 /** Whether the mount was made read-only, which is the first option the kernel lists. */
 bool IsReadOnly(const char* options) {
@@ -60,30 +65,30 @@ void WriteUsage(JsonWriter* writer, const char* target) {
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeStorageInspector_getMountsNative(JNIEnv* env,
                                                                                jobject /* this */) {
-  JsonWriter writer;
-  writer.BeginObject();
-  writer.Key("mounts").BeginArray();
+  return aoscm::ReturnJson(env, [] {
+    JsonWriter writer;
+    writer.BeginObject();
+    writer.Key("mounts").BeginArray();
 
-  FILE* mounts = setmntent("/proc/self/mounts", "r");
-  if (mounts != nullptr) {
-    struct mntent entry = {};
-    char buffer[4096];
-    // The reentrant form: the plain getmntent() hands back a pointer to shared storage, which is
-    // a hazard worth avoiding in a library that any thread may call.
-    while (getmntent_r(mounts, &entry, buffer, sizeof(buffer)) != nullptr) {
-      writer.BeginObject();
-      writer.Field("source", entry.mnt_fsname);
-      writer.Field("target", entry.mnt_dir);
-      writer.Field("fs_type", entry.mnt_type);
-      writer.Field("options", entry.mnt_opts);
-      writer.Field("readonly", IsReadOnly(entry.mnt_opts));
-      WriteUsage(&writer, entry.mnt_dir);
-      writer.EndObject();
+    if (const MountTable mounts{setmntent("/proc/self/mounts", "r")}) {
+      struct mntent entry = {};
+      char buffer[4096];
+      // The reentrant form: the plain getmntent() hands back a pointer to shared storage, which is
+      // a hazard worth avoiding in a library that any thread may call.
+      while (getmntent_r(mounts.get(), &entry, buffer, sizeof(buffer)) != nullptr) {
+        writer.BeginObject();
+        writer.Field("source", entry.mnt_fsname);
+        writer.Field("target", entry.mnt_dir);
+        writer.Field("fs_type", entry.mnt_type);
+        writer.Field("options", entry.mnt_opts);
+        writer.Field("readonly", IsReadOnly(entry.mnt_opts));
+        WriteUsage(&writer, entry.mnt_dir);
+        writer.EndObject();
+      }
     }
-    endmntent(mounts);
-  }
 
-  writer.EndArray();
-  writer.EndObject();
-  return env->NewStringUTF(writer.Take().c_str());
+    writer.EndArray();
+    writer.EndObject();
+    return writer.Take();
+  });
 }
