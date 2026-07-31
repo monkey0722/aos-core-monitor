@@ -17,11 +17,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Computer
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Security
@@ -109,7 +109,7 @@ fun WelcomeScreen(
             ),
             MenuItem(
                 title = "System Logs",
-                icon = Icons.Default.List,
+                icon = Icons.AutoMirrored.Filled.List,
                 color = MaterialTheme.colorScheme.secondary,
                 onClick = onNavigateToLogs
             ),

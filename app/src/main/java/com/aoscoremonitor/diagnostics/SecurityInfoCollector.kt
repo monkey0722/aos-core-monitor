@@ -316,8 +316,15 @@ class SecurityInfoCollector(
             // Clean up by deleting the test key
             keyStore.deleteEntry(keyAlias)
 
-            // Return whether the key is inside secure hardware
-            keyInfo.isInsideSecureHardware
+            // Return whether the key is inside secure hardware.
+            // isInsideSecureHardware was deprecated in API 31 in favour of securityLevel.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_SOFTWARE &&
+                    keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_UNKNOWN
+            } else {
+                @Suppress("DEPRECATION")
+                keyInfo.isInsideSecureHardware
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             false
