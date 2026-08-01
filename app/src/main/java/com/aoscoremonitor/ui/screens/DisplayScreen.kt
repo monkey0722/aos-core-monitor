@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.CutoutInsets
@@ -40,6 +39,7 @@ import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.MonitorTag
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.DisplayUiState
 import com.aoscoremonitor.ui.viewmodel.DisplayViewModel
@@ -123,22 +123,19 @@ private fun DisplayContent(uiState: DisplayUiState, onNavigateBack: () -> Unit, 
 
 @Composable
 private fun PanelCard(display: DisplayInfo, modifier: Modifier = Modifier) {
-    MonitorCard(modifier = modifier) {
+    MonitorCard(modifier = modifier, spacing = Spacing.Medium) {
         LabeledValue(label = stringResource(R.string.display_name), value = display.name)
         LabeledValue(
             label = stringResource(R.string.display_state),
-            value = stringResource(stateLabel(display.state)),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(stateLabel(display.state))
         )
         LabeledValue(
             label = stringResource(R.string.display_rotation),
-            value = stringResource(R.string.display_degrees, display.rotationDegrees),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(R.string.display_degrees, display.rotationDegrees)
         )
         LabeledValue(
             label = stringResource(R.string.display_id),
-            value = display.displayId.toString(),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = display.displayId.toString()
         )
         ProductRows(display.product)
     }
@@ -156,8 +153,7 @@ private fun ProductRows(product: DisplayProduct) {
         Text(
             text = stringResource(R.string.display_product_absent),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.Small)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         return
     }
@@ -165,34 +161,30 @@ private fun ProductRows(product: DisplayProduct) {
     product.manufacturerPnpId?.let { manufacturer ->
         LabeledValue(
             label = stringResource(R.string.display_product_manufacturer),
-            value = manufacturer,
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = manufacturer
         )
     }
     product.productId?.let { id ->
         LabeledValue(
             label = stringResource(R.string.display_product_id),
-            value = id,
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = id
         )
     }
     product.manufactureYear?.let { year ->
         LabeledValue(
             label = stringResource(R.string.display_product_year),
-            value = year.toString(),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = year.toString()
         )
     }
     LabeledValue(
         label = stringResource(R.string.display_product_connection),
-        value = stringResource(connectionLabel(product.connection)),
-        modifier = Modifier.padding(top = Spacing.Small)
+        value = stringResource(connectionLabel(product.connection))
     )
 }
 
 @Composable
 private fun GeometryCard(display: DisplayInfo, modifier: Modifier = Modifier) {
-    MonitorCard(modifier = modifier) {
+    MonitorCard(modifier = modifier, spacing = Spacing.Medium) {
         display.currentMode?.let { mode ->
             LabeledValue(
                 label = stringResource(R.string.display_resolution),
@@ -201,20 +193,17 @@ private fun GeometryCard(display: DisplayInfo, modifier: Modifier = Modifier) {
         }
         LabeledValue(
             label = stringResource(R.string.display_density),
-            value = stringResource(R.string.display_density_value, display.densityDpi, display.density),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(R.string.display_density_value, display.densityDpi, display.density)
         )
         // The dpi the panel reports, as against the bucket Android rounded it into above: the two
         // differ on most devices, and only the first is a physical measurement.
         LabeledValue(
             label = stringResource(R.string.display_physical_density),
-            value = stringResource(R.string.display_physical_density_value, display.xDpi, display.yDpi),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(R.string.display_physical_density_value, display.xDpi, display.yDpi)
         )
         LabeledValue(
             label = stringResource(R.string.display_font_scale),
-            value = stringResource(R.string.display_font_scale_value, display.fontScale),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(R.string.display_font_scale_value, display.fontScale)
         )
     }
 }
@@ -288,7 +277,7 @@ private fun CapabilitiesCard(display: DisplayInfo, modifier: Modifier = Modifier
 private fun SupportRow(@StringRes label: Int, supported: Boolean) {
     LabeledValue(
         label = stringResource(label),
-        value = stringResource(if (supported) R.string.display_supported else R.string.display_not_supported),
+        value = stringResource(if (supported) R.string.status_supported else R.string.status_not_supported),
         modifier = Modifier.padding(top = Spacing.Small)
     )
 }
@@ -307,7 +296,7 @@ private fun stateLabel(state: DisplayState): Int = when (state) {
     DisplayState.Doze -> R.string.display_state_doze
     DisplayState.DozeSuspended -> R.string.display_state_doze_suspended
     DisplayState.OnSuspended -> R.string.display_state_on_suspended
-    DisplayState.Unknown -> R.string.display_state_unknown
+    DisplayState.Unknown -> R.string.status_not_reported
 }
 
 @StringRes
@@ -315,7 +304,7 @@ private fun connectionLabel(connection: DisplayConnection): Int = when (connecti
     DisplayConnection.BuiltIn -> R.string.display_connection_built_in
     DisplayConnection.Direct -> R.string.display_connection_direct
     DisplayConnection.Transitive -> R.string.display_connection_transitive
-    DisplayConnection.Unknown -> R.string.display_connection_unknown
+    DisplayConnection.Unknown -> R.string.status_not_reported
 }
 
 @StringRes
@@ -327,8 +316,7 @@ private fun hdrLabel(type: HdrType): Int = when (type) {
     HdrType.Unknown -> R.string.display_hdr_unknown
 }
 
-@Preview(name = "Display", showBackground = true)
-@Preview(name = "Display (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun DisplayPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

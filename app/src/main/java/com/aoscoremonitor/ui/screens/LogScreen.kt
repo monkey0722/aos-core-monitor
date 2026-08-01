@@ -30,7 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,6 +37,7 @@ import com.aoscoremonitor.R
 import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.theme.statusColors
@@ -183,8 +183,7 @@ private val LogLevel.backgroundColor: Color
         else -> Color.Transparent
     }
 
-@Preview(name = "Logs", showBackground = true)
-@Preview(name = "Logs (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun LogScreenPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

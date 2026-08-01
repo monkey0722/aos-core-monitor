@@ -1,4 +1,4 @@
-package com.aoscoremonitor.ui.screens.jni
+package com.aoscoremonitor.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
@@ -35,6 +34,7 @@ import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.LoadedLibrariesUiState
@@ -197,8 +197,7 @@ private fun ModuleTag(text: String, modifier: Modifier = Modifier) {
 /** Enough of a build id to tell two builds apart without wrapping the line. */
 private const val BUILD_ID_DIGITS = 16
 
-@Preview(name = "Loaded libraries", showBackground = true)
-@Preview(name = "Loaded libraries (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun LoadedLibrariesPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

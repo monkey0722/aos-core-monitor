@@ -22,9 +22,7 @@ data class SensorInfo(
     val resolution: Float,
     val power: Float,
     val minDelayUs: Int,
-    val maxDelayUs: Int,
     val isWakeUp: Boolean,
-    val isDynamic: Boolean,
     val reportingMode: Int
 ) {
     /** The fastest rate the sensor will report at, or null for one that reports only on change. */
@@ -65,9 +63,7 @@ fun readSensorInventory(sensorManager: SensorManager?): List<SensorInfo> =
             resolution = sensor.resolution,
             power = sensor.power,
             minDelayUs = sensor.minDelay,
-            maxDelayUs = sensor.maxDelay,
             isWakeUp = sensor.isWakeUpSensor,
-            isDynamic = sensor.isDynamicSensor,
             reportingMode = sensor.reportingMode
         )
     }

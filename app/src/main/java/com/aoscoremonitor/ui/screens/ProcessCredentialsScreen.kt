@@ -1,4 +1,4 @@
-package com.aoscoremonitor.ui.screens.jni
+package com.aoscoremonitor.ui.screens
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
@@ -39,6 +38,7 @@ import com.aoscoremonitor.ui.components.MonitorTag
 import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.ProcessCredentialsUiState
@@ -224,7 +224,7 @@ private fun GroupsCard(credentials: ProcessCredentials, modifier: Modifier = Mod
             credentials.supplementaryGroups.forEach { gid ->
                 val name = androidGroupName(gid)
                 MonitorTag(
-                    if (name != null) stringResource(R.string.credentials_group_named, gid, name) else gid.toString()
+                    if (name != null) stringResource(R.string.count_with_name, gid, name) else gid.toString()
                 )
             }
         }
@@ -282,7 +282,7 @@ private fun CapabilityCard(key: String, set: CapabilitySet, modifier: Modifier =
 
 @Composable
 private fun SandboxCard(credentials: ProcessCredentials, modifier: Modifier = Modifier) {
-    MonitorCard(modifier = modifier) {
+    MonitorCard(modifier = modifier, spacing = Spacing.Medium) {
         LabeledValue(
             label = stringResource(R.string.credentials_seccomp),
             value = seccompDescription(credentials)
@@ -293,10 +293,9 @@ private fun SandboxCard(credentials: ProcessCredentials, modifier: Modifier = Mo
                 when (credentials.noNewPrivs) {
                     true -> R.string.credentials_no_new_privs_set
                     false -> R.string.credentials_no_new_privs_clear
-                    null -> R.string.credentials_unknown
+                    null -> R.string.status_not_reported
                 }
-            ),
-            modifier = Modifier.padding(top = Spacing.Small)
+            )
         )
         LabeledValue(
             label = stringResource(R.string.credentials_dumpable),
@@ -304,39 +303,34 @@ private fun SandboxCard(credentials: ProcessCredentials, modifier: Modifier = Mo
                 when (credentials.dumpable) {
                     true -> R.string.credentials_dumpable_on
                     false -> R.string.credentials_dumpable_off
-                    null -> R.string.credentials_unknown
+                    null -> R.string.status_not_reported
                 }
-            ),
-            modifier = Modifier.padding(top = Spacing.Small)
+            )
         )
         LabeledValue(
             label = stringResource(R.string.credentials_umask),
-            value = credentials.umask ?: stringResource(R.string.credentials_unknown),
-            valueStyle = MonitorTypography.machineText,
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = credentials.umask ?: stringResource(R.string.status_not_reported),
+            valueStyle = MonitorTypography.machineText
         )
     }
 }
 
 @Composable
 private fun IdentityCard(credentials: ProcessCredentials, modifier: Modifier = Modifier) {
-    MonitorCard(modifier = modifier) {
+    MonitorCard(modifier = modifier, spacing = Spacing.Medium) {
         LabeledValue(label = stringResource(R.string.credentials_pid), value = credentials.pid.toString())
         LabeledValue(
             label = stringResource(R.string.credentials_ppid),
-            value = credentials.parentPid.toString(),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = credentials.parentPid.toString()
         )
         LabeledValue(
             label = stringResource(R.string.credentials_pgid),
-            value = credentials.processGroup.toString(),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = credentials.processGroup.toString()
         )
         credentials.session?.let { session ->
             LabeledValue(
                 label = stringResource(R.string.credentials_session),
-                value = session.toString(),
-                modifier = Modifier.padding(top = Spacing.Small)
+                value = session.toString()
             )
         }
     }
@@ -393,8 +387,7 @@ private fun contextReason(reason: Unavailable?): Int = when (reason) {
 
 private const val EFFECTIVE_SET = "effective"
 
-@Preview(name = "Credentials", showBackground = true)
-@Preview(name = "Credentials (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun ProcessCredentialsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

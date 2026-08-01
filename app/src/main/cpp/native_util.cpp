@@ -6,6 +6,8 @@
 
 #include <cerrno>
 #include <charconv>
+#include <fstream>
+#include <optional>
 #include <system_error>
 
 namespace aoscm {
@@ -158,15 +160,38 @@ Reading<uint64_t> ReadUint64(const std::string& path) {
   if (!line.has_value()) {
     return std::unexpected(line.error());
   }
-  // from_chars rather than strtoull: it reports an overflow through its own result instead of
-  // through errno, and it cannot read past the end of the string it was given.
-  uint64_t value = 0;
-  const char* const first = line->data();
-  const auto [end, error] = std::from_chars(first, first + line->size(), value);
-  if (error != std::errc() || end == first) {
+  const std::optional<uint64_t> value = ParseNumber<uint64_t>(*line);
+  if (!value.has_value()) {
     return std::unexpected(EINVAL);
   }
-  return value;
+  return *value;
+}
+
+StatusLines ReadProcStatus() {
+  StatusLines lines;
+  std::ifstream status("/proc/self/status");
+  std::string line;
+  while (std::getline(status, line)) {
+    const size_t colon = line.find(':');
+    if (colon == std::string::npos) {
+      continue;
+    }
+    const size_t value_start = line.find_first_not_of(" \t", colon + 1);
+    if (value_start == std::string::npos) {
+      continue;
+    }
+    lines.emplace_back(line.substr(0, colon), line.substr(value_start));
+  }
+  return lines;
+}
+
+const std::string* FindStatus(const StatusLines& status, std::string_view key) {
+  for (const auto& [name, value] : status) {
+    if (name == key) {
+      return &value;
+    }
+  }
+  return nullptr;
 }
 
 void JsonWriter::Separate() {

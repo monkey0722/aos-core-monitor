@@ -1,4 +1,4 @@
-package com.aoscoremonitor.ui.screens.jni
+package com.aoscoremonitor.ui.screens
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
@@ -31,12 +30,14 @@ import com.aoscoremonitor.diagnostics.jni.SchedulerPolicy
 import com.aoscoremonitor.diagnostics.jni.ThreadInfo
 import com.aoscoremonitor.diagnostics.jni.ThreadSnapshot
 import com.aoscoremonitor.diagnostics.jni.ThreadState
+import com.aoscoremonitor.diagnostics.jni.Unavailable
 import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.ThreadsUiState
@@ -113,7 +114,7 @@ private fun SummaryCard(snapshot: ThreadSnapshot, modifier: Modifier = Modifier)
         LabeledValue(
             label = stringResource(R.string.threads_allowed_cpus),
             value = snapshot.processAffinity?.takeIf { it.isNotEmpty() }
-                ?: stringResource(R.string.threads_affinity_unavailable)
+                ?: stringResource(affinityReason(snapshot.processAffinityUnavailable))
         )
         LabeledValue(
             label = stringResource(R.string.threads_real_time),
@@ -176,7 +177,14 @@ private fun ThreadCard(thread: ThreadInfo, snapshot: ThreadSnapshot, modifier: M
         if (!affinity.isNullOrEmpty() && affinity != snapshot.processAffinity) {
             // Only when it differs from the process mask: repeating "0-7" on every thread of an
             // eight-core device is a column of noise.
-            LabeledValue(label = stringResource(R.string.threads_affinity), value = affinity)
+            LabeledValue(label = stringResource(R.string.threads_allowed_cpus), value = affinity)
+        } else if (affinity == null && thread.affinityUnavailable != null) {
+            // A thread that exited between the listing and the call answers ESRCH, which is worth
+            // a line rather than a row that silently omits the mask.
+            LabeledValue(
+                label = stringResource(R.string.threads_allowed_cpus),
+                value = stringResource(affinityReason(thread.affinityUnavailable))
+            )
         }
 
         thread.lastCpu?.let {
@@ -227,8 +235,15 @@ private val SchedulerPolicy.labelRes: Int
         SchedulerPolicy.Unknown -> R.string.thread_policy_unknown
     }
 
-@Preview(name = "Threads", showBackground = true)
-@Preview(name = "Threads (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+/** Why the CPU mask is missing, when sched_getaffinity said why. */
+@StringRes
+private fun affinityReason(reason: Unavailable?): Int = when (reason) {
+    Unavailable.Denied -> R.string.threads_affinity_denied
+    Unavailable.Absent -> R.string.threads_affinity_absent
+    else -> R.string.threads_affinity_unavailable
+}
+
+@MonitorPreviews
 @Composable
 private fun ThreadsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
@@ -246,8 +261,7 @@ private fun ThreadsPreview() {
                             nice = 0,
                             policy = SchedulerPolicy.Other,
                             lastCpu = 3,
-                            affinity = "0-7",
-                            affinityCount = 8
+                            affinity = "0-7"
                         ),
                         ThreadInfo(
                             tid = 4855,
@@ -259,8 +273,7 @@ private fun ThreadsPreview() {
                             nice = -4,
                             policy = SchedulerPolicy.Other,
                             lastCpu = 6,
-                            affinity = "4-7",
-                            affinityCount = 4
+                            affinity = "4-7"
                         ),
                         ThreadInfo(
                             tid = 4870,
@@ -272,14 +285,11 @@ private fun ThreadsPreview() {
                             nice = 0,
                             policy = SchedulerPolicy.Other,
                             lastCpu = 0,
-                            affinity = "0-7",
-                            affinityCount = 8
+                            affinity = "0-7"
                         )
                     ),
                     clockTicks = 100,
-                    cpuCount = 8,
-                    processAffinity = "0-7",
-                    processAffinityCount = 8
+                    processAffinity = "0-7"
                 ),
                 hasLoaded = true
             ),

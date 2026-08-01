@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SensorCategory
@@ -43,6 +42,7 @@ import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.SensorsUiState
@@ -311,8 +311,7 @@ private val AXES = listOf("x", "y", "z")
  */
 private val FORMAT = java.text.DecimalFormat("#,##0.###")
 
-@Preview(name = "Sensors", showBackground = true)
-@Preview(name = "Sensors (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun SensorsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
@@ -330,9 +329,7 @@ private fun SensorsPreview() {
                         resolution = 0.0023956f,
                         power = 0.17f,
                         minDelayUs = 2404,
-                        maxDelayUs = 200000,
                         isWakeUp = false,
-                        isDynamic = false,
                         reportingMode = 0
                     ),
                     SensorInfo(
@@ -346,9 +343,7 @@ private fun SensorsPreview() {
                         resolution = 1f,
                         power = 0.75f,
                         minDelayUs = 0,
-                        maxDelayUs = 0,
                         isWakeUp = true,
-                        isDynamic = false,
                         reportingMode = 1
                     )
                 ),

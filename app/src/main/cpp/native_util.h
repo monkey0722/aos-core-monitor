@@ -3,11 +3,16 @@
 
 #include <jni.h>
 
+#include <charconv>
 #include <cstdint>
 #include <exception>
 #include <expected>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
+#include <vector>
 
 namespace aoscm {
 
@@ -45,6 +50,70 @@ jstring ReturnJson(JNIEnv* env, Collect collect) noexcept {
  */
 template <typename T>
 using Reading = std::expected<T, int>;
+
+/**
+ * Reads a whole string as a number, or nothing when it is not one.
+ *
+ * `from_chars` rather than `strtoull`: it reports an overflow through its own result instead of
+ * through errno, and it cannot read past the end of the string it was given — which matters here,
+ * where every input is a `string_view` into a longer line of /proc.
+ *
+ * Strict, so that trailing characters are a failure rather than something to ignore: a field that
+ * reads "12kB" where a count was expected is a parse this code got wrong, not the number 12. Use
+ * [ParseLeadingNumber] where the trailing text is expected.
+ *
+ * The base is a template parameter rather than a defaulted argument so that `ParseNumber<uint64_t>`
+ * is still a one-argument callable, which is what `std::optional::and_then` at the call sites
+ * needs.
+ */
+template <typename T, int Base = 10>
+[[nodiscard]] std::optional<T> ParseNumber(std::string_view text) {
+  T value{};
+  const char* const first = text.data();
+  const char* const last = first + text.size();
+  const auto [end, error] = std::from_chars(first, last, value, Base);
+  if (error != std::errc() || end != last) {
+    return std::nullopt;
+  }
+  return value;
+}
+
+/**
+ * The same, for a number followed by something else.
+ *
+ * `/proc` writes counts as "  98304 kB", so the leading whitespace is skipped and the unit after
+ * the digits is left where it is.
+ */
+template <typename T, int Base = 10>
+[[nodiscard]] std::optional<T> ParseLeadingNumber(std::string_view text) {
+  const size_t start = text.find_first_not_of(" \t");
+  if (start == std::string_view::npos) {
+    return std::nullopt;
+  }
+  T value{};
+  const char* const first = text.data() + start;
+  const char* const last = text.data() + text.size();
+  const auto [end, error] = std::from_chars(first, last, value, Base);
+  if (error != std::errc() || end == first) {
+    return std::nullopt;
+  }
+  return value;
+}
+
+/**
+ * `/proc/self/status`, as the name and value halves of every line that has both.
+ *
+ * A vector rather than a map: the file runs to some sixty lines and no caller reads more than a
+ * handful, so a linear scan is less machinery for the same answer. Shared because two collectors
+ * read this file — one for the memory counters, one for the capability masks — and each had grown
+ * its own parser for it.
+ */
+using StatusLines = std::vector<std::pair<std::string, std::string>>;
+
+[[nodiscard]] StatusLines ReadProcStatus();
+
+/** The value of one status line, or null where this kernel does not print it. */
+[[nodiscard]] const std::string* FindStatus(const StatusLines& status, std::string_view key);
 
 /** Reads the first line of a file with surrounding whitespace removed. */
 [[nodiscard]] Reading<std::string> ReadTrimmedLine(const std::string& path);

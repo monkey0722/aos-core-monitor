@@ -85,7 +85,7 @@ data class ThreadInfo(
     val realTimePriority: Int? = null,
     val lastCpu: Int? = null,
     val affinity: String? = null,
-    val affinityCount: Int? = null
+    val affinityUnavailable: Unavailable? = null
 ) {
     val cpuTicks: Long get() = userTicks + systemTicks
 }
@@ -100,9 +100,8 @@ data class ThreadInfo(
 data class ThreadSnapshot(
     val threads: List<ThreadInfo> = emptyList(),
     val clockTicks: Long = 0,
-    val cpuCount: Int = 0,
     val processAffinity: String? = null,
-    val processAffinityCount: Int? = null
+    val processAffinityUnavailable: Unavailable? = null
 ) {
     /** Milliseconds of CPU the thread has used since it started. */
     fun cpuMillis(thread: ThreadInfo): Long = if (clockTicks > 0) thread.cpuTicks * MILLIS_PER_SECOND / clockTicks else 0
@@ -157,7 +156,7 @@ internal fun parseThreads(json: String): ThreadSnapshot {
             realTimePriority = thread.intOrNull("rt_priority"),
             lastCpu = thread.intOrNull("last_cpu"),
             affinity = thread.stringOrNull("affinity"),
-            affinityCount = thread.intOrNull("affinity_count")
+            affinityUnavailable = thread.unavailable("affinity_unavailable")
         )
     }.orEmpty()
 
@@ -166,8 +165,7 @@ internal fun parseThreads(json: String): ThreadSnapshot {
         // the kernel's own order is by thread id, which says nothing about which is which.
         threads = threads.sortedByDescending { it.cpuTicks },
         clockTicks = root.optLong("clock_ticks"),
-        cpuCount = root.optInt("cpu_count"),
         processAffinity = root.stringOrNull("affinity"),
-        processAffinityCount = root.intOrNull("affinity_count")
+        processAffinityUnavailable = root.unavailable("affinity_unavailable")
     )
 }

@@ -1,4 +1,4 @@
-package com.aoscoremonitor.ui.screens.jni
+package com.aoscoremonitor.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
@@ -26,6 +25,7 @@ import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.KernelCountersUiState
 import com.aoscoremonitor.ui.viewmodel.KernelCountersViewModel
@@ -116,8 +116,7 @@ private fun LazyListScope.counterSection(section: CounterSection) {
     }
 }
 
-@Preview(name = "Kernel counters", showBackground = true)
-@Preview(name = "Kernel counters (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun KernelCountersPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

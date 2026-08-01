@@ -1,0 +1,68 @@
+name: Build
+
+# On push only. Compiling from scratch costs five minutes where the same work is incremental and
+# near-instant locally, so a pull request is guarded by the two fast jobs and this runs once on what
+# actually lands on main.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, Test and Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      # Both are pinned by the build — the NDK because earlier releases align load segments for a
+      # 4 KB page and cannot be mapped on a 16 KB-page device, and CMake because AGP's bundled
+      # 3.22.1 has no flag mapping for C++23. Installed explicitly so a runner image change cannot
+      # quietly hand the build a different one.
+      - name: Install the pinned NDK and CMake
+        run: sdkmanager --install "ndk;29.0.14206865" "cmake;3.31.6"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      # assembleDebug is what compiles the native library, and it does so for all four ABIs with
+      # -Werror. Nothing before this job ever built the C or C++ in CI, so a compiler warning — the
+      # narrowing conversions this project treats as wrong readings rather than style — could only
+      # be seen by whoever happened to build locally.
+      - name: Build, test and lint
+        run: ./gradlew assembleDebug testDebugUnitTest lint
+
+      - name: Upload test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          # A failed run gets looked at within a day or two, not within the default ninety. Past a
+          # week the branch has moved on and re-running the job beats reading a stale report.
+          retention-days: 7

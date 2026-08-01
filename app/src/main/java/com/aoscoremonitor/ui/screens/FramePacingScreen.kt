@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.DisplayInfo
@@ -35,6 +34,7 @@ import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.FramePacingUiState
 import com.aoscoremonitor.ui.viewmodel.FramePacingViewModel
@@ -175,7 +175,7 @@ private fun JankCard(pacing: FramePacing, modifier: Modifier = Modifier) {
     val jank = pacing.jankFraction
     val status = if (jank != null && jank >= NOTICEABLE_JANK) ReadingStatus.Warning else ReadingStatus.Neutral
 
-    MonitorCard(modifier = modifier, status = status) {
+    MonitorCard(modifier = modifier, status = status, spacing = Spacing.Medium) {
         if (pacing.intervals == 0) {
             Text(text = stringResource(R.string.frames_waiting), style = MaterialTheme.typography.bodyMedium)
             return@MonitorCard
@@ -191,8 +191,7 @@ private fun JankCard(pacing: FramePacing, modifier: Modifier = Modifier) {
         )
         LabeledValue(
             label = stringResource(R.string.frames_jank_rate),
-            value = stringResource(R.string.frames_jank_rate_value, (jank ?: 0f) * PERCENT, pacing.intervals),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(R.string.frames_jank_rate_value, (jank ?: 0f) * PERCENT, pacing.intervals)
         )
         LabeledValue(
             label = stringResource(R.string.frames_worst),
@@ -200,8 +199,7 @@ private fun JankCard(pacing: FramePacing, modifier: Modifier = Modifier) {
                 R.string.frames_worst_value,
                 stringResource(R.string.frames_millis, millis(pacing.worstIntervalNanos)),
                 pacing.worstSlots
-            ),
-            modifier = Modifier.padding(top = Spacing.Small)
+            )
         )
     }
 }
@@ -261,15 +259,14 @@ private fun DistributionCard(pacing: FramePacing, modifier: Modifier = Modifier)
  */
 @Composable
 private fun TimingCard(display: DisplayInfo, modifier: Modifier = Modifier) {
-    MonitorCard(modifier = modifier) {
+    MonitorCard(modifier = modifier, spacing = Spacing.Medium) {
         LabeledValue(
             label = stringResource(R.string.frames_vsync_offset),
             value = stringResource(R.string.frames_millis, millis(display.appVsyncOffsetNanos))
         )
         LabeledValue(
             label = stringResource(R.string.frames_presentation_deadline),
-            value = stringResource(R.string.frames_millis, millis(display.presentationDeadlineNanos)),
-            modifier = Modifier.padding(top = Spacing.Small)
+            value = stringResource(R.string.frames_millis, millis(display.presentationDeadlineNanos))
         )
     }
 }
@@ -283,8 +280,7 @@ private const val NANOS_PER_SECOND = 1_000_000_000f
 private const val PERCENT = 100f
 private const val NOTICEABLE_JANK = 0.05f
 
-@Preview(name = "Frame pacing", showBackground = true)
-@Preview(name = "Frame pacing (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun FramePacingPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

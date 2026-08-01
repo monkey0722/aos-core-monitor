@@ -9,8 +9,9 @@ ktlint {
     android.set(true)
     outputToConsole.set(true)
     filter {
+        // No include: every source set here lives under src/*/java, so a `**/kotlin/**` filter
+        // named nothing while reading as though it named everything.
         exclude("**/generated/**")
-        include("**/kotlin/**")
     }
 }
 
@@ -50,11 +51,23 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 renames classes, and the JNI entry points are bound by the name of the class that
+            // declares them, so proguard-rules.pro keeps that package. Checked by installing a
+            // shrunk build and reading the native screens on a device — the instrumented suite
+            // cannot check it, because running it against a minified app needs keep rules that
+            // exist only for the test runner and would ship with the app.
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // Release builds strip the native libraries, which leaves a Play Console crash report
+            // with addresses and no function names. SYMBOL_TABLE puts the names back; FULL would
+            // add files and line numbers at a size this app has no reason to pay.
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
     buildFeatures {
