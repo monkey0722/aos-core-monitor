@@ -34,6 +34,14 @@ target_compile_options(system_monitor PRIVATE
     -Wshadow
     -Wconversion
     -Wsign-conversion
+    # Errors, because a warning nobody is required to read is a warning nobody reads: the narrowing
+    # this list is here to catch produces a wrong number rather than a crash, and it went unnoticed
+    # for as long as it took someone to build the 32-bit ABIs by hand.
+    #
+    # The cost is that an NDK upgrade can stop the build on a warning the new toolchain has learned
+    # to emit. That is the intended trade: the fix belongs in the code, and until it lands the
+    # reading it guards is not to be trusted.
+    -Werror
 )
 
 # The NDK links libc++ statically, and a static archive's symbols are re-exported by whatever links

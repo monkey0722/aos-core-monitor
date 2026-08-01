@@ -25,12 +25,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # The file list lives in scripts/format.sh, not here. This job used to carry its own copy of
+      # it, and that copy had no *.cpp in it: every implementation file went unchecked while the one
+      # header passed, so the job reported success on unformatted code.
       - name: Check C/C++ formatting
         shell: bash
-        run: |
-          find app/src/main/cpp -type f \
-            \( -name "*.c" -o -name "*.cc" -o -name "*.cxx" \
-               -o -name "*.h" -o -name "*.hh" -o -name "*.hpp" \) \
-            -print0 |
-            xargs -0 --no-run-if-empty \
-              clang-format-18 --dry-run --Werror --style=file
+        env:
+          CLANG_FORMAT: clang-format-18
+        run: ./scripts/format.sh --check cpp
