@@ -8,26 +8,26 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.aoscoremonitor.ui.screens.CpuCoresScreen
+import com.aoscoremonitor.ui.screens.DescriptorsScreen
 import com.aoscoremonitor.ui.screens.DisplayScreen
 import com.aoscoremonitor.ui.screens.FramePacingScreen
 import com.aoscoremonitor.ui.screens.FrameworkAnalysisScreen
 import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.HomeScreen
+import com.aoscoremonitor.ui.screens.KernelCountersScreen
+import com.aoscoremonitor.ui.screens.LoadedLibrariesScreen
 import com.aoscoremonitor.ui.screens.LogScreen
+import com.aoscoremonitor.ui.screens.MemoryMapScreen
+import com.aoscoremonitor.ui.screens.NetworkStatsScreen
+import com.aoscoremonitor.ui.screens.ProcessCredentialsScreen
 import com.aoscoremonitor.ui.screens.SecurityInfoScreen
 import com.aoscoremonitor.ui.screens.SensorsScreen
+import com.aoscoremonitor.ui.screens.StorageMountsScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
-import com.aoscoremonitor.ui.screens.jni.CpuCoresScreen
-import com.aoscoremonitor.ui.screens.jni.DescriptorsScreen
-import com.aoscoremonitor.ui.screens.jni.KernelCountersScreen
-import com.aoscoremonitor.ui.screens.jni.LoadedLibrariesScreen
-import com.aoscoremonitor.ui.screens.jni.MemoryMapScreen
-import com.aoscoremonitor.ui.screens.jni.NetworkStatsScreen
-import com.aoscoremonitor.ui.screens.jni.ProcessCredentialsScreen
-import com.aoscoremonitor.ui.screens.jni.StorageMountsScreen
-import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
-import com.aoscoremonitor.ui.screens.jni.ThreadsScreen
+import com.aoscoremonitor.ui.screens.TcpConnectionsScreen
+import com.aoscoremonitor.ui.screens.ThreadsScreen
 
 /**
  * The app's single navigation host.

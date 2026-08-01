@@ -1,4 +1,4 @@
-package com.aoscoremonitor.ui.screens.jni
+package com.aoscoremonitor.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
