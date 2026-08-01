@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,6 +36,7 @@ import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.SampleDataBanner
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.NetworkStatsUiState
 import com.aoscoremonitor.ui.viewmodel.NetworkStatsViewModel
@@ -147,8 +147,7 @@ private fun TransferRow(icon: ImageVector, label: String, total: String, detail:
     }
 }
 
-@Preview(name = "Network", showBackground = true)
-@Preview(name = "Network (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun NetworkStatsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

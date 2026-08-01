@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.Collected
@@ -36,6 +35,7 @@ import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.components.StatusRow
 import com.aoscoremonitor.ui.components.TabContentList
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.HalInfoViewModel
 import com.aoscoremonitor.ui.viewmodel.monitorViewModel
@@ -214,8 +214,7 @@ private val HalInterfaceCollector.HalInterface.readingStatus: ReadingStatus
 
 private const val RUNNING_STATUS = "Running"
 
-@Preview(name = "HAL", showBackground = true)
-@Preview(name = "HAL (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun HalInfoPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

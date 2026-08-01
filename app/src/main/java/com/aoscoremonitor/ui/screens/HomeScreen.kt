@@ -43,7 +43,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aoscoremonitor.R
@@ -51,6 +50,7 @@ import com.aoscoremonitor.ui.navigation.Destination
 import com.aoscoremonitor.ui.navigation.HomeDestinations
 import com.aoscoremonitor.ui.navigation.shortTitleRes
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import kotlinx.coroutines.delay
 
@@ -201,8 +201,7 @@ private const val STAGGER_STEP_MS = 35L
 /** One less than the number of tiles, so the last one still arrives after the one before it. */
 private const val MAX_STAGGER_STEPS = 14
 
-@Preview(name = "Home", showBackground = true)
-@Preview(name = "Home (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun HomeScreenPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aoscoremonitor.ui.theme.Spacing
 
@@ -28,9 +29,18 @@ import com.aoscoremonitor.ui.theme.Spacing
  * is why the same kind of reading sat on `surfaceVariant` in one place and the default surface in
  * another. This takes its colors from [status] and its inset from [Spacing], so a card's
  * appearance follows from what it says.
+ *
+ * @param spacing between the rows. The default suits a card whose lines belong together — a title
+ *   over its detail. A card that is a list of [LabeledValue]s wants [Spacing.Small], which callers
+ *   were reaching by hanging a top padding on every row but the first.
  */
 @Composable
-fun MonitorCard(modifier: Modifier = Modifier, status: ReadingStatus = ReadingStatus.Neutral, content: @Composable ColumnScope.() -> Unit) {
+fun MonitorCard(
+    modifier: Modifier = Modifier,
+    status: ReadingStatus = ReadingStatus.Neutral,
+    spacing: Dp = Spacing.ExtraSmall,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -42,7 +52,7 @@ fun MonitorCard(modifier: Modifier = Modifier, status: ReadingStatus = ReadingSt
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Spacing.Large),
-            verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall),
+            verticalArrangement = Arrangement.spacedBy(spacing),
             content = content
         )
     }

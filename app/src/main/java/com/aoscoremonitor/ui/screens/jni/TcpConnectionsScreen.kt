@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
@@ -32,6 +31,7 @@ import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SampleDataBanner
 import com.aoscoremonitor.ui.components.StatusRow
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.TcpConnectionsUiState
@@ -150,8 +150,7 @@ private val NativeSystemMonitor.TcpConnection.readingStatus: ReadingStatus
         else -> ReadingStatus.Neutral
     }
 
-@Preview(name = "TCP", showBackground = true)
-@Preview(name = "TCP (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun TcpConnectionsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

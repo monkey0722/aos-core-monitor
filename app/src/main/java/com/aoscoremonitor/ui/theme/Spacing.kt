@@ -15,7 +15,7 @@ object Spacing {
     /** Gap between lines within one card. */
     val Small = 8.dp
 
-    /** Gap between sibling cards in a list. */
+    /** Gap between sibling cards in a list, and between the rows of a card that is a list. */
     val Medium = 12.dp
 
     /** Screen gutter and card inset. */

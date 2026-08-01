@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aoscoremonitor.R
@@ -40,6 +39,7 @@ import com.aoscoremonitor.ui.components.MonitorTag
 import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.MonitorTypography
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.DescriptorsUiState
@@ -283,8 +283,7 @@ private fun targetReason(reason: Unavailable?): Int = when (reason) {
 private const val NEARLY_FULL = 0.9f
 private const val SEPARATOR = " · "
 
-@Preview(name = "Descriptors", showBackground = true)
-@Preview(name = "Descriptors (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun DescriptorsPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

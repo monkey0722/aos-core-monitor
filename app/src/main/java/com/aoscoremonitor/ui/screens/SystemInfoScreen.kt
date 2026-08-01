@@ -15,13 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SystemInfoCollector
 import com.aoscoremonitor.ui.components.InfoCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.SystemInfoViewModel
 import com.aoscoremonitor.ui.viewmodel.monitorViewModel
@@ -82,8 +82,7 @@ private fun SystemInfoContent(systemInfo: SystemInfoCollector.SystemInfo, onNavi
     }
 }
 
-@Preview(name = "System info", showBackground = true)
-@Preview(name = "System info (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun SystemInfoPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

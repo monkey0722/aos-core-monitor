@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SecurityInfoCollector
@@ -33,6 +32,7 @@ import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.components.StatusRow
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.theme.Spacing
 import com.aoscoremonitor.ui.viewmodel.SecurityInfoViewModel
 import com.aoscoremonitor.ui.viewmodel.monitorViewModel
@@ -240,8 +240,7 @@ private fun AppPermissionCard(
 /** Enough to characterise an app without turning the list into a permission dump. */
 private const val PERMISSIONS_SHOWN = 3
 
-@Preview(name = "Security", showBackground = true)
-@Preview(name = "Security (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun SecurityInfoPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {

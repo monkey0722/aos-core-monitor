@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.Collected
@@ -34,6 +33,7 @@ import com.aoscoremonitor.ui.components.SampleDataBanner
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.components.TabContentList
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
+import com.aoscoremonitor.ui.theme.MonitorPreviews
 import com.aoscoremonitor.ui.viewmodel.FrameworkAnalysisViewModel
 import com.aoscoremonitor.ui.viewmodel.monitorViewModel
 import java.time.Instant
@@ -242,8 +242,7 @@ private fun Timestamp(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(name = "Framework", showBackground = true)
-@Preview(name = "Framework (dark)", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@MonitorPreviews
 @Composable
 private fun FrameworkAnalysisPreview() {
     AOSCoreMonitorTheme(dynamicColor = false) {
