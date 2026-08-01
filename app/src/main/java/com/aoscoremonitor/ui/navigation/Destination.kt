@@ -211,6 +211,9 @@ sealed interface Destination : NavKey {
     }
 }
 
+/** A named run of the home grid. */
+data class DestinationGroup(@get:StringRes val titleRes: Int, val destinations: List<Destination>)
+
 /**
  * What the home screen offers, in the order it offers it.
  *
@@ -223,28 +226,48 @@ sealed interface Destination : NavKey {
  * threads), what it is holding (memory, libraries, descriptors), who it is (credentials), and what
  * it can reach (storage, network). The display and the frames it is served close the list, being
  * the one layer the app can watch itself being drawn onto.
+ *
+ * Named groups rather than one long list, because that order was the only thing carrying the
+ * structure and nothing on screen showed it: nineteen tiles arrived looking equally related to each
+ * other. The names are what the grid puts above each run.
  */
-val HomeDestinations: List<Destination> = listOf(
-    Destination.SystemInfo,
-    Destination.Log,
-    Destination.SystemDiagnostics,
-    Destination.SecurityInfo,
-    Destination.FrameworkAnalysis,
-    Destination.HalInfo,
-    Destination.Sensors,
-    Destination.KernelCounters,
-    Destination.CpuCores,
-    Destination.Threads,
-    Destination.MemoryMap,
-    Destination.LoadedLibraries,
-    Destination.Descriptors,
-    Destination.ProcessCredentials,
-    Destination.StorageMounts,
-    Destination.NetworkStats,
-    Destination.TcpConnections,
-    Destination.DisplayPanel,
-    Destination.FramePacing
+val HomeGroups: List<DestinationGroup> = listOf(
+    DestinationGroup(
+        R.string.home_group_framework,
+        listOf(
+            Destination.SystemInfo,
+            Destination.Log,
+            Destination.SystemDiagnostics,
+            Destination.SecurityInfo,
+            Destination.FrameworkAnalysis,
+            Destination.HalInfo,
+            Destination.Sensors
+        )
+    ),
+    DestinationGroup(
+        R.string.home_group_native,
+        listOf(
+            Destination.KernelCounters,
+            Destination.CpuCores,
+            Destination.Threads,
+            Destination.MemoryMap,
+            Destination.LoadedLibraries,
+            Destination.Descriptors,
+            Destination.ProcessCredentials
+        )
+    ),
+    DestinationGroup(
+        R.string.home_group_reach,
+        listOf(Destination.StorageMounts, Destination.NetworkStats, Destination.TcpConnections)
+    ),
+    DestinationGroup(
+        R.string.home_group_display,
+        listOf(Destination.DisplayPanel, Destination.FramePacing)
+    )
 )
+
+/** Every destination the grid offers, flattened. What the navigation test walks. */
+val HomeDestinations: List<Destination> = HomeGroups.flatMap { it.destinations }
 
 /** The short label the home grid uses, which is not always the app bar title. */
 @get:StringRes

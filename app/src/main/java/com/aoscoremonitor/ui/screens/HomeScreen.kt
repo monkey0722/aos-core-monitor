@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,12 +43,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aoscoremonitor.R
 import com.aoscoremonitor.ui.navigation.Destination
-import com.aoscoremonitor.ui.navigation.HomeDestinations
+import com.aoscoremonitor.ui.navigation.HomeGroups
 import com.aoscoremonitor.ui.navigation.shortTitleRes
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.MonitorPreviews
@@ -102,12 +105,31 @@ fun HomeScreen(onNavigate: (Destination) -> Unit, modifier: Modifier = Modifier)
                     modifier = Modifier.padding(bottom = Spacing.Small)
                 )
             }
-            items(HomeDestinations, key = { it.toString() }) { destination ->
-                DestinationTile(
-                    destination = destination,
-                    index = HomeDestinations.indexOf(destination),
-                    onClick = { onNavigate(destination) }
-                )
+            // A heading over each run. The order already meant something — the framework first,
+            // then what this process is made of, then what it can reach — and this is where that
+            // shows. The index carries on across the groups so the entrance still staggers down
+            // the screen rather than restarting at every heading.
+            var index = 0
+            HomeGroups.forEach { group ->
+                item(key = "group-${group.titleRes}", span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = stringResource(group.titleRes),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.Medium, bottom = Spacing.Small)
+                            .semantics(mergeDescendants = true) { heading() }
+                    )
+                }
+                items(group.destinations, key = { it.toString() }) { destination ->
+                    DestinationTile(
+                        destination = destination,
+                        index = group.destinations.indexOf(destination) + index,
+                        onClick = { onNavigate(destination) }
+                    )
+                }
+                index += group.destinations.size
             }
         }
     }
@@ -148,10 +170,14 @@ private fun DestinationTile(destination: Destination, index: Int, onClick: () ->
                 // primary / secondary / tertiary / error / inversePrimary, which read as though
                 // Security and TCP were in a failure state and left Framework's inversePrimary
                 // barely visible against the card.
+                // primaryContainer rather than secondaryContainer: the theme leaves the surface
+                // containers to Material, which derives them from the same near-white surface the
+                // secondary container sits beside, so the well was the same lightness as the card
+                // and read as nothing. The primary one carries enough blue to be seen.
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) {
                     Box(modifier = Modifier.size(IconWellSize), contentAlignment = Alignment.Center) {
                         Icon(

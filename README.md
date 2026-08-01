@@ -12,7 +12,7 @@ Nineteen screens, each with one subject. Everything shown is measured on the dev
 
 **What it can reach** — Storage, Network Stats, TCP Connections
 
-**How it is drawn** — Display, Frame Pacing
+**Display and frames** — Display, Frame Pacing
 
 The native screens read what the Java API cannot reach: `dl_iterate_phdr` for the linker's module list, `mallinfo2` for the native heap, `sched_getaffinity` for a thread's CPU mask, `readlink` and `fcntl` for the open descriptors, the capability masks the kernel prints only in `/proc/self/status`. They are served by one shared library, `libsystem_monitor`, built from `app/src/main/cpp`.
 
