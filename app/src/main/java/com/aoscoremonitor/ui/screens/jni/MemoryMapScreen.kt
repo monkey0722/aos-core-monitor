@@ -159,7 +159,7 @@ private fun MemoryMapContent(uiState: MemoryMapUiState, onNavigateBack: () -> Un
                         icon = Icons.Default.Lock
                     )
                 }
-                item(key = "limits") { ByteReadingsCard(memory.limits, LimitLabels, countKeys = setOf("open_files")) }
+                item(key = "limits") { ByteReadingsCard(memory.limits, LimitLabels) }
             }
         }
     }
@@ -232,23 +232,11 @@ private fun CategoryCard(category: RegionCategory, mappedKb: Long, modifier: Mod
  * is left out on purpose: an unlabelled key would reach the screen as a bare identifier.
  */
 @Composable
-private fun ByteReadingsCard(
-    readings: Map<String, Long>,
-    labels: List<Pair<String, Int>>,
-    modifier: Modifier = Modifier,
-    countKeys: Set<String> = emptySet()
-) {
+private fun ByteReadingsCard(readings: Map<String, Long>, labels: List<Pair<String, Int>>, modifier: Modifier = Modifier) {
     MonitorCard(modifier = modifier) {
         labels.forEach { (key, labelRes) ->
             val value = readings[key] ?: return@forEach
-            LabeledValue(
-                label = stringResource(labelRes),
-                value = if (key in countKeys) {
-                    stringResource(R.string.memory_count, value)
-                } else {
-                    formatBytes(value)
-                }
-            )
+            LabeledValue(label = stringResource(labelRes), value = formatBytes(value))
         }
     }
 }
@@ -263,11 +251,12 @@ private val MallocLabels = listOf(
     "free_chunks" to R.string.memory_malloc_free_chunks
 )
 
+// RLIMIT_NOFILE was here. It bounds the descriptor table rather than the address space, so it is
+// shown on the descriptor screen, next to the count that is filling it.
 private val LimitLabels = listOf(
     "address_space" to R.string.memory_limit_address_space,
     "data" to R.string.memory_limit_data,
-    "stack" to R.string.memory_limit_stack,
-    "open_files" to R.string.memory_limit_open_files
+    "stack" to R.string.memory_limit_stack
 )
 
 /** The display name for a category key the native collector emits. */
@@ -301,7 +290,7 @@ private fun MemoryMapPreview() {
                         swapPssKb = 0,
                         fromRollupFile = true
                     ),
-                    status = mapOf("VmSize" to "14 GB", "VmRSS" to "98304 kB", "Threads" to "21"),
+                    status = mapOf("VmSize" to "14680064 kB", "VmRSS" to "98304 kB", "Threads" to "21"),
                     totalRegions = 1832,
                     categories = listOf(
                         RegionCategory("native_lib", 412, 198_340),
@@ -309,7 +298,7 @@ private fun MemoryMapPreview() {
                         RegionCategory("native_heap", 40, 22_528)
                     ),
                     malloc = mapOf("in_use" to 6_291_456L, "free" to 2_097_152L, "arena" to 8_388_608L),
-                    limits = mapOf("open_files" to 32_768L, "stack" to 8_388_608L)
+                    limits = mapOf("address_space" to 137_438_953_472L, "stack" to 8_388_608L)
                 ),
                 hasLoaded = true
             ),

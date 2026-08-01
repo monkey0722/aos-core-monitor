@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +31,7 @@ import com.aoscoremonitor.diagnostics.jni.Unavailable
 import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.MonitorTag
 import com.aoscoremonitor.ui.components.ReadingStatus
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
@@ -125,8 +124,8 @@ private fun MountCard(mount: MountPoint, modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(end = Spacing.Small)
             )
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
-                if (mount.readOnly) MountTag(stringResource(R.string.storage_readonly))
-                MountTag(mount.fsType)
+                if (mount.readOnly) MonitorTag(stringResource(R.string.storage_readonly))
+                MonitorTag(mount.fsType)
             }
         }
 
@@ -199,25 +198,8 @@ private fun PseudoMountRow(mount: MountPoint, modifier: Modifier = Modifier) {
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(end = Spacing.Small)
             )
-            MountTag(mount.fsType)
+            MonitorTag(mount.fsType)
         }
-    }
-}
-
-@Composable
-private fun MountTag(text: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(percent = 50),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
-        )
     }
 }
 

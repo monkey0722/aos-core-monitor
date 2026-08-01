@@ -2,7 +2,6 @@ package com.aoscoremonitor.diagnostics
 
 import android.app.ActivityManager
 import android.content.Context
-import android.os.PowerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,6 +13,10 @@ import kotlinx.coroutines.withContext
 
 /**
  * A class that analyzes system state using public APIs of AOSP internal services.
+ *
+ * The screen state was read here too, from `PowerManager.isInteractive`. It says what the display
+ * is doing, so it is read and shown by the display screen, which distinguishes dozing from off
+ * where a boolean could not.
  */
 class SystemDiagnosticsCollector(private val context: Context, private val onUpdate: (DiagnosticsInfo) -> Unit) {
     /**
@@ -23,7 +26,7 @@ class SystemDiagnosticsCollector(private val context: Context, private val onUpd
      * system info collector reads a second earlier. Two collectors polling one API for one figure
      * put the same number on two screens, so the figure lives on the system info screen alone now.
      */
-    data class DiagnosticsInfo(val runningProcesses: List<String>, val screenOn: Boolean, val dumpsysResult: String)
+    data class DiagnosticsInfo(val runningProcesses: List<String>, val dumpsysResult: String)
 
     // Maintain CoroutineScope at class level
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -40,7 +43,6 @@ class SystemDiagnosticsCollector(private val context: Context, private val onUpd
             try {
                 val activityManager =
                     context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
                 while (isActive) {
                     // --- Get running process information from ActivityManager ---
@@ -49,16 +51,12 @@ class SystemDiagnosticsCollector(private val context: Context, private val onUpd
                     val runningAppProcesses = activityManager.runningAppProcesses
                     val processNames = runningAppProcesses?.map { it.processName } ?: emptyList()
 
-                    // --- Get screen state from PowerManager ---
-                    val screenOn = powerManager.isInteractive
-
                     // --- Get dumpsys command result ---
                     val dumpsysResult = readDumpsysResult()
 
                     // --- Notify diagnostic information ---
                     val diagnosticsInfo = DiagnosticsInfo(
                         runningProcesses = processNames,
-                        screenOn = screenOn,
                         dumpsysResult = dumpsysResult
                     )
 

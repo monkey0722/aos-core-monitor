@@ -19,7 +19,7 @@ class MemoryMapParsingTest {
              "regions":{"total":3,"categories":[{"key":"anon","count":2,"size_kb":1024},
                                                 {"key":"native_lib","count":1,"size_kb":8192}]},
              "malloc":{"arena":8388608,"in_use":6291456},
-             "limits":{"open_files":32768}}
+             "limits":{"address_space":137438953472}}
             """.trimIndent()
         )
 
@@ -28,7 +28,7 @@ class MemoryMapParsingTest {
         assertEquals(3, snapshot.totalRegions)
         assertEquals("98304 kB", snapshot.status["VmRSS"])
         assertEquals(8_388_608L, snapshot.malloc["arena"])
-        assertEquals(32_768L, snapshot.limits["open_files"])
+        assertEquals(137_438_953_472L, snapshot.limits["address_space"])
     }
 
     @Test

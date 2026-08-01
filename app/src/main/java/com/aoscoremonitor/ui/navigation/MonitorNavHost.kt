@@ -8,6 +8,8 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.aoscoremonitor.ui.screens.DisplayScreen
+import com.aoscoremonitor.ui.screens.FramePacingScreen
 import com.aoscoremonitor.ui.screens.FrameworkAnalysisScreen
 import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.HomeScreen
@@ -17,10 +19,12 @@ import com.aoscoremonitor.ui.screens.SensorsScreen
 import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.jni.CpuCoresScreen
+import com.aoscoremonitor.ui.screens.jni.DescriptorsScreen
 import com.aoscoremonitor.ui.screens.jni.KernelCountersScreen
 import com.aoscoremonitor.ui.screens.jni.LoadedLibrariesScreen
 import com.aoscoremonitor.ui.screens.jni.MemoryMapScreen
 import com.aoscoremonitor.ui.screens.jni.NetworkStatsScreen
+import com.aoscoremonitor.ui.screens.jni.ProcessCredentialsScreen
 import com.aoscoremonitor.ui.screens.jni.StorageMountsScreen
 import com.aoscoremonitor.ui.screens.jni.TcpConnectionsScreen
 import com.aoscoremonitor.ui.screens.jni.ThreadsScreen
@@ -85,6 +89,10 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.MemoryMap> { MemoryMapScreen(onNavigateBack = goBack) }
                 entry<Destination.LoadedLibraries> { LoadedLibrariesScreen(onNavigateBack = goBack) }
                 entry<Destination.StorageMounts> { StorageMountsScreen(onNavigateBack = goBack) }
+                entry<Destination.Descriptors> { DescriptorsScreen(onNavigateBack = goBack) }
+                entry<Destination.ProcessCredentials> { ProcessCredentialsScreen(onNavigateBack = goBack) }
+                entry<Destination.DisplayPanel> { DisplayScreen(onNavigateBack = goBack) }
+                entry<Destination.FramePacing> { FramePacingScreen(onNavigateBack = goBack) }
             }
         }
     )

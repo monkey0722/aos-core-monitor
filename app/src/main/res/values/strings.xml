@@ -28,6 +28,10 @@
     <string name="destination_memory_map">Memory Map</string>
     <string name="destination_loaded_libraries">Native Libraries</string>
     <string name="destination_storage">Storage</string>
+    <string name="destination_descriptors">Descriptors</string>
+    <string name="destination_credentials">Credentials</string>
+    <string name="destination_display">Display</string>
+    <string name="destination_frames">Frame Pacing</string>
 
     <!-- System logs -->
     <string name="logs_title">System Logs</string>
@@ -47,9 +51,6 @@
 
     <!-- System diagnostics -->
     <string name="diagnostics_title">System Diagnostics</string>
-    <string name="diagnostics_screen_state">Screen State</string>
-    <string name="diagnostics_screen_on">On</string>
-    <string name="diagnostics_screen_off">Off</string>
     <string name="diagnostics_running_processes">Processes Visible to This App</string>
     <string name="diagnostics_processes_notice">Since Android 8, ActivityManager reports only the calling app\'s own process. Listing the rest needs root or a userdebug build.</string>
     <string name="diagnostics_no_processes">No process information available</string>
@@ -249,8 +250,6 @@
     <string name="memory_limit_address_space">Address space</string>
     <string name="memory_limit_data">Data segment</string>
     <string name="memory_limit_stack">Stack</string>
-    <string name="memory_limit_open_files">Open files</string>
-    <string name="memory_count">%1$d</string>
 
     <!-- Native libraries -->
     <string name="libraries_title">Native Libraries</string>
@@ -366,4 +365,203 @@
     <string name="storage_readonly">Read-only</string>
     <string name="storage_source">Device · %1$s</string>
     <string name="storage_inodes">Inodes · %1$s free of %2$s</string>
+
+    <!-- Open descriptors -->
+    <string name="descriptors_title">Open Descriptors</string>
+    <string name="descriptors_loading">Walking /proc/self/fd…</string>
+    <string name="descriptors_unavailable">The native library did not load, so this process\'s descriptors cannot be listed.</string>
+    <string name="descriptors_empty">No descriptors were readable for this process.</string>
+    <string name="descriptors_summary_section">This process</string>
+    <plurals name="descriptors_open">
+        <item quantity="one">%1$d descriptor open</item>
+        <item quantity="other">%1$d descriptors open</item>
+    </plurals>
+    <string name="descriptors_limit">%1$,d of the %2$,d this process may hold</string>
+    <string name="descriptors_hard_limit">The hard limit it could raise that to is %1$,d.</string>
+    <string name="descriptors_no_limit">No ceiling is set on how many this process may open.</string>
+    <string name="descriptors_list_section">Descriptors</string>
+    <string name="descriptors_list_subtitle">By number, which is the order the kernel hands them out in</string>
+    <string name="descriptors_number">fd %1$d</string>
+    <string name="descriptors_target_unavailable">Target not readable</string>
+    <string name="descriptors_target_denied">Target: the sandbox may not read it</string>
+    <string name="descriptors_stat_unavailable">Kind not readable</string>
+    <string name="descriptors_stat_denied">Kind: the sandbox may not read it</string>
+    <string name="descriptors_stat_absent">Kind: nothing left at this number to read</string>
+    <string name="descriptors_offset">Offset %1$,d</string>
+    <string name="descriptors_inode">Inode %1$,d</string>
+    <string name="descriptors_cloexec">Closed on exec</string>
+    <string name="descriptors_kept_on_exec">Kept across exec</string>
+    <string name="descriptors_kind_file">File</string>
+    <string name="descriptors_kind_directory">Directory</string>
+    <string name="descriptors_kind_socket">Socket</string>
+    <string name="descriptors_kind_pipe">Pipe</string>
+    <string name="descriptors_kind_anon">Kernel object</string>
+    <string name="descriptors_kind_device">Device</string>
+    <string name="descriptors_kind_other">Other</string>
+    <string name="descriptors_access_read">Read</string>
+    <string name="descriptors_access_write">Write</string>
+    <string name="descriptors_access_readwrite">Read/write</string>
+    <string name="descriptors_access_unknown">Access unknown</string>
+    <string name="descriptors_breakdown_entry">%1$d %2$s</string>
+
+    <!-- Process credentials -->
+    <string name="credentials_title">Process Credentials</string>
+    <string name="credentials_loading">Reading this process\'s credentials…</string>
+    <string name="credentials_unavailable">The native library did not load, so this process\'s credentials cannot be read.</string>
+    <string name="credentials_context_section">Security context</string>
+    <string name="credentials_context_subtitle">The SELinux domain confining this process, which is narrower than what the device enforces</string>
+    <string name="credentials_context_type">Domain</string>
+    <string name="credentials_context_full">Full context</string>
+    <string name="credentials_context_unavailable">The context could not be read.</string>
+    <string name="credentials_context_denied">The sandbox may not read this process\'s SELinux context.</string>
+    <string name="credentials_context_absent">This kernel reports no SELinux context for the process.</string>
+    <string name="credentials_identity_section">Identity</string>
+    <string name="credentials_pid">Process ID</string>
+    <string name="credentials_ppid">Parent process</string>
+    <string name="credentials_pgid">Process group</string>
+    <string name="credentials_session">Session</string>
+    <string name="credentials_user_section">User and groups</string>
+    <string name="credentials_user_subtitle">Real, effective and saved. Only the effective pair decides what a syscall is allowed to do.</string>
+    <string name="credentials_uid">UID</string>
+    <string name="credentials_gid">GID</string>
+    <string name="credentials_ids">%1$d real · %2$d effective · %3$d saved</string>
+    <string name="credentials_ids_uniform">%1$d, the same in all three</string>
+    <string name="credentials_app_uid">Android user %1$d, app ID %2$d</string>
+    <string name="credentials_platform_uid">A platform identity rather than an installed app</string>
+    <string name="credentials_groups">Supplementary groups</string>
+    <string name="credentials_groups_none">None held</string>
+    <string name="credentials_groups_unavailable">The group list could not be read.</string>
+    <string name="credentials_group_named">%1$d %2$s</string>
+    <string name="credentials_capabilities_section">Capabilities</string>
+    <string name="credentials_capabilities_subtitle">What this process may do beyond the rights of its user. An ordinary app holds none.</string>
+    <string name="credentials_cap_effective">Effective</string>
+    <string name="credentials_cap_effective_note">In force right now</string>
+    <string name="credentials_cap_permitted">Permitted</string>
+    <string name="credentials_cap_permitted_note">May be raised into the effective set</string>
+    <string name="credentials_cap_inheritable">Inheritable</string>
+    <string name="credentials_cap_inheritable_note">Survives an exec into a new program</string>
+    <string name="credentials_cap_bounding">Bounding</string>
+    <string name="credentials_cap_bounding_note">The ceiling nothing here can rise above</string>
+    <string name="credentials_cap_ambient">Ambient</string>
+    <string name="credentials_cap_ambient_note">Granted to an unprivileged program on exec</string>
+    <string name="credentials_cap_none">None</string>
+    <string name="credentials_cap_mask">Mask %1$s</string>
+    <string name="credentials_sandbox_section">Sandbox switches</string>
+    <string name="credentials_sandbox_subtitle">The per-process restrictions zygote set before this app\'s code ran</string>
+    <string name="credentials_seccomp">Seccomp</string>
+    <string name="credentials_seccomp_disabled">No filter installed</string>
+    <string name="credentials_seccomp_strict">Strict: read, write, exit and sigreturn only</string>
+    <string name="credentials_seccomp_filter">Filtered by a BPF program</string>
+    <string name="credentials_seccomp_filter_count">Filtered by %1$d BPF programs</string>
+    <string name="credentials_seccomp_unknown">This kernel does not report a seccomp mode.</string>
+    <string name="credentials_no_new_privs">no_new_privs</string>
+    <string name="credentials_no_new_privs_set">Set: no exec can gain privileges</string>
+    <string name="credentials_no_new_privs_clear">Not set</string>
+    <string name="credentials_dumpable">Core dumps</string>
+    <string name="credentials_dumpable_on">Dumpable: this process can be traced and dumped</string>
+    <string name="credentials_dumpable_off">Not dumpable</string>
+    <string name="credentials_umask">umask</string>
+    <string name="credentials_unknown">Not reported</string>
+
+    <!-- Display -->
+    <string name="display_title">Display</string>
+    <string name="display_loading">Reading the display\'s description…</string>
+    <string name="display_unavailable">This device reports no default display.</string>
+    <string name="display_panel_section">Panel</string>
+    <string name="display_panel_subtitle">What the platform says the default display is</string>
+    <string name="display_name">Name</string>
+    <string name="display_id">Display ID</string>
+    <string name="display_state">State</string>
+    <string name="display_state_on">On</string>
+    <string name="display_state_off">Off</string>
+    <string name="display_state_doze">Dozing</string>
+    <string name="display_state_doze_suspended">Dozing, pipeline suspended</string>
+    <string name="display_state_on_suspended">On, pipeline suspended</string>
+    <string name="display_state_unknown">Not reported</string>
+    <string name="display_rotation">Rotation</string>
+    <string name="display_degrees">%1$d°</string>
+    <string name="display_product_manufacturer">Manufacturer (PnP ID)</string>
+    <string name="display_product_id">Product ID</string>
+    <string name="display_product_year">Manufactured</string>
+    <string name="display_product_connection">Connection</string>
+    <string name="display_connection_built_in">Built into the device</string>
+    <string name="display_connection_direct">Connected directly</string>
+    <string name="display_connection_transitive">Reached through another device</string>
+    <string name="display_connection_unknown">Not reported</string>
+    <string name="display_product_absent">The panel publishes no EDID, which a screen built into the device usually does not.</string>
+    <string name="display_geometry_section">Resolution and density</string>
+    <string name="display_geometry_subtitle">The physical pixels of the current mode, and what a dp is worth on them</string>
+    <string name="display_resolution">Resolution</string>
+    <string name="display_pixels">%1$d × %2$d</string>
+    <string name="display_density">Density</string>
+    <string name="display_density_value">%1$d dpi · %2$.2f× scale</string>
+    <string name="display_physical_density">Physical density</string>
+    <string name="display_physical_density_value">%1$.0f × %2$.0f dpi</string>
+    <string name="display_font_scale">Font scale</string>
+    <string name="display_font_scale_value">%1$.2f×</string>
+    <string name="display_modes_section">Modes</string>
+    <string name="display_modes_subtitle">Every resolution and rate the panel can be driven at</string>
+    <string name="display_mode_current">Current</string>
+    <string name="display_mode_hz">%1$.2f Hz</string>
+    <string name="display_mode_id">Mode %1$d</string>
+    <string name="display_capabilities_section">Capabilities</string>
+    <string name="display_capabilities_subtitle">What the panel accepts beyond ordinary colour</string>
+    <string name="display_hdr">HDR formats</string>
+    <string name="display_hdr_none">None reported</string>
+    <string name="display_hdr_dolby_vision">Dolby Vision</string>
+    <string name="display_hdr_hdr10">HDR10</string>
+    <string name="display_hdr_hlg">HLG</string>
+    <string name="display_hdr_hdr10_plus">HDR10+</string>
+    <string name="display_hdr_unknown">Unrecognised format</string>
+    <string name="display_wide_gamut">Wide colour gamut</string>
+    <string name="display_minimal_post_processing">Minimal post-processing</string>
+    <string name="display_secure">Secure surfaces</string>
+    <string name="display_round">Round display</string>
+    <string name="display_supported">Supported</string>
+    <string name="display_not_supported">Not supported</string>
+    <string name="display_cutout">Cutout</string>
+    <string name="display_cutout_insets">Keeps content %1$d px from the top, %2$d from the bottom, %3$d from the left and %4$d from the right</string>
+    <plurals name="display_cutout_rects">
+        <item quantity="one">%1$d cutout area</item>
+        <item quantity="other">%1$d cutout areas</item>
+    </plurals>
+    <string name="display_cutout_none">This display has no cutout.</string>
+
+    <!-- Frame pacing -->
+    <string name="frames_title">Frame Pacing</string>
+    <string name="frames_loading">Waiting for the first frames…</string>
+    <string name="frames_unavailable">No display was reported, so there is no frame rate to measure against.</string>
+    <string name="frames_rate_section">Frames arriving</string>
+    <string name="frames_rate_subtitle">Measured on this app\'s own vsync callbacks, this screen\'s updates included</string>
+    <string name="frames_fps">%1$.1f fps</string>
+    <string name="frames_target">Target %1$.1f fps · one frame every %2$s</string>
+    <string name="frames_target_unknown">The display reports no refresh rate to measure against.</string>
+    <string name="frames_counted">%1$,d frames over %2$s</string>
+    <string name="frames_waiting">Measuring…</string>
+    <string name="frames_jank_section">Frames missed</string>
+    <string name="frames_jank_subtitle">A gap longer than one frame means the main thread was not there to take it</string>
+    <string name="frames_dropped">Dropped</string>
+    <plurals name="frames_dropped_value">
+        <item quantity="one">%1$d frame</item>
+        <item quantity="other">%1$d frames</item>
+    </plurals>
+    <string name="frames_jank_rate">Late gaps</string>
+    <string name="frames_jank_rate_value">%1$.1f%% of %2$,d</string>
+    <string name="frames_worst">Worst gap</string>
+    <string name="frames_worst_value">%1$s · %2$d frames wide</string>
+    <string name="frames_none_missed">Every frame arrived on time.</string>
+    <string name="frames_distribution_section">Gaps by width</string>
+    <string name="frames_distribution_subtitle">How many frames each gap between callbacks spanned</string>
+    <plurals name="frames_slot_label">
+        <item quantity="one">%1$d frame</item>
+        <item quantity="other">%1$d frames</item>
+    </plurals>
+    <string name="frames_slot_count">%1$,d · %2$d%%</string>
+    <string name="frames_slot_on_time">on time</string>
+    <string name="frames_timing_section">Pipeline timing</string>
+    <string name="frames_timing_subtitle">How far ahead of the panel the app is asked to work</string>
+    <string name="frames_vsync_offset">App vsync offset</string>
+    <string name="frames_presentation_deadline">Presentation deadline</string>
+    <string name="frames_millis">%1$.2f ms</string>
+    <string name="frames_seconds">%1$.1f s</string>
 </resources>

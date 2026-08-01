@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,7 +17,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aoscoremonitor.R
 import com.aoscoremonitor.diagnostics.SystemDiagnosticsCollector
 import com.aoscoremonitor.ui.components.ExpandableTextCard
-import com.aoscoremonitor.ui.components.InfoCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.Spacing
@@ -59,17 +56,6 @@ private fun SystemDiagnosticsContent(
             contentPadding = PaddingValues(Spacing.Large),
             verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
         ) {
-            item(key = "screen") {
-                InfoCard(
-                    title = stringResource(R.string.diagnostics_screen_state),
-                    value = stringResource(
-                        if (diagnostics.screenOn) R.string.diagnostics_screen_on else R.string.diagnostics_screen_off
-                    ),
-                    // Deliberately no status: the screen being on is not a health signal, and
-                    // painting the whole card green said it was.
-                    icon = if (diagnostics.screenOn) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                )
-            }
             item(key = "processes") {
                 ExpandableTextCard(
                     title = stringResource(R.string.diagnostics_running_processes),
@@ -101,7 +87,6 @@ private fun SystemDiagnosticsPreview() {
         SystemDiagnosticsContent(
             diagnostics = SystemDiagnosticsCollector.DiagnosticsInfo(
                 runningProcesses = listOf("com.aoscoremonitor"),
-                screenOn = true,
                 dumpsysResult = "Applications Memory Usage (in Kilobytes):\nUptime: 843211 Realtime: 843211"
             ),
             onNavigateBack = {}
