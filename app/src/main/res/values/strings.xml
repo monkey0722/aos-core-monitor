@@ -30,6 +30,8 @@
     <string name="destination_storage">Storage</string>
     <string name="destination_descriptors">Descriptors</string>
     <string name="destination_credentials">Credentials</string>
+    <string name="destination_display">Display</string>
+    <string name="destination_frames">Frame Pacing</string>
 
     <!-- System logs -->
     <string name="logs_title">System Logs</string>
@@ -49,9 +51,6 @@
 
     <!-- System diagnostics -->
     <string name="diagnostics_title">System Diagnostics</string>
-    <string name="diagnostics_screen_state">Screen State</string>
-    <string name="diagnostics_screen_on">On</string>
-    <string name="diagnostics_screen_off">Off</string>
     <string name="diagnostics_running_processes">Processes Visible to This App</string>
     <string name="diagnostics_processes_notice">Since Android 8, ActivityManager reports only the calling app\'s own process. Listing the rest needs root or a userdebug build.</string>
     <string name="diagnostics_no_processes">No process information available</string>
@@ -463,4 +462,106 @@
     <string name="credentials_dumpable_off">Not dumpable</string>
     <string name="credentials_umask">umask</string>
     <string name="credentials_unknown">Not reported</string>
+
+    <!-- Display -->
+    <string name="display_title">Display</string>
+    <string name="display_loading">Reading the display\'s description…</string>
+    <string name="display_unavailable">This device reports no default display.</string>
+    <string name="display_panel_section">Panel</string>
+    <string name="display_panel_subtitle">What the platform says the default display is</string>
+    <string name="display_name">Name</string>
+    <string name="display_id">Display ID</string>
+    <string name="display_state">State</string>
+    <string name="display_state_on">On</string>
+    <string name="display_state_off">Off</string>
+    <string name="display_state_doze">Dozing</string>
+    <string name="display_state_doze_suspended">Dozing, pipeline suspended</string>
+    <string name="display_state_on_suspended">On, pipeline suspended</string>
+    <string name="display_state_unknown">Not reported</string>
+    <string name="display_rotation">Rotation</string>
+    <string name="display_degrees">%1$d°</string>
+    <string name="display_product_manufacturer">Manufacturer (PnP ID)</string>
+    <string name="display_product_id">Product ID</string>
+    <string name="display_product_year">Manufactured</string>
+    <string name="display_product_connection">Connection</string>
+    <string name="display_connection_built_in">Built into the device</string>
+    <string name="display_connection_direct">Connected directly</string>
+    <string name="display_connection_transitive">Reached through another device</string>
+    <string name="display_connection_unknown">Not reported</string>
+    <string name="display_product_absent">The panel publishes no EDID, which a screen built into the device usually does not.</string>
+    <string name="display_geometry_section">Resolution and density</string>
+    <string name="display_geometry_subtitle">The physical pixels of the current mode, and what a dp is worth on them</string>
+    <string name="display_resolution">Resolution</string>
+    <string name="display_pixels">%1$d × %2$d</string>
+    <string name="display_density">Density</string>
+    <string name="display_density_value">%1$d dpi · %2$.2f× scale</string>
+    <string name="display_physical_density">Physical density</string>
+    <string name="display_physical_density_value">%1$.0f × %2$.0f dpi</string>
+    <string name="display_font_scale">Font scale</string>
+    <string name="display_font_scale_value">%1$.2f×</string>
+    <string name="display_modes_section">Modes</string>
+    <string name="display_modes_subtitle">Every resolution and rate the panel can be driven at</string>
+    <string name="display_mode_current">Current</string>
+    <string name="display_mode_hz">%1$.2f Hz</string>
+    <string name="display_mode_id">Mode %1$d</string>
+    <string name="display_capabilities_section">Capabilities</string>
+    <string name="display_capabilities_subtitle">What the panel accepts beyond ordinary colour</string>
+    <string name="display_hdr">HDR formats</string>
+    <string name="display_hdr_none">None reported</string>
+    <string name="display_hdr_dolby_vision">Dolby Vision</string>
+    <string name="display_hdr_hdr10">HDR10</string>
+    <string name="display_hdr_hlg">HLG</string>
+    <string name="display_hdr_hdr10_plus">HDR10+</string>
+    <string name="display_hdr_unknown">Unrecognised format</string>
+    <string name="display_wide_gamut">Wide colour gamut</string>
+    <string name="display_minimal_post_processing">Minimal post-processing</string>
+    <string name="display_secure">Secure surfaces</string>
+    <string name="display_round">Round display</string>
+    <string name="display_supported">Supported</string>
+    <string name="display_not_supported">Not supported</string>
+    <string name="display_cutout">Cutout</string>
+    <string name="display_cutout_insets">Keeps content %1$d px from the top, %2$d from the bottom, %3$d from the left and %4$d from the right</string>
+    <plurals name="display_cutout_rects">
+        <item quantity="one">%1$d cutout area</item>
+        <item quantity="other">%1$d cutout areas</item>
+    </plurals>
+    <string name="display_cutout_none">This display has no cutout.</string>
+
+    <!-- Frame pacing -->
+    <string name="frames_title">Frame Pacing</string>
+    <string name="frames_loading">Waiting for the first frames…</string>
+    <string name="frames_unavailable">No display was reported, so there is no frame rate to measure against.</string>
+    <string name="frames_rate_section">Frames arriving</string>
+    <string name="frames_rate_subtitle">Measured on this app\'s own vsync callbacks, this screen\'s updates included</string>
+    <string name="frames_fps">%1$.1f fps</string>
+    <string name="frames_target">Target %1$.1f fps · one frame every %2$s</string>
+    <string name="frames_target_unknown">The display reports no refresh rate to measure against.</string>
+    <string name="frames_counted">%1$,d frames over %2$s</string>
+    <string name="frames_waiting">Measuring…</string>
+    <string name="frames_jank_section">Frames missed</string>
+    <string name="frames_jank_subtitle">A gap longer than one frame means the main thread was not there to take it</string>
+    <string name="frames_dropped">Dropped</string>
+    <plurals name="frames_dropped_value">
+        <item quantity="one">%1$d frame</item>
+        <item quantity="other">%1$d frames</item>
+    </plurals>
+    <string name="frames_jank_rate">Late gaps</string>
+    <string name="frames_jank_rate_value">%1$.1f%% of %2$,d</string>
+    <string name="frames_worst">Worst gap</string>
+    <string name="frames_worst_value">%1$s · %2$d frames wide</string>
+    <string name="frames_none_missed">Every frame arrived on time.</string>
+    <string name="frames_distribution_section">Gaps by width</string>
+    <string name="frames_distribution_subtitle">How many frames each gap between callbacks spanned</string>
+    <plurals name="frames_slot_label">
+        <item quantity="one">%1$d frame</item>
+        <item quantity="other">%1$d frames</item>
+    </plurals>
+    <string name="frames_slot_count">%1$,d · %2$d%%</string>
+    <string name="frames_slot_on_time">on time</string>
+    <string name="frames_timing_section">Pipeline timing</string>
+    <string name="frames_timing_subtitle">How far ahead of the panel the app is asked to work</string>
+    <string name="frames_vsync_offset">App vsync offset</string>
+    <string name="frames_presentation_deadline">Presentation deadline</string>
+    <string name="frames_millis">%1$.2f ms</string>
+    <string name="frames_seconds">%1$.1f s</string>
 </resources>

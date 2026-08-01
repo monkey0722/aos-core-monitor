@@ -1,10 +1,13 @@
 package com.aoscoremonitor.ui.navigation
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.NoActivityResumedException
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -27,12 +30,21 @@ class MonitorNavigationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
+    /**
+     * Every destination has a tile, including the ones past the bottom of the screen.
+     *
+     * Scrolled to rather than asserted on where it stands: the grid outgrew the screen, and a tile
+     * below the fold is not composed at all, so the assertion would fail on a phone while passing
+     * on a tall emulator. Scrolling to each in turn also pins that the grid can reach all of them.
+     */
     @Test
     fun homeListsEveryDestination() {
         awaitText(string(R.string.destination_system_info))
 
         HomeDestinations.forEach { destination ->
-            composeRule.onNodeWithText(string(destination.shortTitleRes)).assertIsDisplayed()
+            val label = string(destination.shortTitleRes)
+            composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(label))
+            composeRule.onNodeWithText(label).assertIsDisplayed()
         }
     }
 

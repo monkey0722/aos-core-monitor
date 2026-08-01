@@ -13,10 +13,12 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.NetworkCell
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -191,6 +193,22 @@ sealed interface Destination : NavKey {
         @Transient
         override val icon: ImageVector = Icons.Default.VerifiedUser
     }
+
+    @Serializable
+    data object DisplayPanel : Destination {
+        override val titleRes get() = R.string.display_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.Monitor
+    }
+
+    @Serializable
+    data object FramePacing : Destination {
+        override val titleRes get() = R.string.frames_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.Speed
+    }
 }
 
 /**
@@ -203,7 +221,8 @@ sealed interface Destination : NavKey {
  *
  * Within the native run the order goes outwards from the process: what it is running (CPU,
  * threads), what it is holding (memory, libraries, descriptors), who it is (credentials), and what
- * it can reach (storage, network).
+ * it can reach (storage, network). The display and the frames it is served close the list, being
+ * the one layer the app can watch itself being drawn onto.
  */
 val HomeDestinations: List<Destination> = listOf(
     Destination.SystemInfo,
@@ -222,7 +241,9 @@ val HomeDestinations: List<Destination> = listOf(
     Destination.ProcessCredentials,
     Destination.StorageMounts,
     Destination.NetworkStats,
-    Destination.TcpConnections
+    Destination.TcpConnections,
+    Destination.DisplayPanel,
+    Destination.FramePacing
 )
 
 /** The short label the home grid uses, which is not always the app bar title. */
@@ -247,4 +268,6 @@ val Destination.shortTitleRes: Int
         Destination.StorageMounts -> R.string.destination_storage
         Destination.Descriptors -> R.string.destination_descriptors
         Destination.ProcessCredentials -> R.string.destination_credentials
+        Destination.DisplayPanel -> R.string.destination_display
+        Destination.FramePacing -> R.string.destination_frames
     }

@@ -8,6 +8,8 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.aoscoremonitor.ui.screens.DisplayScreen
+import com.aoscoremonitor.ui.screens.FramePacingScreen
 import com.aoscoremonitor.ui.screens.FrameworkAnalysisScreen
 import com.aoscoremonitor.ui.screens.HalInfoScreen
 import com.aoscoremonitor.ui.screens.HomeScreen
@@ -89,6 +91,8 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.StorageMounts> { StorageMountsScreen(onNavigateBack = goBack) }
                 entry<Destination.Descriptors> { DescriptorsScreen(onNavigateBack = goBack) }
                 entry<Destination.ProcessCredentials> { ProcessCredentialsScreen(onNavigateBack = goBack) }
+                entry<Destination.DisplayPanel> { DisplayScreen(onNavigateBack = goBack) }
+                entry<Destination.FramePacing> { FramePacingScreen(onNavigateBack = goBack) }
             }
         }
     )
