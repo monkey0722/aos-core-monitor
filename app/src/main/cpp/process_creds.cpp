@@ -5,13 +5,10 @@
 
 #include <array>
 #include <cerrno>
-#include <charconv>
 #include <cstdint>
-#include <fstream>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -21,6 +18,7 @@ namespace {
 
 using aoscm::JsonWriter;
 using aoscm::Reading;
+using aoscm::StatusLines;
 
 /**
  * Capability names by bit, as the kernel numbers them.
@@ -85,51 +83,6 @@ constexpr std::array<std::pair<const char*, const char*>, 5> kCapabilitySets = {
 }};
 
 /**
- * `/proc/self/status`, split into its name and value halves.
- *
- * A vector rather than a map: the file holds some sixty lines and this reads eight of them, so a
- * linear scan is less machinery for the same answer.
- */
-using StatusLines = std::vector<std::pair<std::string, std::string>>;
-
-StatusLines ReadStatus() {
-  StatusLines lines;
-  std::ifstream status("/proc/self/status");
-  std::string line;
-  while (std::getline(status, line)) {
-    const size_t colon = line.find(':');
-    if (colon == std::string::npos) {
-      continue;
-    }
-    const size_t value_start = line.find_first_not_of(" \t", colon + 1);
-    if (value_start == std::string::npos) {
-      continue;
-    }
-    lines.emplace_back(line.substr(0, colon), line.substr(value_start));
-  }
-  return lines;
-}
-
-const std::string* Find(const StatusLines& status, std::string_view key) {
-  for (const auto& [name, value] : status) {
-    if (name == key) {
-      return &value;
-    }
-  }
-  return nullptr;
-}
-
-std::optional<uint64_t> HexMask(const std::string& text) {
-  uint64_t value = 0;
-  const char* const first = text.data();
-  const auto [end, error] = std::from_chars(first, first + text.size(), value, 16);
-  if (error != std::errc() || end == first) {
-    return std::nullopt;
-  }
-  return value;
-}
-
-/**
  * One capability set, as the mask the kernel printed and the names the bits stand for.
  *
  * Both, rather than either alone: the names are what the set means, and the mask is what was
@@ -137,14 +90,14 @@ std::optional<uint64_t> HexMask(const std::string& text) {
  */
 void WriteCapabilitySet(JsonWriter* writer, const StatusLines& status, const char* key,
                         const char* status_key) {
-  const std::string* text = Find(status, status_key);
+  const std::string* text = aoscm::FindStatus(status, status_key);
   if (text == nullptr) {
     return;
   }
 
   writer->Key(key).BeginObject();
   writer->Field("hex", *text);
-  if (const std::optional<uint64_t> mask = HexMask(*text)) {
+  if (const std::optional<uint64_t> mask = aoscm::ParseNumber<uint64_t, 16>(*text)) {
     writer->Key("names").BeginArray();
     for (unsigned bit = 0; bit < 64; ++bit) {
       if ((*mask & (uint64_t{1} << bit)) == 0) {
@@ -166,44 +119,46 @@ void WriteCapabilitySet(JsonWriter* writer, const StatusLines& status, const cha
 /** Writes a `/proc/self/status` line that holds a plain decimal count. */
 void WriteStatusNumber(JsonWriter* writer, const StatusLines& status, const char* key,
                        const char* status_key) {
-  const std::string* text = Find(status, status_key);
+  const std::string* text = aoscm::FindStatus(status, status_key);
   if (text == nullptr) {
     return;
   }
-  uint64_t value = 0;
-  const char* const first = text->data();
-  const auto [end, error] = std::from_chars(first, first + text->size(), value);
-  if (error == std::errc() && end != first) {
-    writer->Field(key, value);
+  if (const std::optional<uint64_t> value = aoscm::ParseNumber<uint64_t>(*text)) {
+    writer->Field(key, *value);
   }
+}
+
+/**
+ * An identity in the three forms the kernel keeps it in.
+ *
+ * uid_t and gid_t are the same width and the two triples are written the same way, so they share
+ * this rather than the file carrying the same six lines twice.
+ */
+void WriteIdTriple(JsonWriter* writer, const char* key, unsigned int real, unsigned int effective,
+                   unsigned int saved) {
+  writer->Key(key).BeginObject();
+  writer->Field("real", static_cast<uint64_t>(real));
+  writer->Field("effective", static_cast<uint64_t>(effective));
+  writer->Field("saved", static_cast<uint64_t>(saved));
+  writer->EndObject();
 }
 
 void WriteUserIds(JsonWriter* writer) {
   uid_t real = 0;
   uid_t effective = 0;
   uid_t saved = 0;
-  if (getresuid(&real, &effective, &saved) != 0) {
-    return;
+  if (getresuid(&real, &effective, &saved) == 0) {
+    WriteIdTriple(writer, "uid", real, effective, saved);
   }
-  writer->Key("uid").BeginObject();
-  writer->Field("real", static_cast<uint64_t>(real));
-  writer->Field("effective", static_cast<uint64_t>(effective));
-  writer->Field("saved", static_cast<uint64_t>(saved));
-  writer->EndObject();
 }
 
 void WriteGroupIds(JsonWriter* writer) {
   gid_t real = 0;
   gid_t effective = 0;
   gid_t saved = 0;
-  if (getresgid(&real, &effective, &saved) != 0) {
-    return;
+  if (getresgid(&real, &effective, &saved) == 0) {
+    WriteIdTriple(writer, "gid", real, effective, saved);
   }
-  writer->Key("gid").BeginObject();
-  writer->Field("real", static_cast<uint64_t>(real));
-  writer->Field("effective", static_cast<uint64_t>(effective));
-  writer->Field("saved", static_cast<uint64_t>(saved));
-  writer->EndObject();
 }
 
 /**
@@ -273,7 +228,7 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeCredentialsInspector_getCredentialsNative(
     JNIEnv* env, jobject /* this */) {
   return aoscm::ReturnJson(env, [] {
-    const StatusLines status = ReadStatus();
+    const StatusLines status = aoscm::ReadProcStatus();
 
     JsonWriter writer;
     writer.BeginObject();
@@ -303,7 +258,7 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeCredentialsInspector_getCredential
 
     // As a string, not a number: a umask is octal, and 0077 published as 77 decimal is a different
     // mask that happens to print plausibly.
-    if (const std::string* umask = Find(status, "Umask")) {
+    if (const std::string* umask = aoscm::FindStatus(status, "Umask")) {
       writer.Field("umask", *umask);
     }
 

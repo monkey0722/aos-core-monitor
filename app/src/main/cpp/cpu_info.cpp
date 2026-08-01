@@ -3,11 +3,9 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-#include <charconv>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <vector>
 
 #include "native_util.h"
@@ -30,15 +28,6 @@ std::string CpuDir(int id) {
   return "/sys/devices/system/cpu/cpu" + std::to_string(id);
 }
 
-std::optional<int> ParseInt(std::string_view text) {
-  int value = 0;
-  const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
-  if (error != std::errc() || end == text.data()) {
-    return std::nullopt;
-  }
-  return value;
-}
-
 /**
  * The CPU ids the kernel knows about, from `/sys/devices/system/cpu/present`.
  *
@@ -57,9 +46,10 @@ std::vector<int> PresentCpus() {
       const std::string_view range = remaining.substr(0, comma);
       const size_t dash = range.find('-');
 
-      const std::optional<int> first = ParseInt(range.substr(0, dash));
-      const std::optional<int> last =
-          (dash == std::string_view::npos) ? first : ParseInt(range.substr(dash + 1));
+      const std::optional<int> first = aoscm::ParseNumber<int>(range.substr(0, dash));
+      const std::optional<int> last = (dash == std::string_view::npos)
+                                          ? first
+                                          : aoscm::ParseNumber<int>(range.substr(dash + 1));
       if (first.has_value() && last.has_value()) {
         for (int id = *first; id <= *last && id - *first < kMaxCoresPerRange; ++id) {
           ids.push_back(id);

@@ -7,14 +7,12 @@
 
 #include <array>
 #include <cerrno>
-#include <charconv>
 #include <climits>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -42,17 +40,6 @@ constexpr std::array<std::pair<int, const char*>, 6> kStatusFlags = {{
     {O_NOATIME, "noatime"},
     {O_PATH, "path"},
 }};
-
-std::optional<int> FdNumber(std::string_view name) {
-  int value = 0;
-  const char* const first = name.data();
-  const char* const last = first + name.size();
-  const auto [end, error] = std::from_chars(first, last, value);
-  if (error != std::errc() || end != last) {
-    return std::nullopt;
-  }
-  return value;
-}
 
 /**
  * What the descriptor is open on, as the mode bits report it.
@@ -114,7 +101,7 @@ std::vector<int> ListDescriptorNumbers() {
     return numbers;
   }
   while (const dirent* entry = readdir(descriptors.get())) {
-    if (const std::optional<int> fd = FdNumber(entry->d_name)) {
+    if (const std::optional<int> fd = aoscm::ParseNumber<int>(entry->d_name)) {
       numbers.push_back(*fd);
     }
     // Anything else is "." or "..", which readdir reports alongside the numbers.

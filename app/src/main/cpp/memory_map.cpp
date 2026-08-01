@@ -3,8 +3,8 @@
 #include <sys/resource.h>
 
 #include <array>
-#include <cstdlib>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -109,16 +109,20 @@ MapsSummary SummarizeMaps() {
       continue;
     }
 
-    const uint64_t start = std::strtoull(line.c_str(), nullptr, 16);
-    const uint64_t end = std::strtoull(line.c_str() + dash + 1, nullptr, 16);
-    if (end <= start) {
+    const std::string_view entry(line);
+    const std::optional<uint64_t> first = aoscm::ParseNumber<uint64_t, 16>(entry.substr(0, dash));
+    const std::optional<uint64_t> last =
+        aoscm::ParseNumber<uint64_t, 16>(entry.substr(dash + 1, space - dash - 1));
+    if (!first.has_value() || !last.has_value() || *last <= *first) {
       continue;
     }
+    const uint64_t start = *first;
+    const uint64_t end = *last;
 
     summary.total_regions += 1;
 
     // The permissions are the fixed-width field straight after the address range.
-    const std::string_view permissions = std::string_view(line).substr(space + 1, 4);
+    const std::string_view permissions = entry.substr(space + 1, 4);
     const bool accessible =
         permissions.size() == 4 &&
         (permissions[0] == 'r' || permissions[1] == 'w' || permissions[2] == 'x');
@@ -142,7 +146,7 @@ MapsSummary SummarizeMaps() {
     }
     const std::string_view path =
         (fields == 5 && position != std::string::npos && position < line.size())
-            ? std::string_view(line).substr(position)
+            ? entry.substr(position)
             : std::string_view();
 
     auto& totals = summary.categories[std::to_underlying(Classify(path))];
@@ -194,7 +198,9 @@ Rollup ReadSmaps(const char* path, bool is_rollup_file) {
     const std::string_view key = std::string_view(line).substr(0, colon);
     for (size_t i = 0; i < kRollupKeys.size(); ++i) {
       if (key == kRollupKeys[i]) {
-        rollup.values[i] += std::strtoull(line.c_str() + colon + 1, nullptr, 10);
+        const std::optional<uint64_t> value =
+            aoscm::ParseLeadingNumber<uint64_t>(std::string_view(line).substr(colon + 1));
+        rollup.values[i] += value.value_or(0);
         rollup.present = true;
         break;
       }
@@ -215,28 +221,13 @@ constexpr std::array<const char*, 5> kStatusKeys = {
     "VmSize", "VmRSS", "VmHWM", "VmSwap", "Threads",
 };
 
-void WriteStatus(JsonWriter* writer) {
-  std::ifstream status("/proc/self/status");
-  if (!status.is_open()) {
-    return;
-  }
-
+void WriteStatus(JsonWriter* writer, const aoscm::StatusLines& status) {
+  // Driven by the key list rather than by the file, so the screen gets them in the order named
+  // above. Walking the file put them in the kernel's order, which is not the same one.
   writer->Key("status").BeginObject();
-  std::string line;
-  while (std::getline(status, line)) {
-    const size_t colon = line.find(':');
-    if (colon == std::string::npos) {
-      continue;
-    }
-    const std::string key = line.substr(0, colon);
-    for (const char* wanted : kStatusKeys) {
-      if (key == wanted) {
-        const size_t value_start = line.find_first_not_of(" \t", colon + 1);
-        if (value_start != std::string::npos) {
-          writer->Field(key, std::string_view(line).substr(value_start));
-        }
-        break;
-      }
+  for (const char* key : kStatusKeys) {
+    if (const std::string* value = aoscm::FindStatus(status, key)) {
+      writer->Field(key, *value);
     }
   }
   writer->EndObject();
@@ -281,7 +272,7 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeMemoryInspector_getMemoryMapNative
       writer.EndObject();
     }
 
-    WriteStatus(&writer);
+    WriteStatus(&writer, aoscm::ReadProcStatus());
 
     const MapsSummary maps = SummarizeMaps();
     writer.Key("regions").BeginObject();

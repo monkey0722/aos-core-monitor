@@ -5,13 +5,11 @@
 
 #include <algorithm>
 #include <cerrno>
-#include <charconv>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <vector>
 
 #include "native_util.h"
@@ -37,18 +35,6 @@ constexpr size_t kRtPriorityField = 37;
 /** What the kernel falls back to when sysconf cannot answer. Android has always set USER_HZ to 100.
  */
 constexpr uint64_t kAssumedClockTicks = 100;
-
-template <typename T>
-std::optional<T> Number(std::string_view text) {
-  T value{};
-  const char* const first = text.data();
-  const char* const last = first + text.size();
-  const auto [end, error] = std::from_chars(first, last, value);
-  if (error != std::errc() || end != last) {
-    return std::nullopt;
-  }
-  return value;
-}
 
 std::optional<std::string_view> FieldAt(const std::vector<std::string_view>& fields, size_t index) {
   if (index >= fields.size()) {
@@ -188,22 +174,23 @@ void WriteThread(JsonWriter* writer, std::string_view tid_name, pid_t tid, int c
   if (const auto state = FieldAt(fields, kStateField)) {
     writer->Field("state", *state);
   }
-  if (const auto utime = FieldAt(fields, kUtimeField).and_then(Number<uint64_t>)) {
+  if (const auto utime = FieldAt(fields, kUtimeField).and_then(aoscm::ParseNumber<uint64_t>)) {
     writer->Field("utime_ticks", *utime);
   }
-  if (const auto stime = FieldAt(fields, kStimeField).and_then(Number<uint64_t>)) {
+  if (const auto stime = FieldAt(fields, kStimeField).and_then(aoscm::ParseNumber<uint64_t>)) {
     writer->Field("stime_ticks", *stime);
   }
-  if (const auto priority = FieldAt(fields, kPriorityField).and_then(Number<int64_t>)) {
+  if (const auto priority = FieldAt(fields, kPriorityField).and_then(aoscm::ParseNumber<int64_t>)) {
     writer->Field("priority", *priority);
   }
-  if (const auto nice = FieldAt(fields, kNiceField).and_then(Number<int64_t>)) {
+  if (const auto nice = FieldAt(fields, kNiceField).and_then(aoscm::ParseNumber<int64_t>)) {
     writer->Field("nice", *nice);
   }
-  if (const auto last_cpu = FieldAt(fields, kLastCpuField).and_then(Number<uint64_t>)) {
+  if (const auto last_cpu = FieldAt(fields, kLastCpuField).and_then(aoscm::ParseNumber<uint64_t>)) {
     writer->Field("last_cpu", *last_cpu);
   }
-  if (const auto rt_priority = FieldAt(fields, kRtPriorityField).and_then(Number<uint64_t>)) {
+  if (const auto rt_priority =
+          FieldAt(fields, kRtPriorityField).and_then(aoscm::ParseNumber<uint64_t>)) {
     writer->Field("rt_priority", *rt_priority);
   }
 
@@ -245,7 +232,7 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeThreadInspector_getThreadsNative(J
     if (const TaskDir tasks{opendir("/proc/self/task")}) {
       while (const dirent* entry = readdir(tasks.get())) {
         const std::string_view name(entry->d_name);
-        const auto tid = Number<pid_t>(name);
+        const auto tid = aoscm::ParseNumber<pid_t>(name);
         if (!tid.has_value()) {
           // "." and "..", which readdir reports alongside the thread ids.
           continue;
