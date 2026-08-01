@@ -204,9 +204,15 @@ Rollup ReadSmaps(const char* path, bool is_rollup_file) {
   return rollup;
 }
 
-/** The `/proc/self/status` lines the screen shows, in order. */
-constexpr std::array<const char*, 6> kStatusKeys = {
-    "VmSize", "VmRSS", "VmHWM", "VmSwap", "Threads", "FDSize",
+/**
+ * The `/proc/self/status` lines the screen shows, in order.
+ *
+ * FDSize was here and moved to the descriptor screen, which is about the descriptor table rather
+ * than about memory and reports the count against the limit it is approaching. Two screens showing
+ * the same figure is what that screen was added to stop, not to continue.
+ */
+constexpr std::array<const char*, 5> kStatusKeys = {
+    "VmSize", "VmRSS", "VmHWM", "VmSwap", "Threads",
 };
 
 void WriteStatus(JsonWriter* writer) {
@@ -311,7 +317,8 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeMemoryInspector_getMemoryMapNative
     WriteLimit(&writer, "address_space", RLIMIT_AS);
     WriteLimit(&writer, "data", RLIMIT_DATA);
     WriteLimit(&writer, "stack", RLIMIT_STACK);
-    WriteLimit(&writer, "open_files", RLIMIT_NOFILE);
+    // RLIMIT_NOFILE was here. It bounds the descriptor table rather than the address space, and the
+    // descriptor screen shows it where the count it bounds is.
     writer.EndObject();
 
     writer.EndObject();

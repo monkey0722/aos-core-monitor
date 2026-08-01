@@ -46,6 +46,14 @@ internal fun JSONObject.intOrNull(key: String): Int? = if (has(key)) optInt(key)
 
 internal fun JSONObject.stringOrNull(key: String): String? = if (has(key)) optString(key) else null
 
+/**
+ * The same, for switches the kernel would not answer for.
+ *
+ * `optBoolean` answers false both for a switch that is off and for one that could not be read, and
+ * "no_new_privs is not set" is a different statement from "this kernel would not say".
+ */
+internal fun JSONObject.booleanOrNull(key: String): Boolean? = if (has(key)) optBoolean(key) else null
+
 /** Iterates a JSON array of objects, skipping entries that are not objects. */
 internal inline fun <T> JSONArray.mapObjects(transform: (JSONObject) -> T): List<T> =
     (0 until length()).mapNotNull { index -> optJSONObject(index)?.let(transform) }

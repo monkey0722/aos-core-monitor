@@ -21,6 +21,8 @@ add_library(
     elf_modules.cpp
     storage_info.cpp
     thread_info.cpp
+    fd_info.cpp
+    process_creds.cpp
 )
 
 # The conversion warnings earn their place here: this code carries kernel counters — size_t,

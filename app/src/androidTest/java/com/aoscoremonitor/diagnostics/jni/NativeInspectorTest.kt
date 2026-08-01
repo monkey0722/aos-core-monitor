@@ -1,7 +1,10 @@
 package com.aoscoremonitor.diagnostics.jni
 
+import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -95,6 +98,70 @@ class NativeInspectorTest {
             "No thread reports a scheduling policy",
             snapshot.threads.any { it.policy != SchedulerPolicy.Unknown }
         )
+    }
+
+    @Test
+    fun descriptorInspectorListsThisProcessesDescriptors() = runBlocking {
+        val snapshot = NativeDescriptorInspector().read()
+
+        assertNotNull("Descriptor table could not be read", snapshot)
+        assertTrue("No descriptors reported", snapshot!!.descriptors.isNotEmpty())
+        // Every process is handed the three standard streams, whatever else it holds.
+        assertTrue("fd 0 is missing, which cannot be", snapshot.descriptors.any { it.fd == 0 })
+        assertTrue("No soft limit reported", (snapshot.softLimit ?: 0) > 0)
+    }
+
+    /**
+     * The walk does not report the handle it walked with.
+     *
+     * `/proc/self/fd` is read through a descriptor that appears in its own listing, so a collector
+     * that reads and reports in one pass claims the process holds a descriptor on the very
+     * directory the reading came from. The two-pass design exists to make that unreachable; without
+     * this, nothing would notice it coming back.
+     */
+    @Test
+    fun descriptorInspectorDoesNotReportItsOwnDirectoryHandle() = runBlocking {
+        val snapshot = NativeDescriptorInspector().read()
+
+        assertNotNull("Descriptor table could not be read", snapshot)
+        assertTrue(
+            "The descriptor walk reported the directory it was walking",
+            snapshot!!.descriptors.none { it.target == "/proc/self/fd" }
+        )
+    }
+
+    @Test
+    fun credentialsInspectorReadsThisProcess() = runBlocking {
+        val credentials = NativeCredentialsInspector().read()
+
+        assertNotNull("Credentials could not be read", credentials)
+        assertEquals("Reported a different process", Process.myPid(), credentials!!.pid)
+        assertEquals("Reported a different user", Process.myUid(), credentials.user?.effective)
+        // The kernel prints all five sets on every Android kernel this app runs on; the effective
+        // one is the set that decides what a syscall is allowed to do, so its absence is a failure
+        // rather than a reading that is allowed to be missing.
+        assertNotNull("No effective capability set", credentials.capabilities["effective"])
+        assertNotNull("No bounding capability set", credentials.capabilities["bounding"])
+        assertTrue("No umask reported", credentials.umask?.isNotEmpty() == true)
+    }
+
+    /**
+     * The SELinux context is a context, not a stray byte.
+     *
+     * The kernel terminates what it writes to `/proc/self/attr/current`, and that NUL is not
+     * whitespace — left on, it crosses to Kotlin as part of the MLS level and the type would still
+     * parse out fine, so only the shape of the whole string catches it.
+     */
+    @Test
+    fun theSelinuxContextArrivesAsAContext() = runBlocking {
+        val credentials = NativeCredentialsInspector().read()
+        val context = credentials?.selinuxContext ?: return@runBlocking
+
+        assertTrue("Not a user:role:type context: $context", context.split(':').size >= 3)
+        assertFalse("The context carries the kernel's NUL terminator", context.contains('\u0000'))
+        // The domain itself is not pinned: a test app is untrusted_app on a stock build, but the
+        // same library runs in whatever domain the process it is loaded into was assigned.
+        assertTrue("No SELinux type in $context", credentials.selinuxType?.isNotEmpty() == true)
     }
 
     @Test

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.DataUsage
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Memory
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.aoscoremonitor.R
@@ -173,6 +175,22 @@ sealed interface Destination : NavKey {
         @Transient
         override val icon: ImageVector = Icons.Default.Storage
     }
+
+    @Serializable
+    data object Descriptors : Destination {
+        override val titleRes get() = R.string.descriptors_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.Description
+    }
+
+    @Serializable
+    data object ProcessCredentials : Destination {
+        override val titleRes get() = R.string.credentials_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.VerifiedUser
+    }
 }
 
 /**
@@ -182,6 +200,10 @@ sealed interface Destination : NavKey {
  * rather than the arbitrary order the grid grew in. The four screens added last read the CPU,
  * the process's own address space, the linker and the mount table, so they continue the native
  * run rather than starting a group of their own.
+ *
+ * Within the native run the order goes outwards from the process: what it is running (CPU,
+ * threads), what it is holding (memory, libraries, descriptors), who it is (credentials), and what
+ * it can reach (storage, network).
  */
 val HomeDestinations: List<Destination> = listOf(
     Destination.SystemInfo,
@@ -196,6 +218,8 @@ val HomeDestinations: List<Destination> = listOf(
     Destination.Threads,
     Destination.MemoryMap,
     Destination.LoadedLibraries,
+    Destination.Descriptors,
+    Destination.ProcessCredentials,
     Destination.StorageMounts,
     Destination.NetworkStats,
     Destination.TcpConnections
@@ -221,4 +245,6 @@ val Destination.shortTitleRes: Int
         Destination.MemoryMap -> R.string.destination_memory_map
         Destination.LoadedLibraries -> R.string.destination_loaded_libraries
         Destination.StorageMounts -> R.string.destination_storage
+        Destination.Descriptors -> R.string.destination_descriptors
+        Destination.ProcessCredentials -> R.string.destination_credentials
     }

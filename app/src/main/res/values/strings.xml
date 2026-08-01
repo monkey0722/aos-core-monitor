@@ -28,6 +28,8 @@
     <string name="destination_memory_map">Memory Map</string>
     <string name="destination_loaded_libraries">Native Libraries</string>
     <string name="destination_storage">Storage</string>
+    <string name="destination_descriptors">Descriptors</string>
+    <string name="destination_credentials">Credentials</string>
 
     <!-- System logs -->
     <string name="logs_title">System Logs</string>
@@ -249,8 +251,6 @@
     <string name="memory_limit_address_space">Address space</string>
     <string name="memory_limit_data">Data segment</string>
     <string name="memory_limit_stack">Stack</string>
-    <string name="memory_limit_open_files">Open files</string>
-    <string name="memory_count">%1$d</string>
 
     <!-- Native libraries -->
     <string name="libraries_title">Native Libraries</string>
@@ -366,4 +366,101 @@
     <string name="storage_readonly">Read-only</string>
     <string name="storage_source">Device · %1$s</string>
     <string name="storage_inodes">Inodes · %1$s free of %2$s</string>
+
+    <!-- Open descriptors -->
+    <string name="descriptors_title">Open Descriptors</string>
+    <string name="descriptors_loading">Walking /proc/self/fd…</string>
+    <string name="descriptors_unavailable">The native library did not load, so this process\'s descriptors cannot be listed.</string>
+    <string name="descriptors_empty">No descriptors were readable for this process.</string>
+    <string name="descriptors_summary_section">This process</string>
+    <plurals name="descriptors_open">
+        <item quantity="one">%1$d descriptor open</item>
+        <item quantity="other">%1$d descriptors open</item>
+    </plurals>
+    <string name="descriptors_limit">%1$,d of the %2$,d this process may hold</string>
+    <string name="descriptors_hard_limit">The hard limit it could raise that to is %1$,d.</string>
+    <string name="descriptors_no_limit">No ceiling is set on how many this process may open.</string>
+    <string name="descriptors_list_section">Descriptors</string>
+    <string name="descriptors_list_subtitle">By number, which is the order the kernel hands them out in</string>
+    <string name="descriptors_number">fd %1$d</string>
+    <string name="descriptors_target_unavailable">Target not readable</string>
+    <string name="descriptors_target_denied">Target: the sandbox may not read it</string>
+    <string name="descriptors_stat_unavailable">Kind not readable</string>
+    <string name="descriptors_stat_denied">Kind: the sandbox may not read it</string>
+    <string name="descriptors_stat_absent">Kind: nothing left at this number to read</string>
+    <string name="descriptors_offset">Offset %1$,d</string>
+    <string name="descriptors_inode">Inode %1$,d</string>
+    <string name="descriptors_cloexec">Closed on exec</string>
+    <string name="descriptors_kept_on_exec">Kept across exec</string>
+    <string name="descriptors_kind_file">File</string>
+    <string name="descriptors_kind_directory">Directory</string>
+    <string name="descriptors_kind_socket">Socket</string>
+    <string name="descriptors_kind_pipe">Pipe</string>
+    <string name="descriptors_kind_anon">Kernel object</string>
+    <string name="descriptors_kind_device">Device</string>
+    <string name="descriptors_kind_other">Other</string>
+    <string name="descriptors_access_read">Read</string>
+    <string name="descriptors_access_write">Write</string>
+    <string name="descriptors_access_readwrite">Read/write</string>
+    <string name="descriptors_access_unknown">Access unknown</string>
+    <string name="descriptors_breakdown_entry">%1$d %2$s</string>
+
+    <!-- Process credentials -->
+    <string name="credentials_title">Process Credentials</string>
+    <string name="credentials_loading">Reading this process\'s credentials…</string>
+    <string name="credentials_unavailable">The native library did not load, so this process\'s credentials cannot be read.</string>
+    <string name="credentials_context_section">Security context</string>
+    <string name="credentials_context_subtitle">The SELinux domain confining this process, which is narrower than what the device enforces</string>
+    <string name="credentials_context_type">Domain</string>
+    <string name="credentials_context_full">Full context</string>
+    <string name="credentials_context_unavailable">The context could not be read.</string>
+    <string name="credentials_context_denied">The sandbox may not read this process\'s SELinux context.</string>
+    <string name="credentials_context_absent">This kernel reports no SELinux context for the process.</string>
+    <string name="credentials_identity_section">Identity</string>
+    <string name="credentials_pid">Process ID</string>
+    <string name="credentials_ppid">Parent process</string>
+    <string name="credentials_pgid">Process group</string>
+    <string name="credentials_session">Session</string>
+    <string name="credentials_user_section">User and groups</string>
+    <string name="credentials_user_subtitle">Real, effective and saved. Only the effective pair decides what a syscall is allowed to do.</string>
+    <string name="credentials_uid">UID</string>
+    <string name="credentials_gid">GID</string>
+    <string name="credentials_ids">%1$d real · %2$d effective · %3$d saved</string>
+    <string name="credentials_ids_uniform">%1$d, the same in all three</string>
+    <string name="credentials_app_uid">Android user %1$d, app ID %2$d</string>
+    <string name="credentials_platform_uid">A platform identity rather than an installed app</string>
+    <string name="credentials_groups">Supplementary groups</string>
+    <string name="credentials_groups_none">None held</string>
+    <string name="credentials_groups_unavailable">The group list could not be read.</string>
+    <string name="credentials_group_named">%1$d %2$s</string>
+    <string name="credentials_capabilities_section">Capabilities</string>
+    <string name="credentials_capabilities_subtitle">What this process may do beyond the rights of its user. An ordinary app holds none.</string>
+    <string name="credentials_cap_effective">Effective</string>
+    <string name="credentials_cap_effective_note">In force right now</string>
+    <string name="credentials_cap_permitted">Permitted</string>
+    <string name="credentials_cap_permitted_note">May be raised into the effective set</string>
+    <string name="credentials_cap_inheritable">Inheritable</string>
+    <string name="credentials_cap_inheritable_note">Survives an exec into a new program</string>
+    <string name="credentials_cap_bounding">Bounding</string>
+    <string name="credentials_cap_bounding_note">The ceiling nothing here can rise above</string>
+    <string name="credentials_cap_ambient">Ambient</string>
+    <string name="credentials_cap_ambient_note">Granted to an unprivileged program on exec</string>
+    <string name="credentials_cap_none">None</string>
+    <string name="credentials_cap_mask">Mask %1$s</string>
+    <string name="credentials_sandbox_section">Sandbox switches</string>
+    <string name="credentials_sandbox_subtitle">The per-process restrictions zygote set before this app\'s code ran</string>
+    <string name="credentials_seccomp">Seccomp</string>
+    <string name="credentials_seccomp_disabled">No filter installed</string>
+    <string name="credentials_seccomp_strict">Strict: read, write, exit and sigreturn only</string>
+    <string name="credentials_seccomp_filter">Filtered by a BPF program</string>
+    <string name="credentials_seccomp_filter_count">Filtered by %1$d BPF programs</string>
+    <string name="credentials_seccomp_unknown">This kernel does not report a seccomp mode.</string>
+    <string name="credentials_no_new_privs">no_new_privs</string>
+    <string name="credentials_no_new_privs_set">Set: no exec can gain privileges</string>
+    <string name="credentials_no_new_privs_clear">Not set</string>
+    <string name="credentials_dumpable">Core dumps</string>
+    <string name="credentials_dumpable_on">Dumpable: this process can be traced and dumped</string>
+    <string name="credentials_dumpable_off">Not dumpable</string>
+    <string name="credentials_umask">umask</string>
+    <string name="credentials_unknown">Not reported</string>
 </resources>
