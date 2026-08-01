@@ -123,13 +123,21 @@ private fun SecurityInfoContent(
  * means the mode could not be read at all. The card used to signal that through
  * primaryContainer / tertiaryContainer / errorContainer, which meant "good" was rendered in the
  * app's brand color and read as decoration.
+ *
+ * A mode that could not be read is [ReadingStatus.Neutral], not [ReadingStatus.Problem]. It used to
+ * be the latter, which painted the card in the error color and said the device was in a bad state
+ * when all that happened was that `getenforce` would not run from the app sandbox. Every other
+ * screen in this app states why a reading is missing rather than colouring it as a fault, and the
+ * note under the row is where that is said.
  */
 @Composable
 private fun SeLinuxCard(status: String, mode: String, modifier: Modifier = Modifier) {
+    val enforcing = mode.contains("Enforcing", ignoreCase = true)
+    val permissive = mode.contains("Permissive", ignoreCase = true)
     val readingStatus = when {
-        mode.contains("Enforcing", ignoreCase = true) -> ReadingStatus.Ok
-        mode.contains("Permissive", ignoreCase = true) -> ReadingStatus.Warning
-        else -> ReadingStatus.Problem
+        enforcing -> ReadingStatus.Ok
+        permissive -> ReadingStatus.Warning
+        else -> ReadingStatus.Neutral
     }
 
     MonitorCard(modifier = modifier, status = readingStatus) {
@@ -146,6 +154,14 @@ private fun SeLinuxCard(status: String, mode: String, modifier: Modifier = Modif
                 label = stringResource(R.string.security_selinux_mode),
                 value = mode,
                 valueStyle = MaterialTheme.typography.titleMedium
+            )
+        }
+        if (!enforcing && !permissive) {
+            Text(
+                text = stringResource(R.string.security_selinux_unreadable),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = Spacing.Small)
             )
         }
     }

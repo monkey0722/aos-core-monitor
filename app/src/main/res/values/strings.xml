@@ -16,6 +16,10 @@
 
     <!-- Home -->
     <string name="home_subtitle">Inspect the Android system layers on this device</string>
+    <string name="home_group_framework">Android framework</string>
+    <string name="home_group_native">This process and the kernel</string>
+    <string name="home_group_reach">Storage and network</string>
+    <string name="home_group_display">Display and frames</string>
     <string name="destination_system_info">System Info</string>
     <string name="destination_logs">System Logs</string>
     <string name="destination_diagnostics">Diagnostics</string>
@@ -47,6 +51,15 @@
 
     <!-- System information -->
     <string name="system_info_title">System Information</string>
+    <string name="system_info_device_section">Device</string>
+    <string name="system_info_device_subtitle">What this device and this build of Android call themselves</string>
+    <string name="system_info_android">Android</string>
+    <string name="system_info_android_value">%1$s · API %2$d</string>
+    <string name="system_info_security_patch">Security patch</string>
+    <string name="system_info_build">Build</string>
+    <string name="system_info_fingerprint">Fingerprint</string>
+    <string name="system_info_live_section">Right now</string>
+    <string name="system_info_live_subtitle">Readings that change while you watch</string>
     <string name="system_info_cpu">CPU Usage</string>
     <string name="system_info_memory">Memory</string>
     <string name="system_info_battery">Battery</string>
@@ -66,6 +79,7 @@
     <string name="security_selinux_subtitle">Kernel-level mandatory access control</string>
     <string name="security_selinux_status">Status</string>
     <string name="security_selinux_mode">Mode</string>
+    <string name="security_selinux_unreadable">Reading this needs `getenforce`, which the app sandbox may not run. It says nothing about whether SELinux is enforcing — only that this app cannot ask.</string>
     <string name="security_hardware_section">Hardware Security</string>
     <string name="security_hardware_subtitle">Key storage and biometric hardware on this device</string>
     <string name="security_permissions_section">App Permissions</string>
