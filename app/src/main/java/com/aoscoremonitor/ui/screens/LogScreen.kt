@@ -30,6 +30,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -136,13 +139,31 @@ private fun LogContent(lines: List<LogLine>, droppedCount: Int, onNavigateBack: 
     }
 }
 
+/**
+ * One entry.
+ *
+ * The stamp that opens the line is drawn in the muted colour and the message in the ordinary one.
+ * An entry wraps over four or five lines on a phone, and with every character the same weight the
+ * eye has nothing to catch on to find where the next entry starts — the level rule marks severity,
+ * but only down the left edge of an entry that may be a fifth of the screen tall.
+ */
 @Composable
 private fun LogRow(line: LogLine, modifier: Modifier = Modifier) {
     val accent = line.level.accentColor
+    val prefixColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val messageColor = MaterialTheme.colorScheme.onSurface
+    val text = remember(line, prefixColor, messageColor) {
+        buildAnnotatedString {
+            val split = line.prefixLength.coerceIn(0, line.text.length)
+            withStyle(SpanStyle(color = prefixColor)) { append(line.text.substring(0, split)) }
+            withStyle(SpanStyle(color = messageColor)) { append(line.text.substring(split)) }
+        }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 1.dp)
+            .padding(vertical = Spacing.ExtraSmall / 2)
             .clip(MaterialTheme.shapes.extraSmall)
             .background(line.level.backgroundColor)
     ) {
@@ -156,9 +177,8 @@ private fun LogRow(line: LogLine, modifier: Modifier = Modifier) {
                 .background(accent)
         )
         Text(
-            text = line.text,
+            text = text,
             style = MonitorTypography.machineText,
-            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
         )
     }

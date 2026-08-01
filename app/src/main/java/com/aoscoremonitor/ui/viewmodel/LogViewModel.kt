@@ -23,7 +23,16 @@ enum class LogLevel {
  * [id] exists so the list can be keyed. Lines are not unique — the same message repeats — so
  * keying on the text would collide and make Compose reuse the wrong row.
  */
-data class LogLine(val id: Long, val text: String, val level: LogLevel)
+/**
+ * One line of logcat.
+ *
+ * [prefixLength] is how much of [text] is the `MM-DD HH:MM:SS.mmm PID TID L` stamp that opens
+ * logcat's threadtime format, or zero for a line in another shape. The screen draws that part in a
+ * quieter colour: on a narrow display one entry wraps over four or five lines, and with every
+ * character the same weight there is nothing to tell the reader where one entry ends and the next
+ * begins.
+ */
+data class LogLine(val id: Long, val text: String, val level: LogLevel, val prefixLength: Int = 0)
 
 /**
  * Collects logcat for the log screen and keeps the most recent [MAX_LINES] of it.
@@ -67,7 +76,7 @@ class LogViewModel : ViewModel() {
     }
 
     private fun append(text: String) {
-        _lines.add(LogLine(id = nextId++, text = text, level = parseLogLevel(text)))
+        _lines.add(LogLine(id = nextId++, text = text, level = parseLogLevel(text), prefixLength = logPrefixLength(text)))
         if (_lines.size > MAX_LINES) {
             val excess = _lines.size - MAX_LINES
             _lines.removeRange(0, excess)
@@ -89,6 +98,12 @@ class LogViewModel : ViewModel() {
  * `MM-DD HH:MM:SS.mmm  PID  TID L TAG: message`.
  */
 private val ThreadTimeLevel = Regex("""^\d{2}-\d{2} [\d:.]+\s+\d+\s+\d+\s+([VDIWEFS])\s""")
+
+/**
+ * How much of the line is the timestamp, pid, tid and level, or zero when the line is not in
+ * logcat's threadtime format.
+ */
+internal fun logPrefixLength(line: String): Int = ThreadTimeLevel.find(line)?.value?.length ?: 0
 
 /**
  * Reads the severity of a logcat line.
