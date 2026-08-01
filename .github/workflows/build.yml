@@ -1,9 +1,10 @@
 name: Build
 
+# On push only. Compiling from scratch costs five minutes where the same work is incremental and
+# near-instant locally, so a pull request is guarded by the two fast jobs and this runs once on what
+# actually lands on main.
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
 
 permissions:
