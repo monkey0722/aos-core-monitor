@@ -330,9 +330,7 @@ private fun SensorsPreview() {
                         resolution = 0.0023956f,
                         power = 0.17f,
                         minDelayUs = 2404,
-                        maxDelayUs = 200000,
                         isWakeUp = false,
-                        isDynamic = false,
                         reportingMode = 0
                     ),
                     SensorInfo(
@@ -346,9 +344,7 @@ private fun SensorsPreview() {
                         resolution = 1f,
                         power = 0.75f,
                         minDelayUs = 0,
-                        maxDelayUs = 0,
                         isWakeUp = true,
-                        isDynamic = false,
                         reportingMode = 1
                     )
                 ),

@@ -274,7 +274,9 @@ class SecurityInfoCollector(private val context: Context, private val onUpdate: 
             .build()
 
         keyGenerator.initialize(keyGenSpec)
-        val keyPair = keyGenerator.generateKeyPair()
+        // Generated for the side effect: the key has to exist in the keystore before its KeyInfo
+        // can say whether the keystore put it in secure hardware. The pair itself is never used.
+        keyGenerator.generateKeyPair()
 
         // Get KeyInfo to check if the key is in secure hardware
         val privateKey = keyStore.getKey(keyAlias, null)

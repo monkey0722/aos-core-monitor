@@ -224,7 +224,7 @@ private fun GroupsCard(credentials: ProcessCredentials, modifier: Modifier = Mod
             credentials.supplementaryGroups.forEach { gid ->
                 val name = androidGroupName(gid)
                 MonitorTag(
-                    if (name != null) stringResource(R.string.credentials_group_named, gid, name) else gid.toString()
+                    if (name != null) stringResource(R.string.count_with_name, gid, name) else gid.toString()
                 )
             }
         }
@@ -293,7 +293,7 @@ private fun SandboxCard(credentials: ProcessCredentials, modifier: Modifier = Mo
                 when (credentials.noNewPrivs) {
                     true -> R.string.credentials_no_new_privs_set
                     false -> R.string.credentials_no_new_privs_clear
-                    null -> R.string.credentials_unknown
+                    null -> R.string.status_not_reported
                 }
             ),
             modifier = Modifier.padding(top = Spacing.Small)
@@ -304,14 +304,14 @@ private fun SandboxCard(credentials: ProcessCredentials, modifier: Modifier = Mo
                 when (credentials.dumpable) {
                     true -> R.string.credentials_dumpable_on
                     false -> R.string.credentials_dumpable_off
-                    null -> R.string.credentials_unknown
+                    null -> R.string.status_not_reported
                 }
             ),
             modifier = Modifier.padding(top = Spacing.Small)
         )
         LabeledValue(
             label = stringResource(R.string.credentials_umask),
-            value = credentials.umask ?: stringResource(R.string.credentials_unknown),
+            value = credentials.umask ?: stringResource(R.string.status_not_reported),
             valueStyle = MonitorTypography.machineText,
             modifier = Modifier.padding(top = Spacing.Small)
         )

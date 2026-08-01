@@ -151,7 +151,7 @@ private fun SummaryCard(snapshot: DescriptorSnapshot, modifier: Modifier = Modif
             verticalArrangement = Arrangement.spacedBy(Spacing.Small)
         ) {
             snapshot.breakdown.forEach { (kind, count) ->
-                MonitorTag(stringResource(R.string.descriptors_breakdown_entry, count, stringResource(kindLabel(kind))))
+                MonitorTag(stringResource(R.string.count_with_name, count, stringResource(kindLabel(kind))))
             }
         }
     }

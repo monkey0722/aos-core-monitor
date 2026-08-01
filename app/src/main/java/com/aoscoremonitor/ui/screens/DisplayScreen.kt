@@ -288,7 +288,7 @@ private fun CapabilitiesCard(display: DisplayInfo, modifier: Modifier = Modifier
 private fun SupportRow(@StringRes label: Int, supported: Boolean) {
     LabeledValue(
         label = stringResource(label),
-        value = stringResource(if (supported) R.string.display_supported else R.string.display_not_supported),
+        value = stringResource(if (supported) R.string.status_supported else R.string.status_not_supported),
         modifier = Modifier.padding(top = Spacing.Small)
     )
 }
@@ -307,7 +307,7 @@ private fun stateLabel(state: DisplayState): Int = when (state) {
     DisplayState.Doze -> R.string.display_state_doze
     DisplayState.DozeSuspended -> R.string.display_state_doze_suspended
     DisplayState.OnSuspended -> R.string.display_state_on_suspended
-    DisplayState.Unknown -> R.string.display_state_unknown
+    DisplayState.Unknown -> R.string.status_not_reported
 }
 
 @StringRes
@@ -315,7 +315,7 @@ private fun connectionLabel(connection: DisplayConnection): Int = when (connecti
     DisplayConnection.BuiltIn -> R.string.display_connection_built_in
     DisplayConnection.Direct -> R.string.display_connection_direct
     DisplayConnection.Transitive -> R.string.display_connection_transitive
-    DisplayConnection.Unknown -> R.string.display_connection_unknown
+    DisplayConnection.Unknown -> R.string.status_not_reported
 }
 
 @StringRes

@@ -153,8 +153,9 @@ void WriteAffinity(JsonWriter* writer, pid_t task, int cpu_count) {
     writer->Field("affinity_unavailable", aoscm::DescribeFailure(errno));
     return;
   }
+  // The cpulist alone: the count of CPUs in it was published too, and it is the length of a list
+  // the reader already has.
   writer->Field("affinity", CpuList(mask, cpu_count));
-  writer->Field("affinity_count", static_cast<uint64_t>(CPU_COUNT(&mask)));
 }
 
 void WriteSchedulerPolicy(JsonWriter* writer, pid_t task) {
@@ -235,7 +236,6 @@ Java_com_aoscoremonitor_diagnostics_jni_NativeThreadInspector_getThreadsNative(J
     writer.BeginObject();
     writer.Field("clock_ticks",
                  clock_ticks > 0 ? static_cast<uint64_t>(clock_ticks) : kAssumedClockTicks);
-    writer.Field("cpu_count", static_cast<uint64_t>(cpu_count));
 
     // The process's own mask, which is the ceiling every thread's mask sits under. Written with the
     // same keys as a thread's so that one parser reads both.

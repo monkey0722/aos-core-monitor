@@ -10,6 +10,9 @@
     <string name="sample_data_label">Sample data</string>
     <string name="status_supported">Supported</string>
     <string name="status_not_supported">Not supported</string>
+    <string name="status_not_reported">Not reported</string>
+    <!-- A count and what it counts: "12 File", "3003 inet". -->
+    <string name="count_with_name">%1$d %2$s</string>
 
     <!-- Home -->
     <string name="home_subtitle">Inspect the Android system layers on this device</string>
@@ -279,6 +282,8 @@
     </plurals>
     <string name="threads_allowed_cpus">Allowed CPUs</string>
     <string name="threads_affinity_unavailable">Not readable</string>
+    <string name="threads_affinity_denied">The sandbox may not read it</string>
+    <string name="threads_affinity_absent">The thread went away before it could be read</string>
     <string name="threads_real_time">Real-time scheduled</string>
     <plurals name="threads_real_time_count">
         <item quantity="one">%1$d thread</item>
@@ -291,7 +296,6 @@
     <string name="threads_identity">tid %1$d</string>
     <string name="threads_nice">Nice</string>
     <string name="threads_nice_with_rt">%1$d · real-time priority %2$d</string>
-    <string name="threads_affinity">Allowed CPUs</string>
     <string name="threads_last_cpu">Last ran on CPU</string>
     <string name="thread_state_running">Running</string>
     <string name="thread_state_sleeping">Sleeping</string>
@@ -402,7 +406,6 @@
     <string name="descriptors_access_write">Write</string>
     <string name="descriptors_access_readwrite">Read/write</string>
     <string name="descriptors_access_unknown">Access unknown</string>
-    <string name="descriptors_breakdown_entry">%1$d %2$s</string>
 
     <!-- Process credentials -->
     <string name="credentials_title">Process Credentials</string>
@@ -411,7 +414,6 @@
     <string name="credentials_context_section">Security context</string>
     <string name="credentials_context_subtitle">The SELinux domain confining this process, which is narrower than what the device enforces</string>
     <string name="credentials_context_type">Domain</string>
-    <string name="credentials_context_full">Full context</string>
     <string name="credentials_context_unavailable">The context could not be read.</string>
     <string name="credentials_context_denied">The sandbox may not read this process\'s SELinux context.</string>
     <string name="credentials_context_absent">This kernel reports no SELinux context for the process.</string>
@@ -431,7 +433,6 @@
     <string name="credentials_groups">Supplementary groups</string>
     <string name="credentials_groups_none">None held</string>
     <string name="credentials_groups_unavailable">The group list could not be read.</string>
-    <string name="credentials_group_named">%1$d %2$s</string>
     <string name="credentials_capabilities_section">Capabilities</string>
     <string name="credentials_capabilities_subtitle">What this process may do beyond the rights of its user. An ordinary app holds none.</string>
     <string name="credentials_cap_effective">Effective</string>
@@ -461,7 +462,6 @@
     <string name="credentials_dumpable_on">Dumpable: this process can be traced and dumped</string>
     <string name="credentials_dumpable_off">Not dumpable</string>
     <string name="credentials_umask">umask</string>
-    <string name="credentials_unknown">Not reported</string>
 
     <!-- Display -->
     <string name="display_title">Display</string>
@@ -477,7 +477,6 @@
     <string name="display_state_doze">Dozing</string>
     <string name="display_state_doze_suspended">Dozing, pipeline suspended</string>
     <string name="display_state_on_suspended">On, pipeline suspended</string>
-    <string name="display_state_unknown">Not reported</string>
     <string name="display_rotation">Rotation</string>
     <string name="display_degrees">%1$d°</string>
     <string name="display_product_manufacturer">Manufacturer (PnP ID)</string>
@@ -487,7 +486,6 @@
     <string name="display_connection_built_in">Built into the device</string>
     <string name="display_connection_direct">Connected directly</string>
     <string name="display_connection_transitive">Reached through another device</string>
-    <string name="display_connection_unknown">Not reported</string>
     <string name="display_product_absent">The panel publishes no EDID, which a screen built into the device usually does not.</string>
     <string name="display_geometry_section">Resolution and density</string>
     <string name="display_geometry_subtitle">The physical pixels of the current mode, and what a dp is worth on them</string>
@@ -517,8 +515,6 @@
     <string name="display_minimal_post_processing">Minimal post-processing</string>
     <string name="display_secure">Secure surfaces</string>
     <string name="display_round">Round display</string>
-    <string name="display_supported">Supported</string>
-    <string name="display_not_supported">Not supported</string>
     <string name="display_cutout">Cutout</string>
     <string name="display_cutout_insets">Keeps content %1$d px from the top, %2$d from the bottom, %3$d from the left and %4$d from the right</string>
     <plurals name="display_cutout_rects">

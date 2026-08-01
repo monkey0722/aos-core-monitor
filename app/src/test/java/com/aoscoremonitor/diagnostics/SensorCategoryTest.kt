@@ -89,9 +89,7 @@ class SensorCategoryTest {
         resolution = 1f,
         power = 1f,
         minDelayUs = minDelayUs,
-        maxDelayUs = 0,
         isWakeUp = false,
-        isDynamic = false,
         reportingMode = 0
     )
 }
