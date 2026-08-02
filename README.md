@@ -2,7 +2,7 @@
 
 Comprehensive monitoring software for deeply understanding the internal structure of AOS. Because sometimes you need to know what your Android system is secretly plotting.
 
-Twenty-one screens, each with one subject. Everything shown is measured on the device — where a reading cannot be taken, the screen says which reading and why, rather than filling the gap with a plausible number.
+Twenty-one screens, each with one subject. Device readings are kept distinct from built-in sample data: when the app cannot reach a source and shows an example instead, the screen labels it as sample data and says which source was unavailable.
 
 ## What it inspects
 
@@ -30,12 +30,12 @@ Audio Path is the one that asks rather than reads. It opens four output streams 
 | CMake | 3.31.6 |
 | C++ | 23 |
 
-The NDK and CMake versions are pinned rather than preferred: earlier NDKs align a library's load segments for a 4 KB page, which cannot be mapped on the 16 KB-page devices Android 15 introduced, and AGP's bundled CMake 3.22.1 has no flag mapping for C++23.
+The NDK and CMake versions are pinned so local and CI builds use the same native toolchain. NDK r28 and newer produce 16 KB-aligned native libraries by default; this project uses r29. CMake 3.20 and newer support C++23, and the project currently declares and pins 3.31.6.
 
 ```bash
 ./gradlew assembleDebug          # app plus the native library, for all four ABIs
 ./gradlew testDebugUnitTest      # parsers and arithmetic, off-device
-./gradlew connectedDebugAndroidTest   # needs a device: runs every native collector for real
+./gradlew connectedDebugAndroidTest   # needs a device: instrumented UI and JNI collector tests
 ./gradlew lint
 ```
 

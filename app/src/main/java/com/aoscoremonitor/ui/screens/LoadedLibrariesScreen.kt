@@ -11,9 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,6 +29,7 @@ import com.aoscoremonitor.diagnostics.jni.ModuleSnapshot
 import com.aoscoremonitor.ui.components.FullScreenMessage
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
+import com.aoscoremonitor.ui.components.RefreshFab
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.MonitorPreviews
@@ -66,12 +64,7 @@ private fun LoadedLibrariesContent(
         floatingActionButton = {
             // This screen does not poll — the loaded set barely changes — so taking a new reading
             // has to be something the user can ask for.
-            FloatingActionButton(onClick = onRefresh) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = stringResource(R.string.action_refresh)
-                )
-            }
+            RefreshFab(onRefresh = onRefresh, isRefreshing = uiState.isRefreshing)
         }
     ) { innerPadding ->
         val snapshot = uiState.modules

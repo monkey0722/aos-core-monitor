@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -47,29 +48,24 @@ template <typename Fn>
 }
 
 /**
- * Holds the loader open for as long as anything fetched from it is in use.
+ * The Vulkan loader, opened once and left open for the life of the process.
  *
  * dlopen rather than a link against libvulkan: linking would make the whole of
  * libsystem_monitor.so fail to load on a device with no Vulkan loader, and with it every other
  * native reading in this app. Opening it here costs one failed dlopen on such a device and lets
  * the screen say so.
+ *
+ * Never closed, which is the ordinary practice for a graphics driver on Android. A driver starts
+ * helper threads and registers pthread_key destructors of its own while an instance exists, and
+ * several do not take them down with the instance; dropping the last reference would unmap the
+ * driver underneath them, and the crash would land on a thread this app does not own — after the
+ * screen had finished loading, or on the next refresh. The cost of keeping it is one mapping in a
+ * process that has already asked for Vulkan once.
  */
-class Loader {
-public:
-    Loader() : handle_(dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL)) {}
-    ~Loader() {
-        if (handle_ != nullptr) {
-            dlclose(handle_);
-        }
-    }
-    Loader(const Loader&) = delete;
-    Loader& operator=(const Loader&) = delete;
-
-    [[nodiscard]] void* get() const { return handle_; }
-
-private:
-    void* handle_;
-};
+void* Loader() {
+    static void* const handle = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
+    return handle;
+}
 
 /** Destroys the instance however the scope is left, exception included. */
 class ScopedInstance {
@@ -275,39 +271,95 @@ void WriteLimits(JsonWriter* writer, const VkPhysicalDeviceLimits& limits) {
     writer->EndObject();
 }
 
-void WriteExtensions(JsonWriter* writer, const VulkanApi& api, VkPhysicalDevice device) {
+/** The device's extension names, or nothing where the enumeration itself failed. */
+std::optional<std::vector<std::string>> ReadExtensions(const VulkanApi& api,
+                                                       VkPhysicalDevice device) {
     uint32_t count = 0;
     if (api.EnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr) != VK_SUCCESS) {
-        return;
+        return std::nullopt;
     }
-    std::vector<VkExtensionProperties> extensions(count);
+    std::vector<VkExtensionProperties> properties(count);
     if (count > 0) {
-        if (api.EnumerateDeviceExtensionProperties(device, nullptr, &count, extensions.data()) !=
-            VK_SUCCESS) {
-            return;
+        // VK_INCOMPLETE is not a failure here any more than it is for the physical devices in
+        // Collect(): it says the list grew between the sizing call and this one, and `count` holds
+        // how many were written. Treating it as a failure would drop every extension the driver
+        // just handed over and take the whole card off the screen with them.
+        const VkResult listed =
+                api.EnumerateDeviceExtensionProperties(device, nullptr, &count, properties.data());
+        if (listed != VK_SUCCESS && listed != VK_INCOMPLETE) {
+            return std::nullopt;
         }
-        extensions.resize(count);
+        properties.resize(count);
     }
 
+    std::vector<std::string> names;
+    names.reserve(properties.size());
+    for (const VkExtensionProperties& property : properties) {
+        names.emplace_back(property.extensionName);
+    }
+    return names;
+}
+
+/** Absent where the enumeration failed, which is not the same as a device supporting none. */
+void WriteExtensions(JsonWriter* writer,
+                     const std::optional<std::vector<std::string>>& extensions) {
+    if (!extensions.has_value()) {
+        return;
+    }
     writer->Key("extensions").BeginArray();
-    for (const VkExtensionProperties& extension : extensions) {
-        writer->Value(extension.extensionName);
+    for (const std::string& name : *extensions) {
+        writer->Value(name);
     }
     writer->EndArray();
 }
 
+/**
+ * Whether this device can be asked which driver is behind it.
+ *
+ * Three separate conditions, and none of them implies another. `vkGetPhysicalDeviceProperties2` is
+ * the entry point the query is chained onto and reached core in Vulkan 1.1; the structure being
+ * chained, `VkPhysicalDeviceDriverProperties`, reached core in 1.2 and exists below that only where
+ * the device enumerates `VK_KHR_driver_properties`. Chaining a structure a device supports neither
+ * way is not something an implementation is required to tolerate, so it is not chained.
+ *
+ * Asked per physical device rather than per instance. The device reports its own API version, which
+ * is not the version the instance was created with and need not be the same on two devices of one
+ * machine — a discrete GPU and a software rasteriser in the same process routinely differ.
+ */
+bool CanQueryDriver(const VulkanApi& api, uint32_t device_api_version,
+                    const std::optional<std::vector<std::string>>& extensions) {
+    if (api.GetPhysicalDeviceProperties2 == nullptr) {
+        return false;
+    }
+    if (device_api_version >= VK_API_VERSION_1_2) {
+        return true;
+    }
+    if (!extensions.has_value()) {
+        return false;
+    }
+    return std::find(extensions->begin(), extensions->end(),
+                     VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME) != extensions->end();
+}
+
 void WriteDevice(JsonWriter* writer, const VulkanApi& api, VkPhysicalDevice device) {
+    // The 1.0 query first, because it is the one every implementation has and because what it
+    // reports — this device's own API version — is what decides whether the driver structure below
+    // may be chained at all.
+    VkPhysicalDeviceProperties base = {};
+    api.GetPhysicalDeviceProperties(device, &base);
+
+    const std::optional<std::vector<std::string>> extensions = ReadExtensions(api, device);
+    const bool driver_query = CanQueryDriver(api, base.apiVersion, extensions);
+
     VkPhysicalDeviceDriverProperties driver = {};
     driver.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
 
     VkPhysicalDeviceProperties2 properties2 = {};
     properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-    properties2.pNext = &driver;
-
-    if (api.GetPhysicalDeviceProperties2 != nullptr) {
+    properties2.properties = base;
+    if (driver_query) {
+        properties2.pNext = &driver;
         api.GetPhysicalDeviceProperties2(device, &properties2);
-    } else {
-        api.GetPhysicalDeviceProperties(device, &properties2.properties);
     }
     const VkPhysicalDeviceProperties& properties = properties2.properties;
 
@@ -326,10 +378,13 @@ void WriteDevice(JsonWriter* writer, const VulkanApi& api, VkPhysicalDevice devi
     // What changes when the driver is updated, which is the one identifier that does.
     writer->Field("pipeline_cache_uuid", HexBytes(properties.pipelineCacheUUID, VK_UUID_SIZE));
 
-    // VkPhysicalDeviceDriverProperties reached core in Vulkan 1.2. A 1.1 driver answers the
-    // properties2 query but leaves a structure it does not know untouched, so the zero it was
-    // initialised with is how "this driver does not report a driver id" arrives — no VkDriverId is
-    // zero.
+    // Said per device, because it is decided per device: whether this one could be asked which
+    // driver is behind it. Where it could not, the keys below are absent because no query was made;
+    // where it could and they are still absent, the driver was asked and did not answer — it may
+    // leave a structure it supports untouched, and the zero it was initialised with is how that
+    // arrives, since no VkDriverId is zero.
+    writer->Field("driver_query_available", driver_query);
+
     if (driver.driverID != 0) {
         const std::string_view name = DriverIdName(driver.driverID);
         if (!name.empty()) {
@@ -344,14 +399,32 @@ void WriteDevice(JsonWriter* writer, const VulkanApi& api, VkPhysicalDevice devi
     WriteLimits(writer, properties.limits);
     WriteMemory(writer, api, device);
     WriteQueueFamilies(writer, api, device);
-    WriteExtensions(writer, api, device);
+    WriteExtensions(writer, extensions);
 }
 
-/** Fetches the instance-level functions. False when one that is core in 1.0 is missing. */
+/**
+ * Fetches `vkDestroyInstance` on its own, ahead of everything else.
+ *
+ * It is the one function whose absence would strand the instance that was just created, so it is
+ * resolved first and the guard is built from it before anything that can leave the scope runs.
+ * `vkGetInstanceProcAddr` is required to answer for a core 1.0 entry point given a live instance,
+ * and the loader exports the symbol directly as well — a loader that answers one and not the other
+ * still gets its instance destroyed.
+ */
+PFN_vkDestroyInstance ResolveDestroyInstance(PFN_vkGetInstanceProcAddr get, void* loader,
+                                             VkInstance instance) {
+    const auto destroy = Resolve<PFN_vkDestroyInstance>(get, instance, "vkDestroyInstance");
+    if (destroy != nullptr) {
+        return destroy;
+    }
+    return reinterpret_cast<PFN_vkDestroyInstance>(dlsym(loader, "vkDestroyInstance"));
+}
+
+/** Fetches the remaining instance-level functions. False when one that is core in 1.0 is missing.
+ */
 bool ResolveInstanceFunctions(VulkanApi* api, VkInstance instance) {
     const PFN_vkGetInstanceProcAddr get = api->GetInstanceProcAddr;
 
-    api->DestroyInstance = Resolve<PFN_vkDestroyInstance>(get, instance, "vkDestroyInstance");
     api->EnumeratePhysicalDevices =
             Resolve<PFN_vkEnumeratePhysicalDevices>(get, instance, "vkEnumeratePhysicalDevices");
     api->GetPhysicalDeviceProperties = Resolve<PFN_vkGetPhysicalDeviceProperties>(
@@ -369,7 +442,7 @@ bool ResolveInstanceFunctions(VulkanApi* api, VkInstance instance) {
     api->GetPhysicalDeviceProperties2 = Resolve<PFN_vkGetPhysicalDeviceProperties2>(
             get, instance, "vkGetPhysicalDeviceProperties2");
 
-    return api->DestroyInstance != nullptr && api->EnumeratePhysicalDevices != nullptr &&
+    return api->EnumeratePhysicalDevices != nullptr &&
            api->GetPhysicalDeviceProperties != nullptr &&
            api->GetPhysicalDeviceMemoryProperties != nullptr &&
            api->GetPhysicalDeviceQueueFamilyProperties != nullptr &&
@@ -380,10 +453,8 @@ std::string Collect() {
     JsonWriter writer;
     writer.BeginObject();
 
-    // Declared before the instance below, so that the instance — which holds pointers into this
-    // library — is destroyed before the library is closed.
-    const Loader loader;
-    if (loader.get() == nullptr) {
+    void* const loader = Loader();
+    if (loader == nullptr) {
         writer.Field("loader_present", false);
         writer.EndObject();
         return writer.Take();
@@ -391,8 +462,8 @@ std::string Collect() {
     writer.Field("loader_present", true);
 
     VulkanApi api;
-    api.GetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
-            dlsym(loader.get(), "vkGetInstanceProcAddr"));
+    api.GetInstanceProcAddr =
+            reinterpret_cast<PFN_vkGetInstanceProcAddr>(dlsym(loader, "vkGetInstanceProcAddr"));
     if (api.GetInstanceProcAddr == nullptr) {
         writer.Field("instance_ok", false);
         writer.Field("instance_error", "initialization_failed");
@@ -445,9 +516,14 @@ std::string Collect() {
         return writer.Take();
     }
 
-    const bool resolved = ResolveInstanceFunctions(&api, instance);
+    // Resolved and guarded before anything else runs against the instance: every branch below this
+    // point can leave the scope, and the guard is the only thing that destroys what was just
+    // created. A null here is a loader that answers neither query for a core 1.0 entry point, which
+    // leaves no way to destroy the instance at all — so the collector stops rather than going on to
+    // read a device with an instance it cannot give back.
+    api.DestroyInstance = ResolveDestroyInstance(api.GetInstanceProcAddr, loader, instance);
     const ScopedInstance scoped(api.DestroyInstance, instance);
-    if (!resolved) {
+    if (api.DestroyInstance == nullptr || !ResolveInstanceFunctions(&api, instance)) {
         writer.Field("instance_ok", false);
         writer.Field("instance_error", "initialization_failed");
         writer.EndObject();

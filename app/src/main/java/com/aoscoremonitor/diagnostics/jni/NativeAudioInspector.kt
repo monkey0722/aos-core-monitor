@@ -86,7 +86,18 @@ data class AudioHardware(
     val channelCount: Int? = null,
     val format: String? = null,
     val formatUnnameable: Boolean = false
-)
+) {
+    /**
+     * Whether the queries answered anything at all.
+     *
+     * The collector writes this object whenever the device is new enough to be asked, so its
+     * presence says the questions were put — not that the HAL answered them. A legacy shared stream
+     * answers all three with an error, and the screen has to say that rather than show a heading
+     * with nothing under it.
+     */
+    val hasReadings: Boolean
+        get() = sampleRate != null || channelCount != null || format != null || formatUnnameable
+}
 
 /**
  * One request, and the two answers to it.

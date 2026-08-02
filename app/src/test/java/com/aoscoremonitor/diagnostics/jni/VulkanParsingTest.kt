@@ -10,7 +10,7 @@ class VulkanParsingTest {
 
     @Test
     fun readsADeviceAndItsDriver() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """
             {"loader_present":true,"instance_version":"1.3.275","instance_ok":true,"devices":[
               {"name":"Adreno (TM) 740","type":"integrated_gpu","api_version":"1.3.275",
@@ -39,15 +39,16 @@ class VulkanParsingTest {
         assertEquals("512.780.0", device.driverVersion)
     }
 
-    /** A 1.1 device answers the properties query and says nothing about its driver. */
+    /** A 1.1 device without the extension was never asked, and says so. */
     @Test
     fun aDeviceWithoutDriverPropertiesReportsNoneRatherThanAnEmptyString() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """
             {"loader_present":true,"instance_ok":true,"devices":[
               {"name":"Mali-G78","type":"integrated_gpu","api_version":"1.1.128",
                "vendor_id":"0x13b5","device_id":"0x70930000",
-               "driver_version_raw":1,"driver_version":"0.0.1"}]}
+               "driver_version_raw":1,"driver_version":"0.0.1",
+               "driver_query_available":false}]}
             """.trimIndent()
         )
 
@@ -56,11 +57,41 @@ class VulkanParsingTest {
         assertNull(device.driverId)
         assertNull(device.driverName)
         assertNull(device.conformanceVersion)
+        assertFalse(device.driverQueryAvailable)
+    }
+
+    /**
+     * Whether the driver could be asked is a fact about one device, not about the instance.
+     *
+     * The query needs Vulkan 1.2 or `VK_KHR_driver_properties`, and both are reported by the
+     * physical device. Two devices behind one loader — a GPU and a software rasteriser, which is
+     * what an emulator shows — can differ, and a flag carried once for the instance could not say
+     * that the first was asked and answered while the second was never asked at all.
+     */
+    @Test
+    fun theDriverQueryIsAnsweredPerDeviceRatherThanPerInstance() {
+        val snapshot = requireVulkan(
+            """
+            {"loader_present":true,"instance_ok":true,"devices":[
+              {"name":"Adreno","type":"integrated_gpu","api_version":"1.3.275","vendor_id":"0x1",
+               "device_id":"0x2","driver_version_raw":1,"driver_version":"0.0.1",
+               "driver_query_available":true,"driver_id":8,"driver_id_name":"qualcomm_proprietary"},
+              {"name":"Mali-G78","type":"integrated_gpu","api_version":"1.1.128","vendor_id":"0x3",
+               "device_id":"0x4","driver_version_raw":1,"driver_version":"0.0.1",
+               "driver_query_available":false}]}
+            """.trimIndent()
+        )
+
+        val (asked, notAsked) = snapshot.devices
+        assertTrue(asked.driverQueryAvailable)
+        assertEquals("qualcomm_proprietary", asked.driverIdName)
+        assertFalse(notAsked.driverQueryAvailable)
+        assertNull(notAsked.driverId)
     }
 
     @Test
     fun readsHeapsTypesAndQueueFamilies() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """
             {"loader_present":true,"instance_ok":true,"devices":[
               {"name":"g","type":"integrated_gpu","api_version":"1.3.0","vendor_id":"0x1",
@@ -88,7 +119,7 @@ class VulkanParsingTest {
 
     @Test
     fun extensionsArriveSorted() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """
             {"loader_present":true,"instance_ok":true,"devices":[
               {"name":"g","type":"cpu","api_version":"1.0.0","vendor_id":"0x1","device_id":"0x2",
@@ -112,7 +143,7 @@ class VulkanParsingTest {
      */
     @Test
     fun aDeviceWithNoLoaderSaysSoRatherThanReportingNoDevices() {
-        val snapshot = parseVulkan("""{"loader_present":false}""")
+        val snapshot = requireVulkan("""{"loader_present":false}""")
 
         assertFalse(snapshot.loaderPresent)
         assertFalse(snapshot.instanceCreated)
@@ -122,7 +153,7 @@ class VulkanParsingTest {
 
     @Test
     fun aFailedInstanceCarriesTheResultThatStoppedIt() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """{"loader_present":true,"instance_version":"1.1.0","instance_ok":false,
                 "instance_error":"incompatible_driver"}"""
         )
@@ -136,7 +167,7 @@ class VulkanParsingTest {
     /** A result this app has no name for crosses as its number rather than as a wrong name. */
     @Test
     fun anUnnamedResultCarriesItsCode() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """{"loader_present":true,"instance_ok":false,"instance_error_code":-13}"""
         )
 
@@ -146,7 +177,7 @@ class VulkanParsingTest {
 
     @Test
     fun anInstanceThatEnumeratedNothingIsNotAFailure() {
-        val snapshot = parseVulkan("""{"loader_present":true,"instance_ok":true,"devices":[]}""")
+        val snapshot = requireVulkan("""{"loader_present":true,"instance_ok":true,"devices":[]}""")
 
         assertTrue(snapshot.instanceCreated)
         assertTrue(snapshot.devices.isEmpty())
@@ -154,7 +185,7 @@ class VulkanParsingTest {
 
     @Test
     fun anUnnamedDeviceTypeIsUnknownRatherThanAGuess() {
-        val snapshot = parseVulkan(
+        val snapshot = requireVulkan(
             """
             {"loader_present":true,"instance_ok":true,"devices":[
               {"name":"g","type":"quantum_gpu","api_version":"1.3.0","vendor_id":"0x1",
@@ -164,4 +195,39 @@ class VulkanParsingTest {
 
         assertEquals(VulkanDeviceType.Unknown, snapshot.devices.single().type)
     }
+
+    /**
+     * A collector that produced nothing is not a device with nothing.
+     *
+     * `ReturnJson` hands back an empty object when a collector throws, and a snapshot built from one
+     * would carry `loaderPresent = false` — the screen would then tell the user this phone has no
+     * Vulkan loader, which is the app describing its own failure as a fact about the device.
+     */
+    @Test
+    fun anEmptyDocumentIsNoReadingRatherThanADeviceWithNoLoader() {
+        assertNull(parseVulkan("{}"))
+    }
+
+    /** A driver that fills its name in with nothing has reported nothing. */
+    @Test
+    fun aBlankDriverNameIsNoNameRatherThanAnEmptyRow() {
+        val snapshot = requireVulkan(
+            """
+            {"loader_present":true,"instance_ok":true,"driver_query_available":true,"devices":[
+              {"name":"g","type":"integrated_gpu","api_version":"1.3.0","vendor_id":"0x1",
+               "device_id":"0x2","driver_version_raw":1,"driver_version":"0.0.1",
+               "driver_id":6,"driver_id_name":"mesa_turnip","driver_name":"","driver_info":"  "}]}
+            """.trimIndent()
+        )
+
+        val device = snapshot.devices.single()
+        assertNull(device.driverName)
+        assertNull(device.driverInfo)
+        // The id survives it: that is the reading, and it is there whether or not the prose is.
+        assertEquals("mesa_turnip", device.driverIdName)
+    }
+
+    /** The parser answers for a document; a null one means the collector produced none. */
+    private fun requireVulkan(json: String): VulkanSnapshot =
+        requireNotNull(parseVulkan(json)) { "parseVulkan returned no reading for: $json" }
 }
