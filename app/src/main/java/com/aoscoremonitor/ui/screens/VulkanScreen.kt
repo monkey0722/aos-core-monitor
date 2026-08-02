@@ -72,8 +72,22 @@ private fun VulkanContent(uiState: VulkanUiState, onNavigateBack: () -> Unit, on
             }
         }
     ) { innerPadding ->
+        // Checked here rather than folded into unavailableMessage, so that the compiler carries the
+        // result: with the null case decided in another function nothing but a `!!` reached the
+        // readings below, and an edit that dropped a branch there would have compiled and thrown.
         val snapshot = uiState.vulkan
-        val message = unavailableMessage(snapshot, uiState.hasLoaded)
+        if (snapshot == null) {
+            FullScreenMessage(
+                message = stringResource(
+                    if (uiState.hasLoaded) R.string.vulkan_unavailable else R.string.vulkan_loading
+                ),
+                icon = Icons.Default.ViewInAr,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@MonitorScaffold
+        }
+
+        val message = unavailableMessage(snapshot)
         if (message != null) {
             FullScreenMessage(
                 message = message,
@@ -95,7 +109,7 @@ private fun VulkanContent(uiState: VulkanUiState, onNavigateBack: () -> Unit, on
                     title = stringResource(R.string.vulkan_summary_section),
                     subtitle = pluralStringResource(
                         R.plurals.vulkan_summary,
-                        snapshot!!.devices.size,
+                        snapshot.devices.size,
                         snapshot.devices.size,
                         snapshot.instanceVersion.orEmpty()
                     ),
@@ -103,7 +117,7 @@ private fun VulkanContent(uiState: VulkanUiState, onNavigateBack: () -> Unit, on
                 )
             }
 
-            snapshot!!.devices.forEachIndexed { index, device ->
+            snapshot.devices.forEachIndexed { index, device ->
                 item(key = "device-$index") { DeviceCard(device) }
                 item(key = "memory-$index") { MemoryCard(device) }
                 item(key = "queues-$index") { QueueCard(device) }
@@ -127,17 +141,18 @@ private fun VulkanContent(uiState: VulkanUiState, onNavigateBack: () -> Unit, on
 }
 
 /**
- * The wording for a screen with nothing to show, or null when there is something.
+ * The wording for a reading that found no devices, or null when it found some.
  *
- * Four ways of having no devices, which are four different statements: the app's own library did
- * not load, the device has no Vulkan loader at all, the loader is there with no driver behind it,
- * and a driver that started and enumerated nothing. Collapsing them into one "unavailable" would
- * throw away the only part of the reading that survived.
+ * Three ways of having none, which are three different statements: the device has no Vulkan loader
+ * at all, the loader is there with no driver behind it, and a driver that started and enumerated
+ * nothing. Collapsing them into one "unavailable" would throw away the only part of the reading
+ * that survived.
+ *
+ * A snapshot that was never taken is the caller's case, not this one — it is the only branch that
+ * decides whether the rest of the screen can run, so it stays where the compiler can see it.
  */
 @Composable
-private fun unavailableMessage(snapshot: VulkanSnapshot?, hasLoaded: Boolean): String? = when {
-    snapshot == null && !hasLoaded -> stringResource(R.string.vulkan_loading)
-    snapshot == null -> stringResource(R.string.vulkan_unavailable)
+private fun unavailableMessage(snapshot: VulkanSnapshot): String? = when {
     !snapshot.loaderPresent -> stringResource(R.string.vulkan_no_loader)
     !snapshot.instanceCreated && snapshot.instanceError != null ->
         stringResource(R.string.vulkan_instance_failed, snapshot.instanceError)

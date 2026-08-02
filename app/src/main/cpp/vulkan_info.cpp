@@ -455,12 +455,24 @@ std::string Collect() {
     }
     writer.Field("instance_ok", true);
 
+    // Both results are checked, because the vector is sized from the first call and filled by the
+    // second: a failure in either leaves entries value-initialised — a null VkPhysicalDevice — and
+    // the loop below would hand one to vkGetPhysicalDeviceProperties. VK_INCOMPLETE is not a
+    // failure; it says the list grew between the two calls and device_count holds how many were
+    // written.
     uint32_t device_count = 0;
-    api.EnumeratePhysicalDevices(instance, &device_count, nullptr);
+    if (api.EnumeratePhysicalDevices(instance, &device_count, nullptr) != VK_SUCCESS) {
+        device_count = 0;
+    }
     std::vector<VkPhysicalDevice> devices(device_count);
     if (device_count > 0) {
-        api.EnumeratePhysicalDevices(instance, &device_count, devices.data());
-        devices.resize(device_count);
+        const VkResult listed =
+                api.EnumeratePhysicalDevices(instance, &device_count, devices.data());
+        if (listed != VK_SUCCESS && listed != VK_INCOMPLETE) {
+            devices.clear();
+        } else {
+            devices.resize(device_count);
+        }
     }
 
     writer.Key("devices").BeginArray();

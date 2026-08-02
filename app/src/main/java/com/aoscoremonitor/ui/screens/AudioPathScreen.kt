@@ -138,8 +138,10 @@ private fun AudioPathContent(uiState: AudioPathUiState, onNavigateBack: () -> Un
 private fun ProbeCard(probe: AudioProbe, modifier: Modifier = Modifier) {
     MonitorCard(
         modifier = modifier,
-        // The one place a status is earned: a request the system would not open at all is a
-        // different outcome from one it answered, and StatusRow's wording carries it to TalkBack.
+        // The colour is decoration and nothing more — MonitorCard's status sets the container and
+        // content colours and adds no semantics, so it says nothing to a screen reader. What
+        // carries the refusal is the sentence in the card body, which is why that sentence is
+        // there rather than left to the shade of the card.
         status = if (probe.opened) ReadingStatus.Neutral else ReadingStatus.Warning
     ) {
         Text(
