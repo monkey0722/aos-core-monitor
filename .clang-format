@@ -1,20 +1,22 @@
 ---
 Language: Cpp
-# BasedOnStyle: Google
+# CI pins clang-format 18, so keep this file compatible with that release.
+BasedOnStyle: Google
 AccessModifierOffset: -1
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
 AlignEscapedNewlines: Left
-AlignOperands: true
-AlignTrailingComments: true
+AlignOperands: Align
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Inline
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: Yes
@@ -22,11 +24,10 @@ BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:
   AfterClass: false
-  AfterControlStatement: false
+  AfterControlStatement: Never
   AfterEnum: false
   AfterFunction: false
   AfterNamespace: false
-  AfterObjCDeclaration: false
   AfterStruct: false
   AfterUnion: false
   AfterExternBlock: false
@@ -38,21 +39,17 @@ BraceWrapping:
   SplitEmptyNamespace: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
-BreakBeforeInheritanceComma: false
 BreakInheritanceList: BeforeColon
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: BeforeColon
-BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: true
 ColumnLimit: 100
 CommentPragmas: '^ IWYU pragma:'
 CompactNamespaces: false
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
-DerivePointerAlignment: true
+DerivePointerAlignment: false
 DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
@@ -75,17 +72,12 @@ IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 2
 IndentWrappedFunctionNames: false
-JavaScriptQuotes: Leave
-JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
-ObjCBinPackProtocolList: Never
-ObjCBlockIndentWidth: 2
-ObjCSpaceAfterProperty: false
-ObjCSpaceBeforeProtocolList: true
+PackConstructorInitializers: NextLine
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakComment: 300
@@ -134,13 +126,11 @@ SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: true
-SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 2
-SpacesInAngles: false
-SpacesInContainerLiterals: true
-SpacesInCStyleCastParentheses: false
-SpacesInParentheses: false
+SpacesInAngles: Never
+SpacesInParens: Never
 SpacesInSquareBrackets: false
+# clang-format 18 cannot select C++23 explicitly; Auto is the compatible choice until CI upgrades.
 Standard: Auto
 TabWidth: 2
 UseTab: Never
