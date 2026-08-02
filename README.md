@@ -2,7 +2,7 @@
 
 Comprehensive monitoring software for deeply understanding the internal structure of AOS. Because sometimes you need to know what your Android system is secretly plotting.
 
-Twenty screens, each with one subject. Everything shown is measured on the device — where a reading cannot be taken, the screen says which reading and why, rather than filling the gap with a plausible number.
+Twenty-one screens, each with one subject. Everything shown is measured on the device — where a reading cannot be taken, the screen says which reading and why, rather than filling the gap with a plausible number.
 
 ## What it inspects
 
@@ -14,7 +14,11 @@ Twenty screens, each with one subject. Everything shown is measured on the devic
 
 **Display, frames and the GPU** — Display, Frame Pacing, Vulkan
 
-The native screens read what the Java API cannot reach: `dl_iterate_phdr` for the linker's module list, `mallinfo2` for the native heap, `sched_getaffinity` for a thread's CPU mask, `readlink` and `fcntl` for the open descriptors, the capability masks the kernel prints only in `/proc/self/status`, and Vulkan — a C API the platform has never given Java a binding to — for the GPU's driver, memory heaps and queue families. They are served by one shared library, `libsystem_monitor`, built from `app/src/main/cpp`.
+**Audio** — Audio Path
+
+The native screens read what the Java API cannot reach: `dl_iterate_phdr` for the linker's module list, `mallinfo2` for the native heap, `sched_getaffinity` for a thread's CPU mask, `readlink` and `fcntl` for the open descriptors, the capability masks the kernel prints only in `/proc/self/status`, and Vulkan — a C API the platform has never given Java a binding to — for the GPU's driver, memory heaps and queue families.
+
+Audio Path is the one that asks rather than reads. It opens four output streams with different requests and reports what the system granted against what was wanted — whether the exclusive MMAP path was on offer, what burst size the stream actually settled on, and what the hardware underneath runs at, which `AAudioStream_getHardwareSampleRate` reports and nothing in the framework does. None of the streams is ever started, so nothing is played and no audio focus is taken; the cost of stopping there is the underrun count, which means nothing on a stream that never ran. They are served by one shared library, `libsystem_monitor`, built from `app/src/main/cpp`.
 
 ## Building
 

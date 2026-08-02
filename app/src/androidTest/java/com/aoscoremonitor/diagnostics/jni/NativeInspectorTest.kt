@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -225,6 +226,57 @@ class NativeInspectorTest {
             "Repeated readings disagreed about how many devices there are",
             1,
             readings.map { it?.devices?.size }.distinct().size
+        )
+    }
+
+    /**
+     * Every probe puts its request and comes back with either an answer or a reason.
+     *
+     * A device with no audio HAL may refuse all four, and an emulator often refuses the exclusive
+     * one, so which of them open is not pinned. What is pinned is that a probe never reports
+     * readings it did not take, and never fails silently.
+     */
+    @Test
+    fun audioInspectorPutsEveryRequestToTheSystem() = runBlocking {
+        val snapshot = NativeAudioInspector().read()
+
+        assertNotNull("The audio path could not be read", snapshot)
+        assertEquals("Not every probe came back", 4, snapshot!!.probes.size)
+
+        snapshot.probes.forEach { probe ->
+            if (probe.opened) {
+                assertNotNull("${probe.label} opened and reported nothing", probe.granted)
+                // The collector writes the hardware object whenever the API-34 guard passes, so a
+                // device that can take the reading and an open stream must produce one.
+                if (snapshot.hardwareQueryAvailable) {
+                    assertNotNull("${probe.label} took no hardware reading", probe.hardware)
+                }
+            } else {
+                assertNotNull("${probe.label} was refused without saying why", probe.openError)
+                assertNull("${probe.label} was refused and still reported readings", probe.granted)
+            }
+        }
+    }
+
+    /**
+     * The probe streams are closed, not leaked.
+     *
+     * AAudio caps how many streams a process may hold open, so a collector that forgot to close
+     * them would pass once and then start reporting refusals — which is what the screen's refresh
+     * would do to it. Four readings is more than the cap allows to be leaked.
+     */
+    @Test
+    fun audioProbeStreamsAreClosedBetweenReadings() = runBlocking {
+        val inspector = NativeAudioInspector()
+        val opened = (1..4).map { reading ->
+            val snapshot = inspector.read()
+            assertNotNull("Reading $reading came back empty", snapshot)
+            snapshot!!.probes.count { it.opened }
+        }
+
+        assertTrue(
+            "Later readings opened fewer streams than the first, which is what a leak looks like: $opened",
+            opened.last() >= opened.first()
         )
     }
 }

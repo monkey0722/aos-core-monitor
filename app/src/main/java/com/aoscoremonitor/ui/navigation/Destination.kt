@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.DataUsage
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Monitor
@@ -218,6 +219,14 @@ sealed interface Destination : NavKey {
         @Transient
         override val icon: ImageVector = Icons.Default.ViewInAr
     }
+
+    @Serializable
+    data object AudioPath : Destination {
+        override val titleRes get() = R.string.audio_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.GraphicEq
+    }
 }
 
 /** A named run of the home grid. */
@@ -272,7 +281,10 @@ val HomeGroups: List<DestinationGroup> = listOf(
     DestinationGroup(
         R.string.home_group_display,
         listOf(Destination.DisplayPanel, Destination.FramePacing, Destination.Vulkan)
-    )
+    ),
+    // A group of one. The audio path is not a display reading and not a process reading, and
+    // filing it under either would say something untrue about it to make the grid look even.
+    DestinationGroup(R.string.home_group_audio, listOf(Destination.AudioPath))
 )
 
 /** Every destination the grid offers, flattened. What the navigation test walks. */
@@ -303,4 +315,5 @@ val Destination.shortTitleRes: Int
         Destination.DisplayPanel -> R.string.destination_display
         Destination.FramePacing -> R.string.destination_frames
         Destination.Vulkan -> R.string.destination_vulkan
+        Destination.AudioPath -> R.string.destination_audio
     }

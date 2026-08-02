@@ -24,6 +24,7 @@ add_library(
     fd_info.cpp
     process_creds.cpp
     vulkan_info.cpp
+    audio_path.cpp
 )
 
 # The conversion warnings earn their place here: this code carries kernel counters — size_t,
@@ -53,4 +54,8 @@ target_link_options(system_monitor PRIVATE "-Wl,--version-script=${version_scrip
 # Editing the script alone is a reason to relink.
 set_target_properties(system_monitor PROPERTIES LINK_DEPENDS "${version_script}")
 
-target_link_libraries(system_monitor PRIVATE log)
+# aaudio is linked rather than dlopen'd, which vulkan_info.cpp does for libvulkan: that loader is
+# only present where a GPU driver is, so linking it would take the whole library down on a device
+# without one. libaaudio has shipped on every device since API 26 and this app's minSdk is 33, so
+# there is no such device to guard against.
+target_link_libraries(system_monitor PRIVATE log aaudio)

@@ -8,6 +8,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.aoscoremonitor.ui.screens.AudioPathScreen
 import com.aoscoremonitor.ui.screens.CpuCoresScreen
 import com.aoscoremonitor.ui.screens.DescriptorsScreen
 import com.aoscoremonitor.ui.screens.DisplayScreen
@@ -95,6 +96,7 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.DisplayPanel> { DisplayScreen(onNavigateBack = goBack) }
                 entry<Destination.FramePacing> { FramePacingScreen(onNavigateBack = goBack) }
                 entry<Destination.Vulkan> { VulkanScreen(onNavigateBack = goBack) }
+                entry<Destination.AudioPath> { AudioPathScreen(onNavigateBack = goBack) }
             }
         }
     )
