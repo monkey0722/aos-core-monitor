@@ -30,14 +30,14 @@ void LogCollectorFailure(const char* what);
  */
 template <typename Collect>
 jstring ReturnJson(JNIEnv* env, Collect collect) noexcept {
-  try {
-    return env->NewStringUTF(collect().c_str());
-  } catch (const std::exception& failure) {
-    LogCollectorFailure(failure.what());
-  } catch (...) {
-    LogCollectorFailure("unknown exception");
-  }
-  return env->NewStringUTF("{}");
+    try {
+        return env->NewStringUTF(collect().c_str());
+    } catch (const std::exception& failure) {
+        LogCollectorFailure(failure.what());
+    } catch (...) {
+        LogCollectorFailure("unknown exception");
+    }
+    return env->NewStringUTF("{}");
 }
 
 /**
@@ -68,14 +68,14 @@ using Reading = std::expected<T, int>;
  */
 template <typename T, int Base = 10>
 [[nodiscard]] std::optional<T> ParseNumber(std::string_view text) {
-  T value{};
-  const char* const first = text.data();
-  const char* const last = first + text.size();
-  const auto [end, error] = std::from_chars(first, last, value, Base);
-  if (error != std::errc() || end != last) {
-    return std::nullopt;
-  }
-  return value;
+    T value{};
+    const char* const first = text.data();
+    const char* const last = first + text.size();
+    const auto [end, error] = std::from_chars(first, last, value, Base);
+    if (error != std::errc() || end != last) {
+        return std::nullopt;
+    }
+    return value;
 }
 
 /**
@@ -86,18 +86,18 @@ template <typename T, int Base = 10>
  */
 template <typename T, int Base = 10>
 [[nodiscard]] std::optional<T> ParseLeadingNumber(std::string_view text) {
-  const size_t start = text.find_first_not_of(" \t");
-  if (start == std::string_view::npos) {
-    return std::nullopt;
-  }
-  T value{};
-  const char* const first = text.data() + start;
-  const char* const last = text.data() + text.size();
-  const auto [end, error] = std::from_chars(first, last, value, Base);
-  if (error != std::errc() || end == first) {
-    return std::nullopt;
-  }
-  return value;
+    const size_t start = text.find_first_not_of(" \t");
+    if (start == std::string_view::npos) {
+        return std::nullopt;
+    }
+    T value{};
+    const char* const first = text.data() + start;
+    const char* const last = text.data() + text.size();
+    const auto [end, error] = std::from_chars(first, last, value, Base);
+    if (error != std::errc() || end == first) {
+        return std::nullopt;
+    }
+    return value;
 }
 
 /**
@@ -142,55 +142,55 @@ using StatusLines = std::vector<std::pair<std::string, std::string>>;
  * Structure is the caller's responsibility; the writer only tracks where a comma belongs.
  */
 class JsonWriter {
- public:
-  JsonWriter& BeginObject();
-  JsonWriter& EndObject();
-  JsonWriter& BeginArray();
-  JsonWriter& EndArray();
+public:
+    JsonWriter& BeginObject();
+    JsonWriter& EndObject();
+    JsonWriter& BeginArray();
+    JsonWriter& EndArray();
 
-  JsonWriter& Key(std::string_view key);
+    JsonWriter& Key(std::string_view key);
 
-  JsonWriter& Value(std::string_view value);
-  JsonWriter& Value(uint64_t value);
-  /** For counters the kernel reports signed — a thread's nice value runs from -20. */
-  JsonWriter& Value(int64_t value);
-  JsonWriter& Value(bool value);
-  /**
-   * Keeps a C string a string.
-   *
-   * Without it, `const char*` converts to `bool` by a standard conversion and to `string_view`
-   * only by a user-defined one, so overload resolution silently picks the boolean overload and
-   * `uname().machine` is written as `true`.
-   */
-  JsonWriter& Value(const char* value);
-  JsonWriter& Field(std::string_view key, std::string_view value);
-  JsonWriter& Field(std::string_view key, uint64_t value);
-  /** See [Value(int64_t)]. */
-  JsonWriter& Field(std::string_view key, int64_t value);
-  JsonWriter& Field(std::string_view key, bool value);
-  /** See [Value(const char*)] — the same overload trap applies here. */
-  JsonWriter& Field(std::string_view key, const char* value);
-  /** Writes an address as a `"0x…"` string: JSON numbers cannot hold a 64-bit pointer exactly. */
-  JsonWriter& FieldHex(std::string_view key, uint64_t value);
+    JsonWriter& Value(std::string_view value);
+    JsonWriter& Value(uint64_t value);
+    /** For counters the kernel reports signed — a thread's nice value runs from -20. */
+    JsonWriter& Value(int64_t value);
+    JsonWriter& Value(bool value);
+    /**
+     * Keeps a C string a string.
+     *
+     * Without it, `const char*` converts to `bool` by a standard conversion and to `string_view`
+     * only by a user-defined one, so overload resolution silently picks the boolean overload and
+     * `uname().machine` is written as `true`.
+     */
+    JsonWriter& Value(const char* value);
+    JsonWriter& Field(std::string_view key, std::string_view value);
+    JsonWriter& Field(std::string_view key, uint64_t value);
+    /** See [Value(int64_t)]. */
+    JsonWriter& Field(std::string_view key, int64_t value);
+    JsonWriter& Field(std::string_view key, bool value);
+    /** See [Value(const char*)] — the same overload trap applies here. */
+    JsonWriter& Field(std::string_view key, const char* value);
+    /** Writes an address as a `"0x…"` string: JSON numbers cannot hold a 64-bit pointer exactly. */
+    JsonWriter& FieldHex(std::string_view key, uint64_t value);
 
-  /**
-   * Writes the field only when the reading was taken.
-   *
-   * Absent keys, rather than nulls or zeros, are how an unavailable reading crosses to Kotlin.
-   */
-  JsonWriter& FieldIfSet(std::string_view key, const Reading<uint64_t>& value);
-  JsonWriter& FieldIfSet(std::string_view key, const Reading<std::string>& value);
+    /**
+     * Writes the field only when the reading was taken.
+     *
+     * Absent keys, rather than nulls or zeros, are how an unavailable reading crosses to Kotlin.
+     */
+    JsonWriter& FieldIfSet(std::string_view key, const Reading<uint64_t>& value);
+    JsonWriter& FieldIfSet(std::string_view key, const Reading<std::string>& value);
 
-  /** Hands over the finished document. The writer is empty afterwards. */
-  [[nodiscard]] std::string Take();
+    /** Hands over the finished document. The writer is empty afterwards. */
+    [[nodiscard]] std::string Take();
 
- private:
-  JsonWriter& ValueHex(uint64_t value);
-  void Separate();
-  void AppendEscaped(std::string_view value);
+private:
+    JsonWriter& ValueHex(uint64_t value);
+    void Separate();
+    void AppendEscaped(std::string_view value);
 
-  std::string out_;
-  bool needs_comma_ = false;
+    std::string out_;
+    bool needs_comma_ = false;
 };
 
 }  // namespace aoscm

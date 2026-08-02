@@ -33,12 +33,12 @@ using FdDir = std::unique_ptr<DIR, decltype([](DIR* dir) { closedir(dir); })>;
  * data synchronisation.
  */
 constexpr std::array<std::pair<int, const char*>, 6> kStatusFlags = {{
-    {O_APPEND, "append"},
-    {O_NONBLOCK, "nonblock"},
-    {O_DIRECT, "direct"},
-    {O_SYNC, "sync"},
-    {O_NOATIME, "noatime"},
-    {O_PATH, "path"},
+        {O_APPEND, "append"},
+        {O_NONBLOCK, "nonblock"},
+        {O_DIRECT, "direct"},
+        {O_SYNC, "sync"},
+        {O_NOATIME, "noatime"},
+        {O_PATH, "path"},
 }};
 
 /**
@@ -49,37 +49,37 @@ constexpr std::array<std::pair<int, const char*>, 6> kStatusFlags = {{
  * so a `mode_t` parameter narrows the very field it exists to read.
  */
 const char* TypeName(uint32_t mode) {
-  switch (mode & S_IFMT) {
-    case S_IFREG:
-      return "regular";
-    case S_IFDIR:
-      return "directory";
-    case S_IFCHR:
-      return "character";
-    case S_IFBLK:
-      return "block";
-    case S_IFIFO:
-      return "fifo";
-    case S_IFSOCK:
-      return "socket";
-    case S_IFLNK:
-      return "symlink";
-    default:
-      return "unknown";
-  }
+    switch (mode & S_IFMT) {
+        case S_IFREG:
+            return "regular";
+        case S_IFDIR:
+            return "directory";
+        case S_IFCHR:
+            return "character";
+        case S_IFBLK:
+            return "block";
+        case S_IFIFO:
+            return "fifo";
+        case S_IFSOCK:
+            return "socket";
+        case S_IFLNK:
+            return "symlink";
+        default:
+            return "unknown";
+    }
 }
 
 const char* AccessName(int status_flags) {
-  switch (status_flags & O_ACCMODE) {
-    case O_RDONLY:
-      return "read";
-    case O_WRONLY:
-      return "write";
-    case O_RDWR:
-      return "readwrite";
-    default:
-      return "unknown";
-  }
+    switch (status_flags & O_ACCMODE) {
+        case O_RDONLY:
+            return "read";
+        case O_WRONLY:
+            return "write";
+        case O_RDWR:
+            return "readwrite";
+        default:
+            return "unknown";
+    }
 }
 
 /**
@@ -95,18 +95,18 @@ const char* AccessName(int status_flags) {
  * back as though the process had been holding it all along.
  */
 std::vector<int> ListDescriptorNumbers() {
-  std::vector<int> numbers;
-  const FdDir descriptors{opendir("/proc/self/fd")};
-  if (!descriptors) {
-    return numbers;
-  }
-  while (const dirent* entry = readdir(descriptors.get())) {
-    if (const std::optional<int> fd = aoscm::ParseNumber<int>(entry->d_name)) {
-      numbers.push_back(*fd);
+    std::vector<int> numbers;
+    const FdDir descriptors{opendir("/proc/self/fd")};
+    if (!descriptors) {
+        return numbers;
     }
-    // Anything else is "." or "..", which readdir reports alongside the numbers.
-  }
-  return numbers;
+    while (const dirent* entry = readdir(descriptors.get())) {
+        if (const std::optional<int> fd = aoscm::ParseNumber<int>(entry->d_name)) {
+            numbers.push_back(*fd);
+        }
+        // Anything else is "." or "..", which readdir reports alongside the numbers.
+    }
+    return numbers;
 }
 
 /**
@@ -117,67 +117,68 @@ std::vector<int> ListDescriptorNumbers() {
  * that race is inherent to reading a live process and costs a field, not a wrong reading.
  */
 void WriteDescriptor(JsonWriter* writer, int fd) {
-  char link[PATH_MAX];
-  const std::string path = "/proc/self/fd/" + std::to_string(fd);
-  const ssize_t length = readlink(path.c_str(), link, sizeof(link));
-  const int link_error = length < 0 ? errno : 0;
-  if (link_error == ENOENT || link_error == EBADF) {
-    return;
-  }
-
-  writer->BeginObject();
-  writer->Field("fd", static_cast<uint64_t>(fd));
-
-  if (length >= 0) {
-    // readlink neither terminates what it writes nor fails when the buffer is short — it truncates
-    // — so the length it returns is the only thing that says where the target ends. PATH_MAX is
-    // what the kernel caps these links at, so the truncating case is unreachable here.
-    writer->Field("target", std::string_view(link, static_cast<size_t>(length)));
-  } else {
-    writer->Field("target_unavailable", aoscm::DescribeFailure(link_error));
-  }
-
-  struct stat64 info = {};
-  if (fstat64(fd, &info) != 0) {
-    writer->Field("stat_unavailable", aoscm::DescribeFailure(errno));
-  } else {
-    writer->Field("type", TypeName(info.st_mode));
-    writer->Field("inode", static_cast<uint64_t>(info.st_ino));
-    if (S_ISREG(info.st_mode)) {
-      // Only a regular file has a length worth reporting: a socket answers with zero and a device
-      // with whatever its driver felt like, neither of which is a size.
-      writer->Field("size_bytes", static_cast<uint64_t>(info.st_size));
+    char link[PATH_MAX];
+    const std::string path = "/proc/self/fd/" + std::to_string(fd);
+    const ssize_t length = readlink(path.c_str(), link, sizeof(link));
+    const int link_error = length < 0 ? errno : 0;
+    if (link_error == ENOENT || link_error == EBADF) {
+        return;
     }
-  }
 
-  const int status_flags = fcntl(fd, F_GETFL);
-  if (status_flags >= 0) {
-    writer->Field("access", AccessName(status_flags));
-    writer->Key("flags").BeginArray();
-    for (const auto& [bit, name] : kStatusFlags) {
-      if ((status_flags & bit) == bit) {
-        writer->Value(name);
-      }
+    writer->BeginObject();
+    writer->Field("fd", static_cast<uint64_t>(fd));
+
+    if (length >= 0) {
+        // readlink neither terminates what it writes nor fails when the buffer is short — it
+        // truncates — so the length it returns is the only thing that says where the target ends.
+        // PATH_MAX is what the kernel caps these links at, so the truncating case is unreachable
+        // here.
+        writer->Field("target", std::string_view(link, static_cast<size_t>(length)));
+    } else {
+        writer->Field("target_unavailable", aoscm::DescribeFailure(link_error));
     }
-    writer->EndArray();
-  }
 
-  // The descriptor flag, which is not among the status flags above: close-on-exec belongs to the
-  // descriptor rather than to the open file it names, and F_GETFD is what reports it.
-  const int descriptor_flags = fcntl(fd, F_GETFD);
-  if (descriptor_flags >= 0) {
-    writer->Field("close_on_exec", (descriptor_flags & FD_CLOEXEC) != 0);
-  }
+    struct stat64 info = {};
+    if (fstat64(fd, &info) != 0) {
+        writer->Field("stat_unavailable", aoscm::DescribeFailure(errno));
+    } else {
+        writer->Field("type", TypeName(info.st_mode));
+        writer->Field("inode", static_cast<uint64_t>(info.st_ino));
+        if (S_ISREG(info.st_mode)) {
+            // Only a regular file has a length worth reporting: a socket answers with zero and a
+            // device with whatever its driver felt like, neither of which is a size.
+            writer->Field("size_bytes", static_cast<uint64_t>(info.st_size));
+        }
+    }
 
-  // Where the next read would start. Asking for the current offset moves nothing. A pipe or a
-  // socket has no offset at all, which lseek reports as ESPIPE; the key is then left out rather
-  // than sent as a zero, which would read as "at the beginning".
-  const off64_t offset = lseek64(fd, 0, SEEK_CUR);
-  if (offset >= 0) {
-    writer->Field("offset", static_cast<uint64_t>(offset));
-  }
+    const int status_flags = fcntl(fd, F_GETFL);
+    if (status_flags >= 0) {
+        writer->Field("access", AccessName(status_flags));
+        writer->Key("flags").BeginArray();
+        for (const auto& [bit, name] : kStatusFlags) {
+            if ((status_flags & bit) == bit) {
+                writer->Value(name);
+            }
+        }
+        writer->EndArray();
+    }
 
-  writer->EndObject();
+    // The descriptor flag, which is not among the status flags above: close-on-exec belongs to the
+    // descriptor rather than to the open file it names, and F_GETFD is what reports it.
+    const int descriptor_flags = fcntl(fd, F_GETFD);
+    if (descriptor_flags >= 0) {
+        writer->Field("close_on_exec", (descriptor_flags & FD_CLOEXEC) != 0);
+    }
+
+    // Where the next read would start. Asking for the current offset moves nothing. A pipe or a
+    // socket has no offset at all, which lseek reports as ESPIPE; the key is then left out rather
+    // than sent as a zero, which would read as "at the beginning".
+    const off64_t offset = lseek64(fd, 0, SEEK_CUR);
+    if (offset >= 0) {
+        writer->Field("offset", static_cast<uint64_t>(offset));
+    }
+
+    writer->EndObject();
 }
 
 }  // namespace
@@ -194,30 +195,30 @@ void WriteDescriptor(JsonWriter* writer, int fd) {
  */
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeDescriptorInspector_getDescriptorsNative(
-    JNIEnv* env, jobject /* this */) {
-  return aoscm::ReturnJson(env, [] {
-    JsonWriter writer;
-    writer.BeginObject();
+        JNIEnv* env, jobject /* this */) {
+    return aoscm::ReturnJson(env, [] {
+        JsonWriter writer;
+        writer.BeginObject();
 
-    rlimit limit = {};
-    if (getrlimit(RLIMIT_NOFILE, &limit) == 0) {
-      // An unlimited ceiling is left out rather than published as a sentinel, so the screen has
-      // nothing to draw a headroom bar against.
-      if (limit.rlim_cur != RLIM_INFINITY) {
-        writer.Field("limit_soft", static_cast<uint64_t>(limit.rlim_cur));
-      }
-      if (limit.rlim_max != RLIM_INFINITY) {
-        writer.Field("limit_hard", static_cast<uint64_t>(limit.rlim_max));
-      }
-    }
+        rlimit limit = {};
+        if (getrlimit(RLIMIT_NOFILE, &limit) == 0) {
+            // An unlimited ceiling is left out rather than published as a sentinel, so the screen
+            // has nothing to draw a headroom bar against.
+            if (limit.rlim_cur != RLIM_INFINITY) {
+                writer.Field("limit_soft", static_cast<uint64_t>(limit.rlim_cur));
+            }
+            if (limit.rlim_max != RLIM_INFINITY) {
+                writer.Field("limit_hard", static_cast<uint64_t>(limit.rlim_max));
+            }
+        }
 
-    writer.Key("descriptors").BeginArray();
-    for (const int fd : ListDescriptorNumbers()) {
-      WriteDescriptor(&writer, fd);
-    }
-    writer.EndArray();
+        writer.Key("descriptors").BeginArray();
+        for (const int fd : ListDescriptorNumbers()) {
+            WriteDescriptor(&writer, fd);
+        }
+        writer.EndArray();
 
-    writer.EndObject();
-    return writer.Take();
-  });
+        writer.EndObject();
+        return writer.Take();
+    });
 }

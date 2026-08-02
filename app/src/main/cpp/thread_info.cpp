@@ -37,10 +37,10 @@ constexpr size_t kRtPriorityField = 37;
 constexpr uint64_t kAssumedClockTicks = 100;
 
 std::optional<std::string_view> FieldAt(const std::vector<std::string_view>& fields, size_t index) {
-  if (index >= fields.size()) {
-    return std::nullopt;
-  }
-  return fields[index];
+    if (index >= fields.size()) {
+        return std::nullopt;
+    }
+    return fields[index];
 }
 
 /**
@@ -53,45 +53,45 @@ std::optional<std::string_view> FieldAt(const std::vector<std::string_view>& fie
  * The views point into `line`, which the caller keeps alive for as long as it reads them.
  */
 std::vector<std::string_view> StatFieldsAfterComm(std::string_view line) {
-  const size_t comm_end = line.rfind(") ");
-  if (comm_end == std::string_view::npos) {
-    return {};
-  }
-
-  std::vector<std::string_view> fields;
-  size_t start = comm_end + 2;
-  while (start < line.size()) {
-    const size_t end = line.find(' ', start);
-    if (end == std::string_view::npos) {
-      fields.push_back(line.substr(start));
-      break;
+    const size_t comm_end = line.rfind(") ");
+    if (comm_end == std::string_view::npos) {
+        return {};
     }
-    fields.push_back(line.substr(start, end - start));
-    start = end + 1;
-  }
-  return fields;
+
+    std::vector<std::string_view> fields;
+    size_t start = comm_end + 2;
+    while (start < line.size()) {
+        const size_t end = line.find(' ', start);
+        if (end == std::string_view::npos) {
+            fields.push_back(line.substr(start));
+            break;
+        }
+        fields.push_back(line.substr(start, end - start));
+        start = end + 1;
+    }
+    return fields;
 }
 
 /** The scheduling policy's name, as the SCHED_* constant it came back as. */
 const char* PolicyName(int policy) {
-  switch (policy) {
-    case SCHED_OTHER:
-      return "other";
-    case SCHED_FIFO:
-      return "fifo";
-    case SCHED_RR:
-      return "rr";
-    case SCHED_BATCH:
-      return "batch";
-    case SCHED_IDLE:
-      return "idle";
+    switch (policy) {
+        case SCHED_OTHER:
+            return "other";
+        case SCHED_FIFO:
+            return "fifo";
+        case SCHED_RR:
+            return "rr";
+        case SCHED_BATCH:
+            return "batch";
+        case SCHED_IDLE:
+            return "idle";
 #ifdef SCHED_DEADLINE
-    case SCHED_DEADLINE:
-      return "deadline";
+        case SCHED_DEADLINE:
+            return "deadline";
 #endif
-    default:
-      return "unknown";
-  }
+        default:
+            return "unknown";
+    }
 }
 
 /**
@@ -99,30 +99,30 @@ const char* PolicyName(int policy) {
  * /proc/self/status's Cpus_allowed_list, and reads better than eight ones and zeros.
  */
 std::string CpuList(const cpu_set_t& mask, int cpu_count) {
-  std::string list;
-  int run_start = -1;
+    std::string list;
+    int run_start = -1;
 
-  // Runs to cpu_count inclusive so that a run reaching the last CPU is closed by the same branch
-  // as every other run, rather than needing a second copy of it after the loop.
-  for (int cpu = 0; cpu <= cpu_count; ++cpu) {
-    const bool allowed = cpu < cpu_count && CPU_ISSET(cpu, &mask);
-    if (allowed && run_start < 0) {
-      run_start = cpu;
-      continue;
+    // Runs to cpu_count inclusive so that a run reaching the last CPU is closed by the same branch
+    // as every other run, rather than needing a second copy of it after the loop.
+    for (int cpu = 0; cpu <= cpu_count; ++cpu) {
+        const bool allowed = cpu < cpu_count && CPU_ISSET(cpu, &mask);
+        if (allowed && run_start < 0) {
+            run_start = cpu;
+            continue;
+        }
+        if (!allowed && run_start >= 0) {
+            if (!list.empty()) {
+                list.push_back(',');
+            }
+            list.append(std::to_string(run_start));
+            if (cpu - 1 > run_start) {
+                list.push_back('-');
+                list.append(std::to_string(cpu - 1));
+            }
+            run_start = -1;
+        }
     }
-    if (!allowed && run_start >= 0) {
-      if (!list.empty()) {
-        list.push_back(',');
-      }
-      list.append(std::to_string(run_start));
-      if (cpu - 1 > run_start) {
-        list.push_back('-');
-        list.append(std::to_string(cpu - 1));
-      }
-      run_start = -1;
-    }
-  }
-  return list;
+    return list;
 }
 
 /**
@@ -133,70 +133,73 @@ std::string CpuList(const cpu_set_t& mask, int cpu_count) {
  * process on some kernels.
  */
 void WriteAffinity(JsonWriter* writer, pid_t task, int cpu_count) {
-  cpu_set_t mask;
-  CPU_ZERO(&mask);
-  if (sched_getaffinity(task, sizeof(mask), &mask) != 0) {
-    writer->Field("affinity_unavailable", aoscm::DescribeFailure(errno));
-    return;
-  }
-  // The cpulist alone: the count of CPUs in it was published too, and it is the length of a list
-  // the reader already has.
-  writer->Field("affinity", CpuList(mask, cpu_count));
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    if (sched_getaffinity(task, sizeof(mask), &mask) != 0) {
+        writer->Field("affinity_unavailable", aoscm::DescribeFailure(errno));
+        return;
+    }
+    // The cpulist alone: the count of CPUs in it was published too, and it is the length of a list
+    // the reader already has.
+    writer->Field("affinity", CpuList(mask, cpu_count));
 }
 
 void WriteSchedulerPolicy(JsonWriter* writer, pid_t task) {
-  const int policy = sched_getscheduler(task);
-  if (policy < 0) {
-    writer->Field("policy_unavailable", aoscm::DescribeFailure(errno));
-    return;
-  }
-  writer->Field("policy", PolicyName(policy));
+    const int policy = sched_getscheduler(task);
+    if (policy < 0) {
+        writer->Field("policy_unavailable", aoscm::DescribeFailure(errno));
+        return;
+    }
+    writer->Field("policy", PolicyName(policy));
 }
 
 void WriteThread(JsonWriter* writer, std::string_view tid_name, pid_t tid, int cpu_count) {
-  const std::string task = std::string("/proc/self/task/").append(tid_name);
-  const Reading<std::string> stat = aoscm::ReadTrimmedLine(task + "/stat");
-  if (!stat.has_value()) {
-    // The thread exited between listing the directory and reading it, which is ordinary: a thread
-    // that is gone has nothing to report and is left out rather than listed as a blank row.
-    return;
-  }
-  const std::vector<std::string_view> fields = StatFieldsAfterComm(*stat);
+    const std::string task = std::string("/proc/self/task/").append(tid_name);
+    const Reading<std::string> stat = aoscm::ReadTrimmedLine(task + "/stat");
+    if (!stat.has_value()) {
+        // The thread exited between listing the directory and reading it, which is ordinary: a
+        // thread that is gone has nothing to report and is left out rather than listed as a blank
+        // row.
+        return;
+    }
+    const std::vector<std::string_view> fields = StatFieldsAfterComm(*stat);
 
-  writer->BeginObject();
-  writer->Field("tid", static_cast<uint64_t>(tid));
+    writer->BeginObject();
+    writer->Field("tid", static_cast<uint64_t>(tid));
 
-  // comm rather than the name inside stat: the same string, but without the parentheses and the
-  // escaping that a name containing one would need.
-  const Reading<std::string> name = aoscm::ReadTrimmedLine(task + "/comm");
-  writer->FieldIfSet("name", name);
+    // comm rather than the name inside stat: the same string, but without the parentheses and the
+    // escaping that a name containing one would need.
+    const Reading<std::string> name = aoscm::ReadTrimmedLine(task + "/comm");
+    writer->FieldIfSet("name", name);
 
-  if (const auto state = FieldAt(fields, kStateField)) {
-    writer->Field("state", *state);
-  }
-  if (const auto utime = FieldAt(fields, kUtimeField).and_then(aoscm::ParseNumber<uint64_t>)) {
-    writer->Field("utime_ticks", *utime);
-  }
-  if (const auto stime = FieldAt(fields, kStimeField).and_then(aoscm::ParseNumber<uint64_t>)) {
-    writer->Field("stime_ticks", *stime);
-  }
-  if (const auto priority = FieldAt(fields, kPriorityField).and_then(aoscm::ParseNumber<int64_t>)) {
-    writer->Field("priority", *priority);
-  }
-  if (const auto nice = FieldAt(fields, kNiceField).and_then(aoscm::ParseNumber<int64_t>)) {
-    writer->Field("nice", *nice);
-  }
-  if (const auto last_cpu = FieldAt(fields, kLastCpuField).and_then(aoscm::ParseNumber<uint64_t>)) {
-    writer->Field("last_cpu", *last_cpu);
-  }
-  if (const auto rt_priority =
-          FieldAt(fields, kRtPriorityField).and_then(aoscm::ParseNumber<uint64_t>)) {
-    writer->Field("rt_priority", *rt_priority);
-  }
+    if (const auto state = FieldAt(fields, kStateField)) {
+        writer->Field("state", *state);
+    }
+    if (const auto utime = FieldAt(fields, kUtimeField).and_then(aoscm::ParseNumber<uint64_t>)) {
+        writer->Field("utime_ticks", *utime);
+    }
+    if (const auto stime = FieldAt(fields, kStimeField).and_then(aoscm::ParseNumber<uint64_t>)) {
+        writer->Field("stime_ticks", *stime);
+    }
+    if (const auto priority =
+                FieldAt(fields, kPriorityField).and_then(aoscm::ParseNumber<int64_t>)) {
+        writer->Field("priority", *priority);
+    }
+    if (const auto nice = FieldAt(fields, kNiceField).and_then(aoscm::ParseNumber<int64_t>)) {
+        writer->Field("nice", *nice);
+    }
+    if (const auto last_cpu =
+                FieldAt(fields, kLastCpuField).and_then(aoscm::ParseNumber<uint64_t>)) {
+        writer->Field("last_cpu", *last_cpu);
+    }
+    if (const auto rt_priority =
+                FieldAt(fields, kRtPriorityField).and_then(aoscm::ParseNumber<uint64_t>)) {
+        writer->Field("rt_priority", *rt_priority);
+    }
 
-  WriteSchedulerPolicy(writer, tid);
-  WriteAffinity(writer, tid, cpu_count);
-  writer->EndObject();
+    WriteSchedulerPolicy(writer, tid);
+    WriteAffinity(writer, tid, cpu_count);
+    writer->EndObject();
 }
 
 }  // namespace
@@ -213,36 +216,37 @@ void WriteThread(JsonWriter* writer, std::string_view tid_name, pid_t tid, int c
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeThreadInspector_getThreadsNative(JNIEnv* env,
                                                                                jobject /* this */) {
-  return aoscm::ReturnJson(env, [] {
-    const long configured_cpus = sysconf(_SC_NPROCESSORS_CONF);
-    const int cpu_count =
-        configured_cpus > 0 ? static_cast<int>(std::min<long>(configured_cpus, CPU_SETSIZE)) : 1;
-    const long clock_ticks = sysconf(_SC_CLK_TCK);
+    return aoscm::ReturnJson(env, [] {
+        const long configured_cpus = sysconf(_SC_NPROCESSORS_CONF);
+        const int cpu_count =
+                configured_cpus > 0 ? static_cast<int>(std::min<long>(configured_cpus, CPU_SETSIZE))
+                                    : 1;
+        const long clock_ticks = sysconf(_SC_CLK_TCK);
 
-    JsonWriter writer;
-    writer.BeginObject();
-    writer.Field("clock_ticks",
-                 clock_ticks > 0 ? static_cast<uint64_t>(clock_ticks) : kAssumedClockTicks);
+        JsonWriter writer;
+        writer.BeginObject();
+        writer.Field("clock_ticks",
+                     clock_ticks > 0 ? static_cast<uint64_t>(clock_ticks) : kAssumedClockTicks);
 
-    // The process's own mask, which is the ceiling every thread's mask sits under. Written with the
-    // same keys as a thread's so that one parser reads both.
-    WriteAffinity(&writer, 0, cpu_count);
+        // The process's own mask, which is the ceiling every thread's mask sits under. Written with
+        // the same keys as a thread's so that one parser reads both.
+        WriteAffinity(&writer, 0, cpu_count);
 
-    writer.Key("threads").BeginArray();
-    if (const TaskDir tasks{opendir("/proc/self/task")}) {
-      while (const dirent* entry = readdir(tasks.get())) {
-        const std::string_view name(entry->d_name);
-        const auto tid = aoscm::ParseNumber<pid_t>(name);
-        if (!tid.has_value()) {
-          // "." and "..", which readdir reports alongside the thread ids.
-          continue;
+        writer.Key("threads").BeginArray();
+        if (const TaskDir tasks{opendir("/proc/self/task")}) {
+            while (const dirent* entry = readdir(tasks.get())) {
+                const std::string_view name(entry->d_name);
+                const auto tid = aoscm::ParseNumber<pid_t>(name);
+                if (!tid.has_value()) {
+                    // "." and "..", which readdir reports alongside the thread ids.
+                    continue;
+                }
+                WriteThread(&writer, name, *tid, cpu_count);
+            }
         }
-        WriteThread(&writer, name, *tid, cpu_count);
-      }
-    }
-    writer.EndArray();
+        writer.EndArray();
 
-    writer.EndObject();
-    return writer.Take();
-  });
+        writer.EndObject();
+        return writer.Take();
+    });
 }
