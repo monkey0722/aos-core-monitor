@@ -10,9 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +33,7 @@ import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.MonitorTag
 import com.aoscoremonitor.ui.components.ReadingStatus
+import com.aoscoremonitor.ui.components.RefreshFab
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.MonitorPreviews
@@ -65,12 +63,7 @@ private fun AudioPathContent(uiState: AudioPathUiState, onNavigateBack: () -> Un
         floatingActionButton = {
             // Worth offering here in a way it is not on the other native screens: what the system
             // grants depends on what else is playing, so the answer can change between taps.
-            FloatingActionButton(onClick = onRefresh) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = stringResource(R.string.action_refresh)
-                )
-            }
+            RefreshFab(onRefresh = onRefresh, isRefreshing = uiState.isRefreshing)
         }
     ) { innerPadding ->
         val snapshot = uiState.audio
@@ -296,6 +289,16 @@ private fun HardwareBlock(hardware: AudioHardware, isResampled: Boolean, isForma
     if (hardware.formatUnnameable) {
         Text(
             text = stringResource(R.string.audio_format_unnameable),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    // The same rule one level up. The collector writes this object whenever the device is new
+    // enough for the questions to be put, and a HAL that answers none of them leaves every row
+    // above unrendered — a heading with nothing under it, which reads as though nobody looked.
+    if (!hardware.hasReadings) {
+        Text(
+            text = stringResource(R.string.audio_hardware_unanswered),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

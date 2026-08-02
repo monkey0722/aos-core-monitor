@@ -63,8 +63,14 @@ data class VulkanQueueFamily(
 /**
  * One physical device, as its driver describes it.
  *
- * @param driverIdName the driver behind the device, named. Null both where the driver is one this
- *   app has no name for and where the device implements Vulkan 1.1, which predates the query.
+ * @param driverId the driver behind the device, as the enum value that identifies it. Null where
+ *   the driver reported none — see [driverQueryAvailable] for the two reasons that happens.
+ * @param driverIdName the same id, named. Null where [driverId] is, and also where the id is one
+ *   this app has no name for — the number is still there.
+ * @param driverQueryAvailable whether this device could be asked which driver is behind it at all.
+ *   The query needs Vulkan 1.2 or the `VK_KHR_driver_properties` extension, both of which are
+ *   properties of this device rather than of the instance, so two devices in one process can
+ *   differ. False means [driverId] is absent because nothing was asked.
  * @param driverVersionRaw the driver's own version number, unpacked. Its encoding is the vendor's
  *   choice, so [driverVersion] — the conventional split — is a reading of it rather than a fact
  *   about it.
@@ -80,6 +86,7 @@ data class VulkanDevice(
     val pipelineCacheUuid: String? = null,
     val driverId: Int? = null,
     val driverIdName: String? = null,
+    val driverQueryAvailable: Boolean = false,
     val driverName: String? = null,
     val driverInfo: String? = null,
     val conformanceVersion: String? = null,
@@ -140,8 +147,18 @@ class NativeVulkanInspector {
     }
 }
 
-internal fun parseVulkan(json: String): VulkanSnapshot {
+/**
+ * The reading, or null where the collector produced none.
+ *
+ * A collector that threw hands back an empty object, and every field of a snapshot built from one
+ * would be a default that reads as a statement about the device — `loaderPresent = false` says this
+ * phone has no Vulkan loader, which is a claim the app would be making about its own failure. The
+ * loader is the one thing the collector reports whatever else happened, so its absence is how an
+ * empty document is told apart from a device with nothing to report.
+ */
+internal fun parseVulkan(json: String): VulkanSnapshot? {
     val root = JSONObject(json)
+    if (!root.has("loader_present")) return null
 
     val devices = root.optJSONArray("devices")?.mapObjects { device ->
         VulkanDevice(
@@ -155,8 +172,11 @@ internal fun parseVulkan(json: String): VulkanSnapshot {
             pipelineCacheUuid = device.stringOrNull("pipeline_cache_uuid"),
             driverId = device.intOrNull("driver_id"),
             driverIdName = device.stringOrNull("driver_id_name"),
-            driverName = device.stringOrNull("driver_name"),
-            driverInfo = device.stringOrNull("driver_info"),
+            driverQueryAvailable = device.optBoolean("driver_query_available"),
+            // Blank is not a name: a driver that fills the structure with an empty string has
+            // reported nothing, and a row rendered from one is an empty row under a label.
+            driverName = device.stringOrNull("driver_name")?.takeIf { it.isNotBlank() },
+            driverInfo = device.stringOrNull("driver_info")?.takeIf { it.isNotBlank() },
             conformanceVersion = device.stringOrNull("conformance_version"),
             limits = device.longMap("limits"),
             memoryHeaps = device.optJSONArray("memory_heaps")?.mapObjects { heap ->

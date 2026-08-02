@@ -7,6 +7,7 @@
     <string name="action_expand">Show all</string>
     <string name="action_collapse">Show less</string>
     <string name="action_refresh">Take a new reading</string>
+    <string name="action_refreshing">Taking a reading…</string>
     <string name="sample_data_label">Sample data</string>
     <string name="status_supported">Supported</string>
     <string name="status_not_supported">Not supported</string>
@@ -581,7 +582,7 @@
     <!-- Vulkan -->
     <string name="vulkan_title">Vulkan</string>
     <string name="vulkan_loading">Asking the Vulkan loader what this device has…</string>
-    <string name="vulkan_unavailable">The native library did not load, so Vulkan cannot be asked.</string>
+    <string name="vulkan_unavailable">The Vulkan reading could not be taken: either the native library did not load, or the collector stopped before it reported anything. Logcat carries the reason.</string>
     <string name="vulkan_no_loader">This device has no Vulkan loader, so there is nothing to ask.</string>
     <string name="vulkan_instance_failed">The loader is here, but no Vulkan instance could be created: %1$s.</string>
     <string name="vulkan_instance_failed_code">The loader is here, but no Vulkan instance could be created (VkResult %1$d).</string>
@@ -592,6 +593,8 @@
         <item quantity="other">%1$d devices · instance %2$s</item>
     </plurals>
     <string name="vulkan_device_api">API version</string>
+    <string name="vulkan_device_driver_id">Driver id</string>
+    <string name="vulkan_device_driver_id_unnamed">id %1$d, which this app has no name for</string>
     <string name="vulkan_device_driver">Driver</string>
     <string name="vulkan_device_driver_version">Driver version</string>
     <string name="vulkan_device_driver_version_value">%1$s · raw %2$d</string>
@@ -599,7 +602,8 @@
     <string name="vulkan_device_ids_value">%1$s · %2$s</string>
     <string name="vulkan_device_conformance">Conformance</string>
     <string name="vulkan_device_cache_uuid">Pipeline cache UUID</string>
-    <string name="vulkan_device_no_driver_properties">This device implements Vulkan 1.1, which predates the query that names a driver.</string>
+    <string name="vulkan_device_driver_not_reported">This driver was asked which driver it is and did not say: the query that names one reached core in Vulkan 1.2, and a driver may answer the surrounding call without filling it in.</string>
+    <string name="vulkan_device_driver_query_absent">This device\'s Vulkan implementation has no properties query, so it was never asked which driver is behind it. That query reached core in Vulkan 1.1.</string>
     <string name="vulkan_type_integrated">Integrated GPU</string>
     <string name="vulkan_type_discrete">Discrete GPU</string>
     <string name="vulkan_type_virtual">Virtual GPU</string>
@@ -612,7 +616,14 @@
         <item quantity="other">%1$d heaps · %2$s in total</item>
     </plurals>
     <string name="vulkan_heap">Heap %1$d</string>
-    <string name="vulkan_heap_device_local">device local</string>
+    <string name="vulkan_memory_type">Type %1$d · heap %2$d</string>
+    <string name="vulkan_property_device_local">device local</string>
+    <string name="vulkan_property_host_visible">host visible</string>
+    <string name="vulkan_property_host_coherent">host coherent</string>
+    <string name="vulkan_property_host_cached">host cached</string>
+    <string name="vulkan_property_lazily_allocated">lazily allocated</string>
+    <string name="vulkan_property_protected">protected</string>
+    <string name="vulkan_property_none">no properties, so the CPU cannot reach it</string>
     <plurals name="vulkan_memory_types">
         <item quantity="one">%1$d memory type</item>
         <item quantity="other">%1$d memory types</item>
@@ -628,6 +639,8 @@
     <string name="vulkan_queue_transfer">transfer</string>
     <string name="vulkan_queue_sparse">sparse</string>
     <string name="vulkan_queue_protected">protected</string>
+    <string name="vulkan_queue_timestamps">%1$d valid timestamp bits</string>
+    <string name="vulkan_queue_no_timestamps">No valid timestamp bits, so this family cannot be profiled with timestamp queries.</string>
     <string name="vulkan_limits_section">Limits</string>
     <string name="vulkan_limit_image_2d">Max 2D image</string>
     <string name="vulkan_limit_descriptor_sets">Bound descriptor sets</string>
@@ -670,6 +683,7 @@
     <string name="audio_row_buffer">Buffer</string>
     <string name="audio_row_device">Output device</string>
     <string name="audio_row_hardware">Hardware underneath</string>
+    <string name="audio_hardware_unanswered">This device can be asked what the hardware runs at, and its audio HAL answered none of the three questions for this stream. That is common on a stream that did not take the MMAP path.</string>
     <string name="audio_hz">%1$d Hz</string>
     <string name="audio_buffer_value">%1$d of %2$d frames</string>
     <string name="audio_sharing_exclusive">exclusive</string>

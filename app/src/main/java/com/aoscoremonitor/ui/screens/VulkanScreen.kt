@@ -9,10 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ViewInAr
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +25,7 @@ import com.aoscoremonitor.diagnostics.formatBytes
 import com.aoscoremonitor.diagnostics.jni.VulkanDevice
 import com.aoscoremonitor.diagnostics.jni.VulkanDeviceType
 import com.aoscoremonitor.diagnostics.jni.VulkanMemoryHeap
+import com.aoscoremonitor.diagnostics.jni.VulkanMemoryType
 import com.aoscoremonitor.diagnostics.jni.VulkanQueueFamily
 import com.aoscoremonitor.diagnostics.jni.VulkanSnapshot
 import com.aoscoremonitor.ui.components.ExpandableTextCard
@@ -36,6 +34,7 @@ import com.aoscoremonitor.ui.components.LabeledValue
 import com.aoscoremonitor.ui.components.MonitorCard
 import com.aoscoremonitor.ui.components.MonitorScaffold
 import com.aoscoremonitor.ui.components.MonitorTag
+import com.aoscoremonitor.ui.components.RefreshFab
 import com.aoscoremonitor.ui.components.SectionHeader
 import com.aoscoremonitor.ui.theme.AOSCoreMonitorTheme
 import com.aoscoremonitor.ui.theme.MonitorPreviews
@@ -64,12 +63,7 @@ private fun VulkanContent(uiState: VulkanUiState, onNavigateBack: () -> Unit, on
         modifier = modifier,
         floatingActionButton = {
             // Nothing here changes while the app runs, so a new reading has to be asked for.
-            FloatingActionButton(onClick = onRefresh) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = stringResource(R.string.action_refresh)
-                )
-            }
+            RefreshFab(onRefresh = onRefresh, isRefreshing = uiState.isRefreshing)
         }
     ) { innerPadding ->
         // Checked here rather than folded into unavailableMessage, so that the compiler carries the
@@ -190,6 +184,20 @@ private fun DeviceCard(device: VulkanDevice, modifier: Modifier = Modifier) {
             valueStyle = MonitorTypography.machineText
         )
 
+        // The reading this screen exists for. Nothing in the Java API distinguishes a Qualcomm
+        // driver from a Mesa one, and the driver name below it is vendor-formatted prose that a
+        // driver may leave empty; the id is the one answer with a fixed meaning.
+        if (device.driverId != null) {
+            LabeledValue(
+                label = stringResource(R.string.vulkan_device_driver_id),
+                // Named where this app has a name for the id, and the number where it does not: an
+                // id registered after this build is still an answer, and it is not "unknown".
+                value = device.driverIdName
+                    ?: stringResource(R.string.vulkan_device_driver_id_unnamed, device.driverId),
+                valueStyle = MonitorTypography.machineText
+            )
+        }
+
         if (device.driverName != null) {
             LabeledValue(
                 label = stringResource(R.string.vulkan_device_driver),
@@ -238,11 +246,18 @@ private fun DeviceCard(device: VulkanDevice, modifier: Modifier = Modifier) {
             )
         }
 
-        // Said rather than left blank: the driver identity query reached core in Vulkan 1.2, so a
-        // 1.1 device is silent here for a reason the screen can name.
-        if (device.driverName == null) {
+        // Said rather than left blank, and worded from what was measured rather than from a version
+        // nobody read: an implementation without the properties query was never asked for a driver
+        // id, and one that has the query and reported none was asked and did not answer.
+        if (device.driverId == null) {
             Text(
-                text = stringResource(R.string.vulkan_device_no_driver_properties),
+                text = stringResource(
+                    if (device.driverQueryAvailable) {
+                        R.string.vulkan_device_driver_not_reported
+                    } else {
+                        R.string.vulkan_device_driver_query_absent
+                    }
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -277,7 +292,55 @@ private fun MemoryCard(device: VulkanDevice, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        device.memoryTypes.forEach { type -> MemoryTypeRow(type) }
     }
+}
+
+@Composable
+private fun MemoryTypeRow(type: VulkanMemoryType, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = Spacing.ExtraSmall),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+    ) {
+        Text(
+            text = stringResource(R.string.vulkan_memory_type, type.index, type.heapIndex),
+            style = MonitorTypography.machineText
+        )
+        Text(
+            text = type.describeProperties(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+/**
+ * The properties that make one type different from another on the same heap.
+ *
+ * Two types over one heap — which is what a phone reports — are the same memory reached on
+ * different terms, and these flags are the terms: whether the CPU can map it, whether a map needs
+ * flushing, whether it is reserved for protected content. A count of types says none of that.
+ *
+ * Written as words rather than pills: six flags is more than a row of tags fits on a phone, and a
+ * pill says nothing to a screen reader that the word does not.
+ */
+@Composable
+private fun VulkanMemoryType.describeProperties(): String {
+    val properties = buildList {
+        if (isDeviceLocal) add(R.string.vulkan_property_device_local)
+        if (isHostVisible) add(R.string.vulkan_property_host_visible)
+        if (isHostCoherent) add(R.string.vulkan_property_host_coherent)
+        if (isHostCached) add(R.string.vulkan_property_host_cached)
+        if (isLazilyAllocated) add(R.string.vulkan_property_lazily_allocated)
+        if (isProtected) add(R.string.vulkan_property_protected)
+    }
+    // A type with no flags set is legal and means something — plain device memory the CPU cannot
+    // reach — so it is named rather than left as an empty half of the row.
+    if (properties.isEmpty()) return stringResource(R.string.vulkan_property_none)
+    return properties.map { stringResource(it) }.joinToString(separator = ", ")
 }
 
 @Composable
@@ -291,7 +354,7 @@ private fun HeapRow(heap: VulkanMemoryHeap, modifier: Modifier = Modifier) {
             style = MonitorTypography.machineText
         )
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
-            if (heap.isDeviceLocal) MonitorTag(stringResource(R.string.vulkan_heap_device_local))
+            if (heap.isDeviceLocal) MonitorTag(stringResource(R.string.vulkan_property_device_local))
             Text(
                 text = formatBytes(heap.sizeBytes),
                 style = MaterialTheme.typography.bodyMedium,
@@ -337,6 +400,18 @@ private fun QueueFamilyRow(family: VulkanQueueFamily, modifier: Modifier = Modif
         if (family.sparseBinding) MonitorTag(stringResource(R.string.vulkan_queue_sparse))
         if (family.protectedMemory) MonitorTag(stringResource(R.string.vulkan_queue_protected))
     }
+    // Zero is a statement about the family rather than a missing reading: a queue with no valid
+    // timestamp bits cannot be profiled with timestamp queries at all, and which families can is
+    // not the same on every family of one device.
+    Text(
+        text = if (family.timestampBits > 0) {
+            stringResource(R.string.vulkan_queue_timestamps, family.timestampBits)
+        } else {
+            stringResource(R.string.vulkan_queue_no_timestamps)
+        },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 @Composable
@@ -404,6 +479,7 @@ private fun VulkanPreview() {
                             pipelineCacheUuid = "1d3f5e0a9c4b2761d8e0f3a4b5c60718",
                             driverId = 8,
                             driverIdName = "qualcomm_proprietary",
+                            driverQueryAvailable = true,
                             driverName = "Qualcomm Technologies Inc. Adreno Vulkan Driver",
                             driverInfo = "Vulkan 1.3.275 (Adreno 740)",
                             conformanceVersion = "1.3.6.3",
@@ -417,6 +493,16 @@ private fun VulkanPreview() {
                             ),
                             memoryHeaps = listOf(
                                 VulkanMemoryHeap(index = 0, sizeBytes = 11_453_246_976, isDeviceLocal = true)
+                            ),
+                            memoryTypes = listOf(
+                                VulkanMemoryType(index = 0, heapIndex = 0, isDeviceLocal = true),
+                                VulkanMemoryType(
+                                    index = 1,
+                                    heapIndex = 0,
+                                    isDeviceLocal = true,
+                                    isHostVisible = true,
+                                    isHostCoherent = true
+                                )
                             ),
                             queueFamilies = listOf(
                                 VulkanQueueFamily(

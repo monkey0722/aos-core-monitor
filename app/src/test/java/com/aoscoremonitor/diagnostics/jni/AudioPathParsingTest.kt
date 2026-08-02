@@ -2,6 +2,7 @@ package com.aoscoremonitor.diagnostics.jni
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -168,6 +169,34 @@ class AudioPathParsingTest {
         assertFalse(probe.grantedAsRequested)
         // Nothing to compare against, so a refusal must not read as a resampled path.
         assertFalse(probe.isResampled)
+    }
+
+    /**
+     * A query that was put and answered nothing is not a query that was never put.
+     *
+     * The collector opens the hardware object whenever the device is new enough to be asked, and a
+     * HAL that implements none of the three leaves it empty — which is what a legacy shared stream
+     * does. The object arriving says the questions were asked; [AudioHardware.hasReadings] is what
+     * the screen needs to avoid printing a heading with nothing under it.
+     */
+    @Test
+    fun aHardwareObjectWithNoReadingsSaysTheQueriesWentUnanswered() {
+        val snapshot = parseAudioPath(
+            """
+            {"hardware_query_available":true,"probes":[
+              {"label":"default_shared","requested":{"performance_mode":"none","sharing_mode":"shared"},
+               "open_ok":true,
+               "granted":{"performance_mode":"none","sharing_mode":"shared","format":"pcm_float",
+                          "sample_rate":48000},
+               "hardware":{}}]}
+            """.trimIndent()
+        )
+
+        val probe = snapshot.probes.single()
+        assertNotNull("The query was put, so the object must survive the parse", probe.hardware)
+        assertFalse("Nothing was answered, so there is nothing to show", probe.hardware!!.hasReadings)
+        assertFalse(probe.isResampled)
+        assertFalse(probe.isFormatConverted)
     }
 
     /** Below API 34 the hardware readings do not exist, which is not the same as matching. */

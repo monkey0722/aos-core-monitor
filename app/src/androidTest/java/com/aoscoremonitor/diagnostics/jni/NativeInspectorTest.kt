@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -210,9 +211,9 @@ class NativeInspectorTest {
      * The instance is destroyed and the loader survives being reopened.
      *
      * Drivers cap how many live instances a process may hold, so a collector that leaked one would
-     * pass once and then fail — which is exactly what the screen's refresh does. This also covers
-     * the dlclose: closing the loader while the driver still held threads would crash here rather
-     * than in front of a user.
+     * pass once and then fail — which is exactly what the screen's refresh does. It also exercises
+     * the loader across readings: a collector that unloaded libvulkan between them would crash here,
+     * on a thread the driver owns, rather than in front of a user.
      */
     @Test
     fun vulkanInspectorCanBeReadRepeatedly() = runBlocking {
@@ -264,6 +265,12 @@ class NativeInspectorTest {
      * AAudio caps how many streams a process may hold open, so a collector that forgot to close
      * them would pass once and then start reporting refusals — which is what the screen's refresh
      * would do to it. Four readings is more than the cap allows to be leaked.
+     *
+     * One probe rather than the count of all four. What the system grants is not device-constant:
+     * another app taking the exclusive MMAP path between two readings legitimately turns a granted
+     * exclusive stream into a refused one, and a test that counted every probe would call that a
+     * leak. The ordinary shared path is the one a device with a working audio HAL always grants, and
+     * a leak is exactly what would stop it.
      */
     @Test
     fun audioProbeStreamsAreClosedBetweenReadings() = runBlocking {
@@ -271,12 +278,26 @@ class NativeInspectorTest {
         val opened = (1..4).map { reading ->
             val snapshot = inspector.read()
             assertNotNull("Reading $reading came back empty", snapshot)
-            snapshot!!.probes.count { it.opened }
+            val probe = snapshot!!.probes.find { it.label == ORDINARY_PROBE }
+            assertNotNull("Reading $reading did not put the $ORDINARY_PROBE request at all", probe)
+            probe!!.opened
         }
 
-        assertTrue(
-            "Later readings opened fewer streams than the first, which is what a leak looks like: $opened",
-            opened.last() >= opened.first()
+        // Skipped rather than passed on a device that grants nothing: with every reading refused the
+        // comparison below holds for a collector that leaks every stream it opens, and a test that
+        // reports success for proving nothing is worse than one that says it did not run.
+        assumeTrue(
+            "This device does not grant the ordinary shared path at all, so a leak would not show here",
+            opened.first()
         )
+        assertTrue(
+            "The ordinary shared stream stopped opening across repeated readings, which is what a leak looks like: $opened",
+            opened.all { it }
+        )
+    }
+
+    private companion object {
+        /** The probe that any device with an audio HAL grants, whatever else is playing. */
+        const val ORDINARY_PROBE = "default_shared"
     }
 }
