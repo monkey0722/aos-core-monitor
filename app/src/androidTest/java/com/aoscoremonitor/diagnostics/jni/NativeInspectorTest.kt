@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -171,5 +172,111 @@ class NativeInspectorTest {
         assertNotNull("Mount table could not be read", mounts)
         assertTrue("No mounts reported", mounts!!.isNotEmpty())
         assertTrue("/proc is not mounted, which cannot be", mounts.any { it.target == "/proc" })
+    }
+
+    /**
+     * Whatever Vulkan answers, it answers coherently.
+     *
+     * A device with no loader and one whose driver refuses to start are both allowed here — this
+     * suite runs on emulators as well as phones — so what is pinned is that the collector never
+     * reports devices it did not get, and that a device it did get is described completely.
+     */
+    @Test
+    fun vulkanInspectorDescribesWhateverItFinds() = runBlocking {
+        val snapshot = NativeVulkanInspector().read()
+
+        assertNotNull("Vulkan could not be queried at all", snapshot)
+        if (!snapshot!!.loaderPresent || !snapshot.instanceCreated) {
+            assertTrue(
+                "Devices were reported without an instance to enumerate them",
+                snapshot.devices.isEmpty()
+            )
+            return@runBlocking
+        }
+
+        assertNotNull("An instance was created without reporting its version", snapshot.instanceVersion)
+        snapshot.devices.forEach { device ->
+            assertTrue("A device arrived with no name", device.name.isNotEmpty())
+            // Every Vulkan implementation has at least one queue family and one memory heap; a
+            // device reporting neither means the second enumeration call was skipped.
+            assertTrue("${device.name} reported no queue families", device.queueFamilies.isNotEmpty())
+            assertTrue("${device.name} reported no memory heaps", device.memoryHeaps.isNotEmpty())
+            assertTrue("${device.name} reported no memory", device.totalMemoryBytes > 0)
+            assertTrue("${device.name} reported no extensions", device.extensions.isNotEmpty())
+        }
+    }
+
+    /**
+     * The instance is destroyed and the loader survives being reopened.
+     *
+     * Drivers cap how many live instances a process may hold, so a collector that leaked one would
+     * pass once and then fail — which is exactly what the screen's refresh does. This also covers
+     * the dlclose: closing the loader while the driver still held threads would crash here rather
+     * than in front of a user.
+     */
+    @Test
+    fun vulkanInspectorCanBeReadRepeatedly() = runBlocking {
+        val inspector = NativeVulkanInspector()
+        val readings = (1..3).map { inspector.read() }
+
+        readings.forEachIndexed { index, snapshot ->
+            assertNotNull("Reading ${index + 1} came back empty", snapshot)
+        }
+        assertEquals(
+            "Repeated readings disagreed about how many devices there are",
+            1,
+            readings.map { it?.devices?.size }.distinct().size
+        )
+    }
+
+    /**
+     * Every probe puts its request and comes back with either an answer or a reason.
+     *
+     * A device with no audio HAL may refuse all four, and an emulator often refuses the exclusive
+     * one, so which of them open is not pinned. What is pinned is that a probe never reports
+     * readings it did not take, and never fails silently.
+     */
+    @Test
+    fun audioInspectorPutsEveryRequestToTheSystem() = runBlocking {
+        val snapshot = NativeAudioInspector().read()
+
+        assertNotNull("The audio path could not be read", snapshot)
+        assertEquals("Not every probe came back", 4, snapshot!!.probes.size)
+
+        snapshot.probes.forEach { probe ->
+            if (probe.opened) {
+                assertNotNull("${probe.label} opened and reported nothing", probe.granted)
+                // The collector writes the hardware object whenever the API-34 guard passes, so a
+                // device that can take the reading and an open stream must produce one.
+                if (snapshot.hardwareQueryAvailable) {
+                    assertNotNull("${probe.label} took no hardware reading", probe.hardware)
+                }
+            } else {
+                assertNotNull("${probe.label} was refused without saying why", probe.openError)
+                assertNull("${probe.label} was refused and still reported readings", probe.granted)
+            }
+        }
+    }
+
+    /**
+     * The probe streams are closed, not leaked.
+     *
+     * AAudio caps how many streams a process may hold open, so a collector that forgot to close
+     * them would pass once and then start reporting refusals — which is what the screen's refresh
+     * would do to it. Four readings is more than the cap allows to be leaked.
+     */
+    @Test
+    fun audioProbeStreamsAreClosedBetweenReadings() = runBlocking {
+        val inspector = NativeAudioInspector()
+        val opened = (1..4).map { reading ->
+            val snapshot = inspector.read()
+            assertNotNull("Reading $reading came back empty", snapshot)
+            snapshot!!.probes.count { it.opened }
+        }
+
+        assertTrue(
+            "Later readings opened fewer streams than the first, which is what a leak looks like: $opened",
+            opened.last() >= opened.first()
+        )
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.DataUsage
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Monitor
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.aoscoremonitor.R
@@ -209,6 +211,22 @@ sealed interface Destination : NavKey {
         @Transient
         override val icon: ImageVector = Icons.Default.Speed
     }
+
+    @Serializable
+    data object Vulkan : Destination {
+        override val titleRes get() = R.string.vulkan_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.ViewInAr
+    }
+
+    @Serializable
+    data object AudioPath : Destination {
+        override val titleRes get() = R.string.audio_title
+
+        @Transient
+        override val icon: ImageVector = Icons.Default.GraphicEq
+    }
 }
 
 /** A named run of the home grid. */
@@ -224,8 +242,8 @@ data class DestinationGroup(@get:StringRes val titleRes: Int, val destinations: 
  *
  * Within the native run the order goes outwards from the process: what it is running (CPU,
  * threads), what it is holding (memory, libraries, descriptors), who it is (credentials), and what
- * it can reach (storage, network). The display and the frames it is served close the list, being
- * the one layer the app can watch itself being drawn onto.
+ * it can reach (storage, network). The display, the frames it is served and the GPU behind both
+ * close the list, being the one layer the app can watch itself being drawn onto.
  *
  * Named groups rather than one long list, because that order was the only thing carrying the
  * structure and nothing on screen showed it: nineteen tiles arrived looking equally related to each
@@ -262,8 +280,11 @@ val HomeGroups: List<DestinationGroup> = listOf(
     ),
     DestinationGroup(
         R.string.home_group_display,
-        listOf(Destination.DisplayPanel, Destination.FramePacing)
-    )
+        listOf(Destination.DisplayPanel, Destination.FramePacing, Destination.Vulkan)
+    ),
+    // A group of one. The audio path is not a display reading and not a process reading, and
+    // filing it under either would say something untrue about it to make the grid look even.
+    DestinationGroup(R.string.home_group_audio, listOf(Destination.AudioPath))
 )
 
 /** Every destination the grid offers, flattened. What the navigation test walks. */
@@ -293,4 +314,6 @@ val Destination.shortTitleRes: Int
         Destination.ProcessCredentials -> R.string.destination_credentials
         Destination.DisplayPanel -> R.string.destination_display
         Destination.FramePacing -> R.string.destination_frames
+        Destination.Vulkan -> R.string.destination_vulkan
+        Destination.AudioPath -> R.string.destination_audio
     }

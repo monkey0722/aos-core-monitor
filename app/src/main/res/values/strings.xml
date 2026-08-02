@@ -19,7 +19,8 @@
     <string name="home_group_framework">Android framework</string>
     <string name="home_group_native">This process and the kernel</string>
     <string name="home_group_reach">Storage and network</string>
-    <string name="home_group_display">Display and frames</string>
+    <string name="home_group_display">Display, frames and the GPU</string>
+    <string name="home_group_audio">Audio</string>
     <string name="destination_system_info">System Info</string>
     <string name="destination_logs">System Logs</string>
     <string name="destination_diagnostics">Diagnostics</string>
@@ -39,6 +40,8 @@
     <string name="destination_credentials">Credentials</string>
     <string name="destination_display">Display</string>
     <string name="destination_frames">Frame Pacing</string>
+    <string name="destination_vulkan">Vulkan</string>
+    <string name="destination_audio">Audio Path</string>
 
     <!-- System logs -->
     <string name="logs_title">System Logs</string>
@@ -574,4 +577,109 @@
     <string name="frames_presentation_deadline">Presentation deadline</string>
     <string name="frames_millis">%1$.2f ms</string>
     <string name="frames_seconds">%1$.1f s</string>
+
+    <!-- Vulkan -->
+    <string name="vulkan_title">Vulkan</string>
+    <string name="vulkan_loading">Asking the Vulkan loader what this device has…</string>
+    <string name="vulkan_unavailable">The native library did not load, so Vulkan cannot be asked.</string>
+    <string name="vulkan_no_loader">This device has no Vulkan loader, so there is nothing to ask.</string>
+    <string name="vulkan_instance_failed">The loader is here, but no Vulkan instance could be created: %1$s.</string>
+    <string name="vulkan_instance_failed_code">The loader is here, but no Vulkan instance could be created (VkResult %1$d).</string>
+    <string name="vulkan_no_devices">A Vulkan instance was created and reported no physical devices.</string>
+    <string name="vulkan_summary_section">Physical devices</string>
+    <plurals name="vulkan_summary">
+        <item quantity="one">%1$d device · instance %2$s</item>
+        <item quantity="other">%1$d devices · instance %2$s</item>
+    </plurals>
+    <string name="vulkan_device_api">API version</string>
+    <string name="vulkan_device_driver">Driver</string>
+    <string name="vulkan_device_driver_version">Driver version</string>
+    <string name="vulkan_device_driver_version_value">%1$s · raw %2$d</string>
+    <string name="vulkan_device_ids">Vendor · Device</string>
+    <string name="vulkan_device_ids_value">%1$s · %2$s</string>
+    <string name="vulkan_device_conformance">Conformance</string>
+    <string name="vulkan_device_cache_uuid">Pipeline cache UUID</string>
+    <string name="vulkan_device_no_driver_properties">This device implements Vulkan 1.1, which predates the query that names a driver.</string>
+    <string name="vulkan_type_integrated">Integrated GPU</string>
+    <string name="vulkan_type_discrete">Discrete GPU</string>
+    <string name="vulkan_type_virtual">Virtual GPU</string>
+    <string name="vulkan_type_cpu">CPU</string>
+    <string name="vulkan_type_other">Other</string>
+    <string name="vulkan_type_unknown">Unnamed type</string>
+    <string name="vulkan_memory_section">Memory heaps</string>
+    <plurals name="vulkan_memory_summary">
+        <item quantity="one">%1$d heap · %2$s in total</item>
+        <item quantity="other">%1$d heaps · %2$s in total</item>
+    </plurals>
+    <string name="vulkan_heap">Heap %1$d</string>
+    <string name="vulkan_heap_device_local">device local</string>
+    <plurals name="vulkan_memory_types">
+        <item quantity="one">%1$d memory type</item>
+        <item quantity="other">%1$d memory types</item>
+    </plurals>
+    <string name="vulkan_queues_section">Queue families</string>
+    <string name="vulkan_queue_family">Family %1$d</string>
+    <plurals name="vulkan_queue_count">
+        <item quantity="one">%1$d queue</item>
+        <item quantity="other">%1$d queues</item>
+    </plurals>
+    <string name="vulkan_queue_graphics">graphics</string>
+    <string name="vulkan_queue_compute">compute</string>
+    <string name="vulkan_queue_transfer">transfer</string>
+    <string name="vulkan_queue_sparse">sparse</string>
+    <string name="vulkan_queue_protected">protected</string>
+    <string name="vulkan_limits_section">Limits</string>
+    <string name="vulkan_limit_image_2d">Max 2D image</string>
+    <string name="vulkan_limit_descriptor_sets">Bound descriptor sets</string>
+    <string name="vulkan_limit_push_constants">Push constants</string>
+    <string name="vulkan_limit_allocations">Memory allocations</string>
+    <string name="vulkan_limit_compute_shared">Compute shared memory</string>
+    <string name="vulkan_limit_compute_invocations">Compute invocations</string>
+    <string name="vulkan_extensions_section">Device extensions</string>
+    <string name="vulkan_extensions_summary">%1$d supported by this device</string>
+
+    <!-- Audio path -->
+    <string name="audio_title">Audio Path</string>
+    <string name="audio_loading">Opening probe streams…</string>
+    <string name="audio_unavailable">The native library did not load, so the audio path cannot be asked.</string>
+    <string name="audio_no_probes">No probe answered, which cannot happen on a device with an audio HAL.</string>
+    <string name="audio_summary_section">Requested against granted</string>
+    <plurals name="audio_summary">
+        <item quantity="one">%1$d request put to the audio system</item>
+        <item quantity="other">%1$d requests put to the audio system</item>
+    </plurals>
+    <string name="audio_no_playback_note">Each probe opens an output stream and closes it without ever starting it, so nothing is played and no audio focus is taken. That is also why there is no underrun count here: it means nothing on a stream that never ran.</string>
+    <string name="audio_hardware_unavailable_note">This device is on API 33, where AAudio does not report what the hardware underneath runs at. The stream\'s own numbers are still shown.</string>
+    <string name="audio_probe_low_latency_exclusive">Low latency, exclusive</string>
+    <string name="audio_probe_low_latency_shared">Low latency, shared</string>
+    <string name="audio_probe_default_shared">Default, shared</string>
+    <string name="audio_probe_resample">44.1 kHz, against whatever the hardware runs at</string>
+    <string name="audio_probe_unknown">Unnamed probe</string>
+    <string name="audio_requested">Asked for</string>
+    <string name="audio_requested_value">%1$s · %2$s</string>
+    <string name="audio_requested_value_rate">%1$s · %2$s · %3$d Hz</string>
+    <string name="audio_as_requested">Granted as asked.</string>
+    <string name="audio_refused">The system would not open this request.</string>
+    <string name="audio_substituted">%1$s (asked %2$s)</string>
+    <string name="audio_row_sharing">Sharing mode</string>
+    <string name="audio_row_performance">Performance mode</string>
+    <string name="audio_row_sample_rate">Sample rate</string>
+    <string name="audio_row_channels">Channels</string>
+    <string name="audio_row_format">Format</string>
+    <string name="audio_row_burst">Frames per burst</string>
+    <string name="audio_row_buffer">Buffer</string>
+    <string name="audio_row_device">Output device</string>
+    <string name="audio_row_hardware">Hardware underneath</string>
+    <string name="audio_hz">%1$d Hz</string>
+    <string name="audio_buffer_value">%1$d of %2$d frames</string>
+    <string name="audio_sharing_exclusive">exclusive</string>
+    <string name="audio_sharing_shared">shared</string>
+    <string name="audio_performance_low_latency">low latency</string>
+    <string name="audio_performance_power_saving">power saving</string>
+    <string name="audio_performance_power_saving_offloaded">power saving, offloaded</string>
+    <string name="audio_performance_none">none</string>
+    <string name="audio_mode_unknown">unnamed</string>
+    <string name="audio_format_unnameable">AAudio has no name for the format this hardware runs, so whether the samples are converted on the way cannot be said from here.</string>
+    <string name="audio_tag_resampled">resampled</string>
+    <string name="audio_tag_converted">format converted</string>
 </resources>
