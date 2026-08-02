@@ -2,7 +2,7 @@
 Language: Cpp
 # CI pins clang-format 18, so keep this file compatible with that release.
 BasedOnStyle: Google
-AccessModifierOffset: -1
+AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: None
 AlignConsecutiveDeclarations: None
@@ -47,7 +47,7 @@ ColumnLimit: 100
 CommentPragmas: '^ IWYU pragma:'
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 4
-ContinuationIndentWidth: 4
+ContinuationIndentWidth: 8
 Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat: false
@@ -70,7 +70,7 @@ IncludeCategories:
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseLabels: true
 IndentPPDirectives: None
-IndentWidth: 2
+IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
 MacroBlockBegin: ''
@@ -132,5 +132,5 @@ SpacesInParens: Never
 SpacesInSquareBrackets: false
 # clang-format 18 cannot select C++23 explicitly; Auto is the compatible choice until CI upgrades.
 Standard: Auto
-TabWidth: 2
+TabWidth: 4
 UseTab: Never

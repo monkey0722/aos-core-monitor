@@ -18,20 +18,20 @@ using aoscm::JsonWriter;
 constexpr char kHexDigits[] = "0123456789abcdef";
 
 struct Module {
-  std::string path;
-  uint64_t base = 0;
-  uint64_t mapped_size = 0;
-  std::string build_id;
-  bool has_relro = false;
-  bool has_tls = false;
-  uint64_t segment_count = 0;
+    std::string path;
+    uint64_t base = 0;
+    uint64_t mapped_size = 0;
+    std::string build_id;
+    bool has_relro = false;
+    bool has_tls = false;
+    uint64_t segment_count = 0;
 };
 
 struct Collector {
-  std::vector<Module> modules;
-  unsigned long long adds = 0;
-  unsigned long long subs = 0;
-  bool counts_valid = false;
+    std::vector<Module> modules;
+    unsigned long long adds = 0;
+    unsigned long long subs = 0;
+    bool counts_valid = false;
 };
 
 /**
@@ -44,32 +44,32 @@ struct Collector {
  * Notes are a packed sequence of `Nhdr`, name, and descriptor, each padded to four bytes.
  */
 std::string ReadBuildId(const ElfW(Phdr) & header, ElfW(Addr) base) {
-  const auto* cursor = reinterpret_cast<const unsigned char*>(base + header.p_vaddr);
-  const unsigned char* const end = cursor + header.p_memsz;
+    const auto* cursor = reinterpret_cast<const unsigned char*>(base + header.p_vaddr);
+    const unsigned char* const end = cursor + header.p_memsz;
 
-  while (cursor + sizeof(ElfW(Nhdr)) <= end) {
-    const auto* note = reinterpret_cast<const ElfW(Nhdr)*>(cursor);
-    const size_t name_size = (note->n_namesz + 3) & ~3u;
-    const size_t desc_size = (note->n_descsz + 3) & ~3u;
-    const unsigned char* const name = cursor + sizeof(ElfW(Nhdr));
-    const unsigned char* const descriptor = name + name_size;
+    while (cursor + sizeof(ElfW(Nhdr)) <= end) {
+        const auto* note = reinterpret_cast<const ElfW(Nhdr)*>(cursor);
+        const size_t name_size = (note->n_namesz + 3) & ~3u;
+        const size_t desc_size = (note->n_descsz + 3) & ~3u;
+        const unsigned char* const name = cursor + sizeof(ElfW(Nhdr));
+        const unsigned char* const descriptor = name + name_size;
 
-    if (descriptor + desc_size > end) {
-      break;
+        if (descriptor + desc_size > end) {
+            break;
+        }
+        if (note->n_type == NT_GNU_BUILD_ID && note->n_namesz == 4 &&
+            std::equal(name, name + 4, reinterpret_cast<const unsigned char*>("GNU"))) {
+            std::string hex;
+            hex.reserve(note->n_descsz * 2);
+            for (size_t i = 0; i < note->n_descsz; ++i) {
+                hex.push_back(kHexDigits[descriptor[i] >> 4]);
+                hex.push_back(kHexDigits[descriptor[i] & 0xF]);
+            }
+            return hex;
+        }
+        cursor = descriptor + desc_size;
     }
-    if (note->n_type == NT_GNU_BUILD_ID && note->n_namesz == 4 &&
-        std::equal(name, name + 4, reinterpret_cast<const unsigned char*>("GNU"))) {
-      std::string hex;
-      hex.reserve(note->n_descsz * 2);
-      for (size_t i = 0; i < note->n_descsz; ++i) {
-        hex.push_back(kHexDigits[descriptor[i] >> 4]);
-        hex.push_back(kHexDigits[descriptor[i] & 0xF]);
-      }
-      return hex;
-    }
-    cursor = descriptor + desc_size;
-  }
-  return std::string();
+    return std::string();
 }
 
 /**
@@ -85,53 +85,53 @@ std::string ReadBuildId(const ElfW(Phdr) & header, ElfW(Addr) base) {
  * outcome, but it is a defined one.
  */
 int CollectModule(dl_phdr_info* info, size_t size, void* data) noexcept {
-  auto* collector = static_cast<Collector*>(data);
+    auto* collector = static_cast<Collector*>(data);
 
-  // dlpi_adds and dlpi_subs were added after the original struct, so they are only there when the
-  // linker says the struct is big enough to hold them.
-  if (!collector->counts_valid &&
-      size >= offsetof(dl_phdr_info, dlpi_subs) + sizeof(info->dlpi_subs)) {
-    collector->adds = info->dlpi_adds;
-    collector->subs = info->dlpi_subs;
-    collector->counts_valid = true;
-  }
-
-  Module module;
-  module.path = (info->dlpi_name != nullptr) ? info->dlpi_name : "";
-  module.base = static_cast<uint64_t>(info->dlpi_addr);
-
-  uint64_t lowest = UINT64_MAX;
-  uint64_t highest = 0;
-  // A pointer and a count are what the linker hands over; a span is what the loop should see.
-  const std::span headers(info->dlpi_phdr, info->dlpi_phnum);
-  for (const ElfW(Phdr) & header : headers) {
-    switch (header.p_type) {
-      case PT_LOAD:
-        lowest = std::min<uint64_t>(lowest, header.p_vaddr);
-        highest = std::max<uint64_t>(highest, header.p_vaddr + header.p_memsz);
-        module.segment_count += 1;
-        break;
-      case PT_NOTE:
-        if (module.build_id.empty()) {
-          module.build_id = ReadBuildId(header, info->dlpi_addr);
-        }
-        break;
-      case PT_GNU_RELRO:
-        module.has_relro = true;
-        break;
-      case PT_TLS:
-        module.has_tls = true;
-        break;
-      default:
-        break;
+    // dlpi_adds and dlpi_subs were added after the original struct, so they are only there when the
+    // linker says the struct is big enough to hold them.
+    if (!collector->counts_valid &&
+        size >= offsetof(dl_phdr_info, dlpi_subs) + sizeof(info->dlpi_subs)) {
+        collector->adds = info->dlpi_adds;
+        collector->subs = info->dlpi_subs;
+        collector->counts_valid = true;
     }
-  }
-  if (lowest != UINT64_MAX) {
-    module.mapped_size = highest - lowest;
-  }
 
-  collector->modules.push_back(std::move(module));
-  return 0;
+    Module module;
+    module.path = (info->dlpi_name != nullptr) ? info->dlpi_name : "";
+    module.base = static_cast<uint64_t>(info->dlpi_addr);
+
+    uint64_t lowest = UINT64_MAX;
+    uint64_t highest = 0;
+    // A pointer and a count are what the linker hands over; a span is what the loop should see.
+    const std::span headers(info->dlpi_phdr, info->dlpi_phnum);
+    for (const ElfW(Phdr) & header : headers) {
+        switch (header.p_type) {
+            case PT_LOAD:
+                lowest = std::min<uint64_t>(lowest, header.p_vaddr);
+                highest = std::max<uint64_t>(highest, header.p_vaddr + header.p_memsz);
+                module.segment_count += 1;
+                break;
+            case PT_NOTE:
+                if (module.build_id.empty()) {
+                    module.build_id = ReadBuildId(header, info->dlpi_addr);
+                }
+                break;
+            case PT_GNU_RELRO:
+                module.has_relro = true;
+                break;
+            case PT_TLS:
+                module.has_tls = true;
+                break;
+            default:
+                break;
+        }
+    }
+    if (lowest != UINT64_MAX) {
+        module.mapped_size = highest - lowest;
+    }
+
+    collector->modules.push_back(std::move(module));
+    return 0;
 }
 
 }  // namespace
@@ -145,35 +145,35 @@ int CollectModule(dl_phdr_info* info, size_t size, void* data) noexcept {
  */
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeModuleInspector_getLoadedModulesNative(
-    JNIEnv* env, jobject /* this */) {
-  return aoscm::ReturnJson(env, [] {
-    Collector collector;
-    dl_iterate_phdr(CollectModule, &collector);
+        JNIEnv* env, jobject /* this */) {
+    return aoscm::ReturnJson(env, [] {
+        Collector collector;
+        dl_iterate_phdr(CollectModule, &collector);
 
-    JsonWriter writer;
-    writer.BeginObject();
-    if (collector.counts_valid) {
-      writer.Field("adds", static_cast<uint64_t>(collector.adds));
-      writer.Field("subs", static_cast<uint64_t>(collector.subs));
-    }
+        JsonWriter writer;
+        writer.BeginObject();
+        if (collector.counts_valid) {
+            writer.Field("adds", static_cast<uint64_t>(collector.adds));
+            writer.Field("subs", static_cast<uint64_t>(collector.subs));
+        }
 
-    writer.Key("modules").BeginArray();
-    for (const Module& module : collector.modules) {
-      writer.BeginObject();
-      writer.Field("path", module.path);
-      writer.FieldHex("base", module.base);
-      writer.Field("mapped_size", module.mapped_size);
-      writer.Field("segment_count", module.segment_count);
-      writer.Field("relro", module.has_relro);
-      writer.Field("tls", module.has_tls);
-      if (!module.build_id.empty()) {
-        writer.Field("build_id", module.build_id);
-      }
-      writer.EndObject();
-    }
-    writer.EndArray();
+        writer.Key("modules").BeginArray();
+        for (const Module& module : collector.modules) {
+            writer.BeginObject();
+            writer.Field("path", module.path);
+            writer.FieldHex("base", module.base);
+            writer.Field("mapped_size", module.mapped_size);
+            writer.Field("segment_count", module.segment_count);
+            writer.Field("relro", module.has_relro);
+            writer.Field("tls", module.has_tls);
+            if (!module.build_id.empty()) {
+                writer.Field("build_id", module.build_id);
+            }
+            writer.EndObject();
+        }
+        writer.EndArray();
 
-    writer.EndObject();
-    return writer.Take();
-  });
+        writer.EndObject();
+        return writer.Take();
+    });
 }

@@ -26,60 +26,60 @@ using aoscm::JsonWriter;
  * signedness conversion at each one.
  */
 enum class Category : size_t {
-  kNativeLib,
-  kArt,
-  kDalvik,
-  kNativeHeap,
-  kStack,
-  kAnon,
-  kOther,
-  kCount,
+    kNativeLib,
+    kArt,
+    kDalvik,
+    kNativeHeap,
+    kStack,
+    kAnon,
+    kOther,
+    kCount,
 };
 
 constexpr std::array<const char*, std::to_underlying(Category::kCount)> kCategoryKeys = {
-    "native_lib", "art", "dalvik", "native_heap", "stack", "anon", "other",
+        "native_lib", "art", "dalvik", "native_heap", "stack", "anon", "other",
 };
 
 Category Classify(std::string_view path) {
-  if (path.empty()) {
-    return Category::kAnon;
-  }
-  if (path.starts_with("[stack") || path.starts_with("[anon:stack_and_tls")) {
-    return Category::kStack;
-  }
-  if (path == "[heap]" || path.starts_with("[anon:libc_malloc") ||
-      path.starts_with("[anon:scudo") || path.starts_with("[anon:GWP-ASan")) {
-    return Category::kNativeHeap;
-  }
-  if (path.contains("dalvik")) {
-    return Category::kDalvik;
-  }
-  // A deleted file keeps its name and gains a " (deleted)" suffix, so a library is matched at
-  // either the end of the path or before that marker.
-  if (path.ends_with(".so") || path.contains(".so ")) {
-    return Category::kNativeLib;
-  }
-  if (path.ends_with(".art") || path.ends_with(".oat") || path.ends_with(".odex") ||
-      path.ends_with(".vdex") || path.ends_with(".dex") || path.ends_with(".jar") ||
-      path.ends_with(".apk")) {
-    return Category::kArt;
-  }
-  if (path.starts_with("[")) {
-    return Category::kAnon;
-  }
-  return Category::kOther;
+    if (path.empty()) {
+        return Category::kAnon;
+    }
+    if (path.starts_with("[stack") || path.starts_with("[anon:stack_and_tls")) {
+        return Category::kStack;
+    }
+    if (path == "[heap]" || path.starts_with("[anon:libc_malloc") ||
+        path.starts_with("[anon:scudo") || path.starts_with("[anon:GWP-ASan")) {
+        return Category::kNativeHeap;
+    }
+    if (path.contains("dalvik")) {
+        return Category::kDalvik;
+    }
+    // A deleted file keeps its name and gains a " (deleted)" suffix, so a library is matched at
+    // either the end of the path or before that marker.
+    if (path.ends_with(".so") || path.contains(".so ")) {
+        return Category::kNativeLib;
+    }
+    if (path.ends_with(".art") || path.ends_with(".oat") || path.ends_with(".odex") ||
+        path.ends_with(".vdex") || path.ends_with(".dex") || path.ends_with(".jar") ||
+        path.ends_with(".apk")) {
+        return Category::kArt;
+    }
+    if (path.starts_with("[")) {
+        return Category::kAnon;
+    }
+    return Category::kOther;
 }
 
 struct CategoryTotals {
-  uint64_t count = 0;
-  uint64_t size_kb = 0;
+    uint64_t count = 0;
+    uint64_t size_kb = 0;
 };
 
 struct MapsSummary {
-  uint64_t total_regions = 0;
-  uint64_t reserved_regions = 0;
-  uint64_t reserved_kb = 0;
-  std::array<CategoryTotals, std::to_underlying(Category::kCount)> categories = {};
+    uint64_t total_regions = 0;
+    uint64_t reserved_regions = 0;
+    uint64_t reserved_kb = 0;
+    std::array<CategoryTotals, std::to_underlying(Category::kCount)> categories = {};
 };
 
 /**
@@ -95,83 +95,84 @@ struct MapsSummary {
  * process holding 100 MB, which is true of the address space and says nothing about the memory.
  */
 MapsSummary SummarizeMaps() {
-  MapsSummary summary;
-  std::ifstream maps("/proc/self/maps");
-  if (!maps.is_open()) {
+    MapsSummary summary;
+    std::ifstream maps("/proc/self/maps");
+    if (!maps.is_open()) {
+        return summary;
+    }
+
+    std::string line;
+    while (std::getline(maps, line)) {
+        const size_t dash = line.find('-');
+        const size_t space = line.find(' ');
+        if (dash == std::string::npos || space == std::string::npos || dash > space) {
+            continue;
+        }
+
+        const std::string_view entry(line);
+        const std::optional<uint64_t> first =
+                aoscm::ParseNumber<uint64_t, 16>(entry.substr(0, dash));
+        const std::optional<uint64_t> last =
+                aoscm::ParseNumber<uint64_t, 16>(entry.substr(dash + 1, space - dash - 1));
+        if (!first.has_value() || !last.has_value() || *last <= *first) {
+            continue;
+        }
+        const uint64_t start = *first;
+        const uint64_t end = *last;
+
+        summary.total_regions += 1;
+
+        // The permissions are the fixed-width field straight after the address range.
+        const std::string_view permissions = entry.substr(space + 1, 4);
+        const bool accessible =
+                permissions.size() == 4 &&
+                (permissions[0] == 'r' || permissions[1] == 'w' || permissions[2] == 'x');
+        if (!accessible) {
+            summary.reserved_regions += 1;
+            summary.reserved_kb += (end - start) / 1024;
+            continue;
+        }
+
+        // Five whitespace-separated fields precede the path; whatever follows them is the path,
+        // spaces included.
+        size_t position = 0;
+        int fields = 0;
+        while (fields < 5 && position < line.size()) {
+            position = line.find(' ', position);
+            if (position == std::string::npos) {
+                break;
+            }
+            position = line.find_first_not_of(' ', position);
+            ++fields;
+        }
+        const std::string_view path =
+                (fields == 5 && position != std::string::npos && position < line.size())
+                        ? entry.substr(position)
+                        : std::string_view();
+
+        auto& totals = summary.categories[std::to_underlying(Classify(path))];
+        totals.count += 1;
+        totals.size_kb += (end - start) / 1024;
+    }
     return summary;
-  }
-
-  std::string line;
-  while (std::getline(maps, line)) {
-    const size_t dash = line.find('-');
-    const size_t space = line.find(' ');
-    if (dash == std::string::npos || space == std::string::npos || dash > space) {
-      continue;
-    }
-
-    const std::string_view entry(line);
-    const std::optional<uint64_t> first = aoscm::ParseNumber<uint64_t, 16>(entry.substr(0, dash));
-    const std::optional<uint64_t> last =
-        aoscm::ParseNumber<uint64_t, 16>(entry.substr(dash + 1, space - dash - 1));
-    if (!first.has_value() || !last.has_value() || *last <= *first) {
-      continue;
-    }
-    const uint64_t start = *first;
-    const uint64_t end = *last;
-
-    summary.total_regions += 1;
-
-    // The permissions are the fixed-width field straight after the address range.
-    const std::string_view permissions = entry.substr(space + 1, 4);
-    const bool accessible =
-        permissions.size() == 4 &&
-        (permissions[0] == 'r' || permissions[1] == 'w' || permissions[2] == 'x');
-    if (!accessible) {
-      summary.reserved_regions += 1;
-      summary.reserved_kb += (end - start) / 1024;
-      continue;
-    }
-
-    // Five whitespace-separated fields precede the path; whatever follows them is the path,
-    // spaces included.
-    size_t position = 0;
-    int fields = 0;
-    while (fields < 5 && position < line.size()) {
-      position = line.find(' ', position);
-      if (position == std::string::npos) {
-        break;
-      }
-      position = line.find_first_not_of(' ', position);
-      ++fields;
-    }
-    const std::string_view path =
-        (fields == 5 && position != std::string::npos && position < line.size())
-            ? entry.substr(position)
-            : std::string_view();
-
-    auto& totals = summary.categories[std::to_underlying(Classify(path))];
-    totals.count += 1;
-    totals.size_kb += (end - start) / 1024;
-  }
-  return summary;
 }
 
 /** The smaps counters worth showing, in the order the screen shows them. */
 constexpr std::array<const char*, 8> kRollupKeys = {
-    "Rss",          "Pss",          "Private_Clean", "Private_Dirty",
-    "Shared_Clean", "Shared_Dirty", "Swap",          "SwapPss",
+        "Rss",          "Pss",          "Private_Clean", "Private_Dirty",
+        "Shared_Clean", "Shared_Dirty", "Swap",          "SwapPss",
 };
 
 /** The JSON key each smaps counter is published under. */
 constexpr std::array<const char*, 8> kRollupJsonKeys = {
-    "rss_kb",          "pss_kb",          "private_clean_kb", "private_dirty_kb",
-    "shared_clean_kb", "shared_dirty_kb", "swap_kb",          "swap_pss_kb",
+        "rss_kb",          "pss_kb",          "private_clean_kb", "private_dirty_kb",
+        "shared_clean_kb", "shared_dirty_kb", "swap_kb",          "swap_pss_kb",
 };
 
 struct Rollup {
-  bool present = false;
-  bool from_rollup_file = false;
-  std::array<uint64_t, kRollupKeys.size()> values = {};
+    bool present = false;
+    bool from_rollup_file = false;
+    std::array<uint64_t, kRollupKeys.size()> values = {};
 };
 
 /**
@@ -183,31 +184,31 @@ struct Rollup {
  * them and only the cost differs.
  */
 Rollup ReadSmaps(const char* path, bool is_rollup_file) {
-  Rollup rollup;
-  std::ifstream file(path);
-  if (!file.is_open()) {
-    return rollup;
-  }
+    Rollup rollup;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        return rollup;
+    }
 
-  std::string line;
-  while (std::getline(file, line)) {
-    const size_t colon = line.find(':');
-    if (colon == std::string::npos) {
-      continue;
+    std::string line;
+    while (std::getline(file, line)) {
+        const size_t colon = line.find(':');
+        if (colon == std::string::npos) {
+            continue;
+        }
+        const std::string_view key = std::string_view(line).substr(0, colon);
+        for (size_t i = 0; i < kRollupKeys.size(); ++i) {
+            if (key == kRollupKeys[i]) {
+                const std::optional<uint64_t> value = aoscm::ParseLeadingNumber<uint64_t>(
+                        std::string_view(line).substr(colon + 1));
+                rollup.values[i] += value.value_or(0);
+                rollup.present = true;
+                break;
+            }
+        }
     }
-    const std::string_view key = std::string_view(line).substr(0, colon);
-    for (size_t i = 0; i < kRollupKeys.size(); ++i) {
-      if (key == kRollupKeys[i]) {
-        const std::optional<uint64_t> value =
-            aoscm::ParseLeadingNumber<uint64_t>(std::string_view(line).substr(colon + 1));
-        rollup.values[i] += value.value_or(0);
-        rollup.present = true;
-        break;
-      }
-    }
-  }
-  rollup.from_rollup_file = is_rollup_file && rollup.present;
-  return rollup;
+    rollup.from_rollup_file = is_rollup_file && rollup.present;
+    return rollup;
 }
 
 /**
@@ -218,29 +219,29 @@ Rollup ReadSmaps(const char* path, bool is_rollup_file) {
  * the same figure is what that screen was added to stop, not to continue.
  */
 constexpr std::array<const char*, 5> kStatusKeys = {
-    "VmSize", "VmRSS", "VmHWM", "VmSwap", "Threads",
+        "VmSize", "VmRSS", "VmHWM", "VmSwap", "Threads",
 };
 
 void WriteStatus(JsonWriter* writer, const aoscm::StatusLines& status) {
-  // Driven by the key list rather than by the file, so the screen gets them in the order named
-  // above. Walking the file put them in the kernel's order, which is not the same one.
-  writer->Key("status").BeginObject();
-  for (const char* key : kStatusKeys) {
-    if (const std::string* value = aoscm::FindStatus(status, key)) {
-      writer->Field(key, *value);
+    // Driven by the key list rather than by the file, so the screen gets them in the order named
+    // above. Walking the file put them in the kernel's order, which is not the same one.
+    writer->Key("status").BeginObject();
+    for (const char* key : kStatusKeys) {
+        if (const std::string* value = aoscm::FindStatus(status, key)) {
+            writer->Field(key, *value);
+        }
     }
-  }
-  writer->EndObject();
+    writer->EndObject();
 }
 
 void WriteLimit(JsonWriter* writer, const char* key, int resource) {
-  rlimit limit = {};
-  if (getrlimit(resource, &limit) != 0 || limit.rlim_cur == RLIM_INFINITY) {
-    // An unlimited resource is left out rather than published as a sentinel, so the screen has
-    // nothing to misreport as a very large number.
-    return;
-  }
-  writer->Field(key, static_cast<uint64_t>(limit.rlim_cur));
+    rlimit limit = {};
+    if (getrlimit(resource, &limit) != 0 || limit.rlim_cur == RLIM_INFINITY) {
+        // An unlimited resource is left out rather than published as a sentinel, so the screen has
+        // nothing to misreport as a very large number.
+        return;
+    }
+    writer->Field(key, static_cast<uint64_t>(limit.rlim_cur));
 }
 
 }  // namespace
@@ -254,65 +255,65 @@ void WriteLimit(JsonWriter* writer, const char* key, int resource) {
  */
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_aoscoremonitor_diagnostics_jni_NativeMemoryInspector_getMemoryMapNative(
-    JNIEnv* env, jobject /* this */) {
-  return aoscm::ReturnJson(env, [] {
-    JsonWriter writer;
-    writer.BeginObject();
+        JNIEnv* env, jobject /* this */) {
+    return aoscm::ReturnJson(env, [] {
+        JsonWriter writer;
+        writer.BeginObject();
 
-    Rollup rollup = ReadSmaps("/proc/self/smaps_rollup", true);
-    if (!rollup.present) {
-      rollup = ReadSmaps("/proc/self/smaps", false);
-    }
-    if (rollup.present) {
-      writer.Key("rollup").BeginObject();
-      for (size_t i = 0; i < kRollupJsonKeys.size(); ++i) {
-        writer.Field(kRollupJsonKeys[i], rollup.values[i]);
-      }
-      writer.Field("from_rollup_file", rollup.from_rollup_file);
-      writer.EndObject();
-    }
+        Rollup rollup = ReadSmaps("/proc/self/smaps_rollup", true);
+        if (!rollup.present) {
+            rollup = ReadSmaps("/proc/self/smaps", false);
+        }
+        if (rollup.present) {
+            writer.Key("rollup").BeginObject();
+            for (size_t i = 0; i < kRollupJsonKeys.size(); ++i) {
+                writer.Field(kRollupJsonKeys[i], rollup.values[i]);
+            }
+            writer.Field("from_rollup_file", rollup.from_rollup_file);
+            writer.EndObject();
+        }
 
-    WriteStatus(&writer, aoscm::ReadProcStatus());
+        WriteStatus(&writer, aoscm::ReadProcStatus());
 
-    const MapsSummary maps = SummarizeMaps();
-    writer.Key("regions").BeginObject();
-    writer.Field("total", maps.total_regions);
-    writer.Field("reserved_count", maps.reserved_regions);
-    writer.Field("reserved_kb", maps.reserved_kb);
-    writer.Key("categories").BeginArray();
-    for (size_t i = 0; i < kCategoryKeys.size(); ++i) {
-      if (maps.categories[i].count == 0) {
-        continue;
-      }
-      writer.BeginObject();
-      writer.Field("key", kCategoryKeys[i]);
-      writer.Field("count", maps.categories[i].count);
-      writer.Field("size_kb", maps.categories[i].size_kb);
-      writer.EndObject();
-    }
-    writer.EndArray();
-    writer.EndObject();
+        const MapsSummary maps = SummarizeMaps();
+        writer.Key("regions").BeginObject();
+        writer.Field("total", maps.total_regions);
+        writer.Field("reserved_count", maps.reserved_regions);
+        writer.Field("reserved_kb", maps.reserved_kb);
+        writer.Key("categories").BeginArray();
+        for (size_t i = 0; i < kCategoryKeys.size(); ++i) {
+            if (maps.categories[i].count == 0) {
+                continue;
+            }
+            writer.BeginObject();
+            writer.Field("key", kCategoryKeys[i]);
+            writer.Field("count", maps.categories[i].count);
+            writer.Field("size_kb", maps.categories[i].size_kb);
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.EndObject();
 
-    const struct mallinfo2 heap = mallinfo2();
-    writer.Key("malloc").BeginObject();
-    writer.Field("arena", static_cast<uint64_t>(heap.arena));
-    writer.Field("in_use", static_cast<uint64_t>(heap.uordblks));
-    writer.Field("free", static_cast<uint64_t>(heap.fordblks));
-    writer.Field("free_chunks", static_cast<uint64_t>(heap.ordblks));
-    writer.Field("mmapped", static_cast<uint64_t>(heap.hblkhd));
-    writer.Field("peak", static_cast<uint64_t>(heap.usmblks));
-    writer.Field("releasable", static_cast<uint64_t>(heap.keepcost));
-    writer.EndObject();
+        const struct mallinfo2 heap = mallinfo2();
+        writer.Key("malloc").BeginObject();
+        writer.Field("arena", static_cast<uint64_t>(heap.arena));
+        writer.Field("in_use", static_cast<uint64_t>(heap.uordblks));
+        writer.Field("free", static_cast<uint64_t>(heap.fordblks));
+        writer.Field("free_chunks", static_cast<uint64_t>(heap.ordblks));
+        writer.Field("mmapped", static_cast<uint64_t>(heap.hblkhd));
+        writer.Field("peak", static_cast<uint64_t>(heap.usmblks));
+        writer.Field("releasable", static_cast<uint64_t>(heap.keepcost));
+        writer.EndObject();
 
-    writer.Key("limits").BeginObject();
-    WriteLimit(&writer, "address_space", RLIMIT_AS);
-    WriteLimit(&writer, "data", RLIMIT_DATA);
-    WriteLimit(&writer, "stack", RLIMIT_STACK);
-    // RLIMIT_NOFILE was here. It bounds the descriptor table rather than the address space, and the
-    // descriptor screen shows it where the count it bounds is.
-    writer.EndObject();
+        writer.Key("limits").BeginObject();
+        WriteLimit(&writer, "address_space", RLIMIT_AS);
+        WriteLimit(&writer, "data", RLIMIT_DATA);
+        WriteLimit(&writer, "stack", RLIMIT_STACK);
+        // RLIMIT_NOFILE was here. It bounds the descriptor table rather than the address space, and
+        // the descriptor screen shows it where the count it bounds is.
+        writer.EndObject();
 
-    writer.EndObject();
-    return writer.Take();
-  });
+        writer.EndObject();
+        return writer.Take();
+    });
 }
