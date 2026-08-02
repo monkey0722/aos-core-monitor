@@ -23,6 +23,7 @@ add_library(
     thread_info.cpp
     fd_info.cpp
     process_creds.cpp
+    vulkan_info.cpp
 )
 
 # The conversion warnings earn their place here: this code carries kernel counters — size_t,

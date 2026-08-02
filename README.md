@@ -2,7 +2,7 @@
 
 Comprehensive monitoring software for deeply understanding the internal structure of AOS. Because sometimes you need to know what your Android system is secretly plotting.
 
-Nineteen screens, each with one subject. Everything shown is measured on the device — where a reading cannot be taken, the screen says which reading and why, rather than filling the gap with a plausible number.
+Twenty screens, each with one subject. Everything shown is measured on the device — where a reading cannot be taken, the screen says which reading and why, rather than filling the gap with a plausible number.
 
 ## What it inspects
 
@@ -12,9 +12,9 @@ Nineteen screens, each with one subject. Everything shown is measured on the dev
 
 **What it can reach** — Storage, Network Stats, TCP Connections
 
-**Display and frames** — Display, Frame Pacing
+**Display, frames and the GPU** — Display, Frame Pacing, Vulkan
 
-The native screens read what the Java API cannot reach: `dl_iterate_phdr` for the linker's module list, `mallinfo2` for the native heap, `sched_getaffinity` for a thread's CPU mask, `readlink` and `fcntl` for the open descriptors, the capability masks the kernel prints only in `/proc/self/status`. They are served by one shared library, `libsystem_monitor`, built from `app/src/main/cpp`.
+The native screens read what the Java API cannot reach: `dl_iterate_phdr` for the linker's module list, `mallinfo2` for the native heap, `sched_getaffinity` for a thread's CPU mask, `readlink` and `fcntl` for the open descriptors, the capability masks the kernel prints only in `/proc/self/status`, and Vulkan — a C API the platform has never given Java a binding to — for the GPU's driver, memory heaps and queue families. They are served by one shared library, `libsystem_monitor`, built from `app/src/main/cpp`.
 
 ## Building
 

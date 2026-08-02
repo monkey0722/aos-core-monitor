@@ -172,4 +172,59 @@ class NativeInspectorTest {
         assertTrue("No mounts reported", mounts!!.isNotEmpty())
         assertTrue("/proc is not mounted, which cannot be", mounts.any { it.target == "/proc" })
     }
+
+    /**
+     * Whatever Vulkan answers, it answers coherently.
+     *
+     * A device with no loader and one whose driver refuses to start are both allowed here — this
+     * suite runs on emulators as well as phones — so what is pinned is that the collector never
+     * reports devices it did not get, and that a device it did get is described completely.
+     */
+    @Test
+    fun vulkanInspectorDescribesWhateverItFinds() = runBlocking {
+        val snapshot = NativeVulkanInspector().read()
+
+        assertNotNull("Vulkan could not be queried at all", snapshot)
+        if (!snapshot!!.loaderPresent || !snapshot.instanceCreated) {
+            assertTrue(
+                "Devices were reported without an instance to enumerate them",
+                snapshot.devices.isEmpty()
+            )
+            return@runBlocking
+        }
+
+        assertNotNull("An instance was created without reporting its version", snapshot.instanceVersion)
+        snapshot.devices.forEach { device ->
+            assertTrue("A device arrived with no name", device.name.isNotEmpty())
+            // Every Vulkan implementation has at least one queue family and one memory heap; a
+            // device reporting neither means the second enumeration call was skipped.
+            assertTrue("${device.name} reported no queue families", device.queueFamilies.isNotEmpty())
+            assertTrue("${device.name} reported no memory heaps", device.memoryHeaps.isNotEmpty())
+            assertTrue("${device.name} reported no memory", device.totalMemoryBytes > 0)
+            assertTrue("${device.name} reported no extensions", device.extensions.isNotEmpty())
+        }
+    }
+
+    /**
+     * The instance is destroyed and the loader survives being reopened.
+     *
+     * Drivers cap how many live instances a process may hold, so a collector that leaked one would
+     * pass once and then fail — which is exactly what the screen's refresh does. This also covers
+     * the dlclose: closing the loader while the driver still held threads would crash here rather
+     * than in front of a user.
+     */
+    @Test
+    fun vulkanInspectorCanBeReadRepeatedly() = runBlocking {
+        val inspector = NativeVulkanInspector()
+        val readings = (1..3).map { inspector.read() }
+
+        readings.forEachIndexed { index, snapshot ->
+            assertNotNull("Reading ${index + 1} came back empty", snapshot)
+        }
+        assertEquals(
+            "Repeated readings disagreed about how many devices there are",
+            1,
+            readings.map { it?.devices?.size }.distinct().size
+        )
+    }
 }

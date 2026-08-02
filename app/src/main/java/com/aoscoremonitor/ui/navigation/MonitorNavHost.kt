@@ -28,6 +28,7 @@ import com.aoscoremonitor.ui.screens.SystemDiagnosticsScreen
 import com.aoscoremonitor.ui.screens.SystemInfoScreen
 import com.aoscoremonitor.ui.screens.TcpConnectionsScreen
 import com.aoscoremonitor.ui.screens.ThreadsScreen
+import com.aoscoremonitor.ui.screens.VulkanScreen
 
 /**
  * The app's single navigation host.
@@ -93,6 +94,7 @@ fun MonitorNavHost(modifier: Modifier = Modifier) {
                 entry<Destination.ProcessCredentials> { ProcessCredentialsScreen(onNavigateBack = goBack) }
                 entry<Destination.DisplayPanel> { DisplayScreen(onNavigateBack = goBack) }
                 entry<Destination.FramePacing> { FramePacingScreen(onNavigateBack = goBack) }
+                entry<Destination.Vulkan> { VulkanScreen(onNavigateBack = goBack) }
             }
         }
     )
